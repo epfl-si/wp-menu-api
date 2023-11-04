@@ -10,7 +10,7 @@ export interface SiteTreeInstance  {
     findItemByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
 }
 
-export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: WpMenu[] }[]) => SiteTreeInstance
+export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: WpMenu[] | undefined }[]) => SiteTreeInstance
 
 export const SiteTree : SiteTreeConstructor = function(menus) {
     const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : number]: WpMenu } } = {};
@@ -22,7 +22,10 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
         parents[menu.urlInstanceRestUrl] = {};
         children[menu.urlInstanceRestUrl] = {};
 
-        const entriesMenu = menu.entries;
+        let entriesMenu = menu.entries;
+        if (!entriesMenu) {
+            entriesMenu = [];
+        }
 
         entriesMenu.forEach(item => {
             itemsByID[menu.urlInstanceRestUrl][item.ID] = item
@@ -104,6 +107,7 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
         findItemByUrl(pageURL: string) {
             const result: { [urlInstance: string]: WpMenu } = {};
             for (const url in itemsByID) {
+                console.log("urlItems", url);
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];

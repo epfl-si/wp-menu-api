@@ -20,3 +20,18 @@ or
 ```
 php test.php
 ```
+
+### To start the server locally
+```
+npx ts-node src/app.ts
+```
+### To start wp-dev and menu-api in the container
+```
+make down; \
+docker rmi wp-local-menu-api:latest; \
+make up
+```
+And then to test in the meni-api container:
+```
+docker exec -it menu-api curl http://localhost:3001/refreshMenus ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
+```

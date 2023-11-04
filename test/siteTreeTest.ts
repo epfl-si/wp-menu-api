@@ -61,6 +61,15 @@ describe("Site Tree", function() {
             }
             assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1), []);
         })
+        it("doesn't crash when entries menu list is empty", function() {
+            const siteTree = SiteTree([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: undefined }]);
+            const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
+            if (tree1) {
+                assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
+            } else {
+                assert.fail();
+            }
+        })
     })
     describe("in multiple sites", function() {
         /*it("doesn't crach with multiple sites", function() {

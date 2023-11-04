@@ -1,8 +1,11 @@
-FROM docker-registry.default.svc:5000/wwp-test/wp-base
+FROM node:20
 RUN mkdir /app
 WORKDIR /app
-COPY package.json /app
-COPY package-lock.json /app
-RUN npm i --no-fund
-COPY *.js /app
-CMD ["npm", "start"]
+
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npm install
+
+CMD ["npx", "ts-node", "./src/app.ts"]

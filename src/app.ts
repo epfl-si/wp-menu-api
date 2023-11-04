@@ -5,33 +5,30 @@ import express, { Request, Response } from 'express';
 import {SiteTree, SiteTreeInstance} from "./interfaces/siteTree";
 
 const app = express()
-const port = 3000
 
 const headers: Headers = new Headers();
 headers.set('Content-Type', 'application/json');
 headers.set('Accept', 'application/json');
 
-let openshiftEnv: string[] = [];
-let wpVeritasURL: string = '';
-let baseUrl: string = '';
 const restUrlEnd: string = 'wp-json/epfl/v1/menus/top?lang=';
+const openshiftEnv: string[] = JSON.parse(process.env.OPENSHIF_ENV || '["rmaggi"]');
+const wpVeritasURL: string = process.env.WPVERITAS_URL || 'https://wp-veritas-test.epfl.ch/api/v1/sites';
+const hostAndPort: string = process.env.MENU_API_HOST_PORT || 'wp-httpd:8080';
+const host: string = process.env.MENU_API_HOST || 'wp-httpd';
+const port: string = process.env.MENU_API_PORT || '';
+const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
+const isDev: boolean = true; //process.env.IS_DEV ==='true';
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
-let dev = true;
-if(dev) {
-    openshiftEnv = ["rmaggi"];
-    wpVeritasURL = 'https://wp-veritas-test.epfl.ch/api/v1/sites';
-    baseUrl = 'https://wp-httpd'
-}else{
-    openshiftEnv = ["labs", "www"];
-    wpVeritasURL = 'https://wp-veritas.epfl.ch/api/v1/sites';
-    baseUrl = 'https://www.epfl.ch'
-}
+console.log(openshiftEnv);
+console.log(wpVeritasURL);
+console.log(host);
+console.log(servicePort);
+console.log(isDev);
 
 const arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 const arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 const arrayMenusDE: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+let errors: number = 0;
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
     const request: RequestInfo = new Request(wpVeritasURL, {
@@ -45,8 +42,8 @@ function getSiteListFromWPVeritas(): Promise<Site[]> {
 }
 
 function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
-    if (dev){
-        siteURL = siteURL.replace(".epfl.ch","");
+    if (isDev){
+        siteURL = siteURL.replace("wp-httpd.epfl.ch",hostAndPort); // siteURL.replace(".epfl.ch","");
     }
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
     const request: RequestInfo = new Request(siteMenuURL, {
@@ -62,18 +59,25 @@ function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
         fetch(request).then((res) => res.json()).then((res) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
-        switch ( lang ) {
-            case "fr":
-                arrayMenusFR.push( { urlInstanceRestUrl: siteMenuURL.substring(baseUrl.length), entries: result.items } );
-                break;
-            case "de":
-                arrayMenusDE.push( { urlInstanceRestUrl: siteMenuURL.substring(baseUrl.length), entries: result.items } );
-                break;
-            default: //en
-                arrayMenusEN.push( { urlInstanceRestUrl: siteMenuURL.substring(baseUrl.length), entries: result.items } );
-                break;
+        if (result.status && result.status==='OK'){
+            const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(hostAndPort)+hostAndPort.length);
+            switch ( lang ) {
+                case "fr":
+                    arrayMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+                    break;
+                case "de":
+                    arrayMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+                    break;
+                default: //en
+                    arrayMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+                    break;
+            }
+            return result;
+        } else {
+            errors++;
+            console.log(result);
+            return new ErrorResult(siteMenuURL.concat(" - ").concat(result.status));
         }
-        return result;
     }).catch ((error) => {
         let message: string = '';
         if (typeof error === "string") {
@@ -81,6 +85,7 @@ function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
         } else if (error instanceof Error) {
             message = error.message;
         }
+        errors++;
         console.log(message);
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
@@ -113,28 +118,8 @@ const searchAllParentsEntriesByID = (entry: WpMenu, urlInstanceRestUrl: string, 
     }
 }
 
-function refreshMenus() {
-    getSiteListFromWPVeritas().then(async sites => {
-        const filteredListOfSites: Site[] = sites.filter(function (site){
-            return openshiftEnv.includes(site.openshiftEnv);
-        });
-        await getMenuInParallel(filteredListOfSites, "en", getMenuForSite, 10);
-        await getMenuInParallel(filteredListOfSites, "fr", getMenuForSite, 10);
-        await getMenuInParallel(filteredListOfSites, "de", getMenuForSite, 10);
-    });
-}
-
-app.get('/refreshMenus', (req, res) => {
-    refreshMenus();
-    res.send('Menu list charged');
-});
-
-app.get('/breadcrumb', (req, res) => {
-    const url: string = req.query.url as string;
-    const lang: string = req.query.lang as string;
-
-    let breadcrumbForURL: WpMenu[] = [];
-    let sibling: WpMenu[] = [];
+function createResponse(url: string, lang: string, type: string) : WpMenu[] {
+    let items: WpMenu[] = [];
 
     let siteArray: SiteTreeInstance;
     switch ( lang ) {
@@ -148,25 +133,57 @@ app.get('/breadcrumb', (req, res) => {
             siteArray = SiteTree(arrayMenusEN);
             break;
     }
-    console.log("url".concat(url));
+
+    console.log(url);
     let firstSite: { [urlInstance: string]: WpMenu } | undefined = siteArray.findItemByUrl(url);
+    console.log(firstSite);
     if (firstSite) {
         const restUrl = Object.keys(firstSite)[0];
         if (firstSite[restUrl]) {
-            breadcrumbForURL = firstSite !== undefined ? [
-                ...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray),
-            ] : [];
-            sibling = siteArray.getSiblings(restUrl,firstSite[restUrl].ID)
+            switch ( type ) {
+                case "siblings":
+                    items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
+                    break;
+                case "breadcrumb":
+                    items = firstSite !== undefined ? [
+                        ...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray),
+                    ] : [];
+                    break;
+            }
         }
     }
+    return items;
+}
+
+app.get('/refreshMenus', (req, res) => {
+    errors = 0;
+    getSiteListFromWPVeritas().then(async sites => {
+        const filteredListOfSites: Site[] = sites.filter(function (site){
+            return openshiftEnv.includes(site.openshiftEnv);
+        });
+        await getMenuInParallel(filteredListOfSites, "en", getMenuForSite, 10);
+        await getMenuInParallel(filteredListOfSites, "fr", getMenuForSite, 10);
+        await getMenuInParallel(filteredListOfSites, "de", getMenuForSite, 10);
+        console.log(errors);
+        if (errors>0){
+            res.send('Menu list charged with errors');
+        }else {
+            res.send('Menu list charged');
+        }
+    });
+});
+
+app.get('/details', (req, res) => {
+    const url: string = req.query.url as string;
+    const lang: string = req.query.lang as string;
+    const type: string = req.query.type as string;
 
     res.json({
         status: "OK",
-        breadcrumb: breadcrumbForURL,
-        sibling: sibling
+        result: createResponse(url, lang, type)
     })
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(servicePort, () => {
+    console.log(`Server is running on port ${servicePort}`);
 });
