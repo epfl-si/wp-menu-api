@@ -35,3 +35,7 @@ And then to test in the meni-api container:
 ```
 docker exec -it menu-api curl http://localhost:3001/refreshMenus ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
 ```
+And to see logs:
+```
+docker logs -f menu-api
+```

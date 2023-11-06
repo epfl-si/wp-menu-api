@@ -107,7 +107,6 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
         findItemByUrl(pageURL: string) {
             const result: { [urlInstance: string]: WpMenu } = {};
             for (const url in itemsByID) {
-                console.log("urlItems", url);
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];

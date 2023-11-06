@@ -3,6 +3,7 @@ import { MenuAPIResult, ErrorResult } from './interfaces/menuAPIResult'
 import {WpMenu} from "./interfaces/wpMenu";
 import express, { Request, Response } from 'express';
 import {SiteTree, SiteTreeInstance} from "./interfaces/siteTree";
+import * as dotenv from 'dotenv';
 
 const app = express()
 
@@ -10,20 +11,15 @@ const headers: Headers = new Headers();
 headers.set('Content-Type', 'application/json');
 headers.set('Accept', 'application/json');
 
+debugger;
+
+dotenv.config();
 const restUrlEnd: string = 'wp-json/epfl/v1/menus/top?lang=';
 const openshiftEnv: string[] = JSON.parse(process.env.OPENSHIF_ENV || '["rmaggi"]');
 const wpVeritasURL: string = process.env.WPVERITAS_URL || 'https://wp-veritas-test.epfl.ch/api/v1/sites';
 const hostAndPort: string = process.env.MENU_API_HOST_PORT || 'wp-httpd:8080';
-const host: string = process.env.MENU_API_HOST || 'wp-httpd';
-const port: string = process.env.MENU_API_PORT || '';
 const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
-const isDev: boolean = true; //process.env.IS_DEV ==='true';
-
-console.log(openshiftEnv);
-console.log(wpVeritasURL);
-console.log(host);
-console.log(servicePort);
-console.log(isDev);
+const isDev: boolean = process.env.IS_DEV ==='true';
 
 const arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 const arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
@@ -43,9 +39,10 @@ function getSiteListFromWPVeritas(): Promise<Site[]> {
 
 function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
     if (isDev){
-        siteURL = siteURL.replace("wp-httpd.epfl.ch",hostAndPort); // siteURL.replace(".epfl.ch","");
+        siteURL = siteURL.replace("wp-httpd.epfl.ch",hostAndPort);
     }
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
+    console.log("siteMenuURL", siteMenuURL);
     const request: RequestInfo = new Request(siteMenuURL, {
         method: 'GET',
         headers: headers
@@ -61,6 +58,7 @@ function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
     ]).then((result) => {
         if (result.status && result.status==='OK'){
             const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(hostAndPort)+hostAndPort.length);
+            console.log("siteUrlSubstring", siteUrlSubstring);
             switch ( lang ) {
                 case "fr":
                     arrayMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );

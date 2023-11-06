@@ -61,8 +61,17 @@ describe("Site Tree", function() {
             }
             assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1), []);
         })
-        it("doesn't crash when entries menu list is empty", function() {
+        it("doesn't crash when entries menu list is undefined", function() {
             const siteTree = SiteTree([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: undefined }]);
+            const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
+            if (tree1) {
+                assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
+            } else {
+                assert.fail();
+            }
+        })
+        it("doesn't crash when entries menu list is empty", function() {
+            const siteTree = SiteTree([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
             if (tree1) {
                 assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
@@ -72,15 +81,6 @@ describe("Site Tree", function() {
         })
     })
     describe("in multiple sites", function() {
-        /*it("doesn't crach with multiple sites", function() {
-            const parent : WpMenu = {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1", ...bogusWpMenu},
-                child : WpMenu = {ID: 2, menu_item_parent: 1, title: "Some_Page child 2", ...bogusWpMenu};
-            const parent2 : WpMenu = {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1 bis", ...bogusWpMenu},
-                child2 : WpMenu = {ID: 3, menu_item_parent: 1 ,title: "Some_Page child 3", ...bogusWpMenu};
-            const siteTree = SiteTree([{ siteBaseUrl: "https://toto.com", entries: [parent, child] },{ siteBaseUrl: "https://tototata.com", entries: [parent2, child2] }]);
-            assert(siteTree.getParent(2)?.title === "Some_Page parent 1");
-            assert(siteTree.getParent(3)?.title === "Some_Page parent 1 bis");
-        })*/
         it("doesn't crach with multiple sites", function() {
             const parent : WpMenu = {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1",rest_url: "http://toto.com/wp-json/bla?bla", ...bogusWpMenu},
                 child : WpMenu = {ID: 2, menu_item_parent: 1, title: "Some_Page child 2",rest_url: "http://toto.com/wp-json/bla?bla", ...bogusWpMenu};
