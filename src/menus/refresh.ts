@@ -12,7 +12,6 @@ const restUrlEnd: string = 'wp-json/epfl/v1/menus/top?lang=';
 const openshiftEnv: string[] = JSON.parse(process.env.OPENSHIF_ENV || '["rmaggi"]');
 const wpVeritasURL: string = process.env.WPVERITAS_URL || 'https://wp-veritas-test.epfl.ch/api/v1/sites';
 const hostAndPort: string = process.env.MENU_API_HOST_PORT || 'wp-httpd:8080';
-const isDev: boolean = process.env.IS_DEV ==='true';
 let errors: string = '';
 
 const arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
@@ -31,19 +30,19 @@ export class Refresh {
         });
     }
 
-    static async getMenusInParallel(sites: Site[], lang: string, fn: (siteURL: string, language: string) => Promise<MenuAPIResult>, threads = 10): Promise<MenuAPIResult[]> {
+    static async getMenusInParallel(isDev: boolean, sites: Site[], lang: string, fn: (isDev: boolean, siteURL: string, language: string) => Promise<MenuAPIResult>, threads = 10): Promise<MenuAPIResult[]> {
         const result: MenuAPIResult[][] = [];
         const arr: Site[] = [];
         sites.forEach(s => arr.push(s));
         while (arr.length) {
-            let subListOfSitesMenus: Promise<MenuAPIResult>[] = arr.splice(0, threads).map(x => fn(x.url, lang));
+            let subListOfSitesMenus: Promise<MenuAPIResult>[] = arr.splice(0, threads).map(x => fn(isDev, x.url, lang));
             const res: MenuAPIResult[] = await Promise.all(subListOfSitesMenus);
             result.push(res);
         }
         return result.flat();
     }
 
-    static getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
+    static getMenuForSite(isDev: boolean, siteURL: string, lang: string): Promise<MenuAPIResult> {
         if (isDev){
             siteURL = siteURL.replace("wp-httpd.epfl.ch",hostAndPort);
         }
@@ -91,18 +90,20 @@ export class Refresh {
         });
     }
 
-    static async refreshMenu(): Promise<string> {
+    static async refreshMenu(isDev: boolean): Promise<string> {
         errors = '';
         const sites = await this.getSiteListFromWPVeritas();
         const filteredListOfSites: Site[] = sites.filter(function (site){
             return openshiftEnv.includes(site.openshiftEnv);
         });
         const promises: Promise<MenuAPIResult[]>[] = [
-            this.getMenusInParallel(filteredListOfSites, "en", this.getMenuForSite, 10),
-            this.getMenusInParallel(filteredListOfSites, "fr", this.getMenuForSite, 10),
-            this.getMenusInParallel(filteredListOfSites, "de", this.getMenuForSite, 10)
+            this.getMenusInParallel(isDev, filteredListOfSites, "en", this.getMenuForSite, 10),
+            this.getMenusInParallel(isDev, filteredListOfSites, "fr", this.getMenuForSite, 10),
+            this.getMenusInParallel(isDev, filteredListOfSites, "de", this.getMenuForSite, 10)
         ];
         await Promise.all(promises);
+        if(errors!=='')
+            console.log(errors);//TODO where we should write errors?
         return errors;
     }
 
