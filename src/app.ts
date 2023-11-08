@@ -7,6 +7,7 @@ const app = express()
 
 dotenv.config();
 const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
+const isDev: boolean = process.env.IS_DEV ==='true';
 
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
@@ -27,16 +28,6 @@ app.use('/menus', (req, res, next) => {
     }
 })
 
-app.get('/refreshMenus', (req, res) => {
-    Refresh.refreshMenu().then(message => {
-        if (message!==''){
-            res.send('Menu list charged with errors:'.concat('\n').concat(message));
-        }else {
-            res.send('Menu list correctly charged');
-        }
-    });
-});
-
 app.get('/menus/breadcrumb', (req, res) => {
     res.status(200).json({
         status: "OK",
@@ -53,4 +44,6 @@ app.get('/menus/siblings', (req, res) => {
 
 app.listen(servicePort, () => {
     console.log(`Server is running on port ${servicePort}`);
+    Refresh.refreshMenu(isDev);//Run immediately the first time and every 10 min after
+    setInterval(() => Refresh.refreshMenu(isDev), 600000);//every 10min
 });
