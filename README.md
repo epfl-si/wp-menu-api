@@ -5,11 +5,56 @@ An express server that can serves WordPress menu.
 
 ## Development
 
-* `docker build -t epflsi/menu-api .`
-* `docker run --name menu-api -it -p 8888:3000 epflsi/menu-api`
-* `docker rm -f menu-api && docker build -t epflsi/menu-api . && docker run -d --name menu-api -it -p 8888:3000 epflsi/menu-api`
-* Then use `docker logs -f menu-api`
-* And then to test in the meni-api container:
+### Prerequisite
+
+* access to the wp-veritas API
+* some dev sites running:
+    * wp-httpd
+    * wp-httpd/campus
+    * wp-httpd/campus/services
+    * wp-httpd/campus/services/websites
+
+### Environment variables
+
+Environment variables are declareted in the 
+- `.env.dev` file for local tests. Make sure to put right variables
+- `.env.test` file for wp-httpd container test
+- prod environment variables are declared inside ansible
+
+## Run tests locally
+
+To run tests locally:
+`npm test`
+This command will run all tests with the `.env.dev` environment variables file as it is configured in the 
+`package.json --> script --> test`: 
+![package_json_scripts_test.png](package_json_scripts_test.png)
+
+### NodeJS
+
+* `npm i`
+* Start the server locally:
+  ```
+  npx -p dotenv -e dev ts-node ./src/app.ts
+  ```
+  The `dotenv -e dev` will take the `.env.dev` file for environment variables.
+
+* open your browser on
+    * http://localhost:3001/menus/breadcrumb/?lang=en&url=http://wp-httpd/campus/services/en/it-services/security-it/
+    * http://localhost:3001/menus/siblings/?lang=en&url=http://wp-httpd/campus/services/en/it-services/security-it/
+
+### Docker
+
+Inside wp-dev run:
+* If containers are already running: `make stop`
+* To refresh the image of the menu-api we need to delete it: `docker compose build menu-api`
+* Run `make up` to rebuild automatically the new image and run all containers
+* Then you can use `docker logs -f menu-api`
+* And then to test inside the meni-api container:
 ```
 docker exec -it menu-api curl http://localhost:3001/refreshMenus ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
 ```
+
+_**N.B.**: The test container (wp-httpd) will take the `.env.test` file for environment variables as it is configured 
+in the **docker-compose.yml** file.
+Then the Dockerfile of the **menu-api** will be executed and so the `npm start`._
+
