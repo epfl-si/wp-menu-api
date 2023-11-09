@@ -1,7 +1,7 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
-import {Refresh} from "./menus/refresh";
-import {Lists} from "./menus/lists";
+import {refreshMenu} from "./menus/refresh";
+import {getMenuItems} from "./menus/lists";
 
 const app = express()
 
@@ -30,19 +30,19 @@ app.use('/menus', (req, res, next) => {
 app.get('/menus/breadcrumb', (req, res) => {
     res.status(200).json({
         status: "OK",
-        result: Lists.getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb")
+        result: getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb")
     })
 });
 
 app.get('/menus/siblings', (req, res) => {
     res.status(200).json({
         status: "OK",
-        result: Lists.getMenuItems(req.query.url as string, req.query.lang as string, "siblings")
+        result: getMenuItems(req.query.url as string, req.query.lang as string, "siblings")
     })
 });
 
-app.listen(servicePort, () => {
+app.listen(servicePort, async () => {
     console.log(`Server is running on port ${servicePort}`);
-    Refresh.refreshMenu();//Run immediately the first time and every 10 min after
-    setInterval(() => Refresh.refreshMenu(), 600000);//every 10min
+    await refreshMenu();  //Run immediately the first time and every 10 min after
+    setInterval(async () => await refreshMenu(), 600000);  //every 10min
 });
