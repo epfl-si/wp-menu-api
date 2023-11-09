@@ -8,4 +8,4 @@ COPY src ./src
 
 RUN npm install
 
-CMD ["npx", "ts-node", "./src/app.ts"]
+CMD ["npm", "start"]

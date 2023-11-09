@@ -4,8 +4,8 @@
   "description": "A menu API for WordPress",
   "main": "index.js",
   "scripts": {
-    "start": "npx ts-node ./app.ts",
-    "test": "mocha --require ts-node/register './test/**/*.ts' --timeout 10000"
+    "start": "npx ts-node ./src/app.ts",
+    "test": "cross-env NODE_ENV=dev npx -p dotenv mocha './test/**/*.ts' --require ts-node/register --timeout 10000"
   },
   "author": "",
   "license": "MIT",
@@ -22,6 +22,8 @@
     "@types/node": "^20.8.6",
     "assert": "^2.1.0",
     "chai": "^4.3.10",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1",
     "mocha": "^10.2.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
