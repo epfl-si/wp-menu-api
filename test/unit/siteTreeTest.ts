@@ -1,9 +1,9 @@
 import 'mocha';
 import { assert } from "chai";
-import {SiteTree} from "../src/interfaces/siteTree";
-import {WpMenu} from "../src/interfaces/wpMenu";
+import {SiteTree} from "../../src/interfaces/siteTree";
+import {WpMenu} from "../../src/interfaces/wpMenu";
 import * as fs from 'fs';
-import {MenuAPIResult} from "../src/interfaces/menuAPIResult";
+import {MenuAPIResult} from "../../src/interfaces/menuAPIResult";
 
 const bogusWpMenu = {
     post_status: "post_status",
@@ -111,8 +111,8 @@ describe("Site Tree", function() {
             assert(siteTree.findExternalMenuByRestUrl(child3.rest_url!)?.title=="Some_Page parent 1");
         })
         it("gets the correct instance parent in a different instance", function() {
-            const jsonService =  fs.readFileSync('./test/data/services.json', 'utf-8');
-            const jsonWebSite =  fs.readFileSync('./test/data/website.json', 'utf-8');
+            const jsonService =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
+            const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
             const serviceMenu: MenuAPIResult = JSON.parse(jsonService);
             const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
             const siteTree = SiteTree([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: serviceMenu.items },
@@ -125,8 +125,8 @@ describe("Site Tree", function() {
             }
         })
         it("gets the correct instance child", function() {
-            const jsoServices =  fs.readFileSync('./test/data/services.json', 'utf-8');
-            const jsonWebSite =  fs.readFileSync('./test/data/website.json', 'utf-8');
+            const jsoServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
+            const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
             const servicesMenu: MenuAPIResult = JSON.parse(jsoServices);
             const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
             const siteTree = SiteTree([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items },
@@ -135,8 +135,8 @@ describe("Site Tree", function() {
             assert(children.filter(item => item.ID ===15624 ).length == 1);
         })
         it("finds the correct item", function() {
-            const jsoServices =  fs.readFileSync('./test/data/services.json', 'utf-8');
-            const jsonWebSite =  fs.readFileSync('./test/data/website.json', 'utf-8');
+            const jsoServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
+            const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
             const servicesMenu: MenuAPIResult = JSON.parse(jsoServices);
             const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
             const siteTree = SiteTree([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items },
