@@ -29,5 +29,9 @@ describe("End To End Menu", function() {
             const items = getMenuItems("http://wp-httpd/campus/services/website/support-courses-web-workshop/", "en", "siblings");
             expect(items.find(f => f.title=='Close a website')).not.be.undefined;
         });
+        it("doesn't contain external menus", async function() {
+            const items = getMenuItems("http://wp-httpd/campus/services/en/xxx/", "en", "siblings");
+            assert.deepEqual(items.filter(f => f.object=='epfl-external-menu'), []);
+        });
     });
 });

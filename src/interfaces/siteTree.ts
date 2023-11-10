@@ -65,7 +65,7 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
         },
         getChildren(urlInstanceRestUrl: string, idParent:number) {
             const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
-            return childrenInTheSameSite.map(child => {
+            const childrenList = childrenInTheSameSite.map(child => {
                 if (child.object === 'epfl-external-menu'){
                     const foundExternalMenu = this.findExternalMenuByRestUrl(child.rest_url!);
                     if (foundExternalMenu) {
@@ -74,6 +74,7 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
                 }
                 return child;//for normal menus or external not found menus
             });
+            return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
             const parent = this.getParent(urlInstanceRestUrl,idItem);

@@ -125,14 +125,24 @@ describe("Site Tree", function() {
             }
         })
         it("gets the correct instance child", function() {
-            const jsoServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
+            const jsonServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
             const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
-            const servicesMenu: MenuAPIResult = JSON.parse(jsoServices);
+            const servicesMenu: MenuAPIResult = JSON.parse(jsonServices);
             const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
             const siteTree = SiteTree([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items },
                 { urlInstanceRestUrl: "/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items }]);
             const children = siteTree.getChildren("/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119);
             assert(children.filter(item => item.ID ===15624 ).length == 1);
+        })
+        it("has no external menu as children", function() {
+            const jsonServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
+            const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
+            const servicesMenu: MenuAPIResult = JSON.parse(jsonServices);
+            const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
+            const siteTree = SiteTree([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items },
+                { urlInstanceRestUrl: "/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items }]);
+            const children = siteTree.getChildren("/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119);
+            assert.deepEqual(children.filter(item => item.object === 'epfl-external-menu' ), []);
         })
         it("finds the correct item", function() {
             const jsoServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
