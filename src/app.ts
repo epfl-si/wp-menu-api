@@ -7,6 +7,7 @@ const app = express()
 
 dotenv.config();
 const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
+const refreshInterval: number = parseInt(process.env.REFRESH_INTERVAL || '600000', 10);
 
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
@@ -43,6 +44,6 @@ app.get('/menus/siblings', (req, res) => {
 
 app.listen(servicePort, async () => {
     console.log(`Server is running on port ${servicePort}`);
-    await refreshMenu();  //Run immediately the first time and every 10 min after
-    setInterval(async () => await refreshMenu(), 600000);  //every 10min
+    await refreshMenu();  //Run immediately the first time and every refreshInterval after
+    setInterval(async () => await refreshMenu(), refreshInterval);
 });
