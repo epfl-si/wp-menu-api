@@ -1,6 +1,6 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
-import {refreshMenu} from "./menus/refresh";
+import {readRefreshFile, refreshFileMenu, refreshMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
 import {error, info} from "./utils/logger";
@@ -10,6 +10,9 @@ const app = express()
 dotenv.config();
 const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
 const refreshInterval: number = parseInt(process.env.REFRESH_INTERVAL || '600000', 10);
+const refreshIntervalWithFile: number = parseInt(process.env.REFRESH_INTERVAL_WITH_FILE || '1200000', 10);
+const refreshFromFile: boolean =  JSON.parse(process.env.REFRESH_FROM_FILE || 'true');
+const pathRefreshFile: string =  process.env.PATH_REFRESH_FILE || '.';
 
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
@@ -48,6 +51,20 @@ app.get('/menus/siblings', (req, res) => {
 
 app.listen(servicePort, async () => {
     console.log(`Server is running on port ${servicePort}`);
-    await refreshMenu();  //Run immediately the first time and every refreshInterval after
-    setInterval(async () => await refreshMenu(), refreshInterval);
+    info(`Server is running on port ${servicePort}`);
+    if (refreshFromFile) {
+        info('Server running in refresh from file mode');
+        if (!fs.existsSync(pathRefreshFile.concat('/menusFR.json')) ||
+            !fs.existsSync(pathRefreshFile.concat('/menusEN.json')) ||
+            !fs.existsSync(pathRefreshFile.concat('/menusDE.json'))) {
+            await refreshFileMenu(pathRefreshFile, true);
+        } else {
+            readRefreshFile(pathRefreshFile);
+        }
+    } else {
+        info('Server running in refresh from API mode');
+        await refreshMenu();  //Run immediately the first time and every refreshInterval after
+        setInterval(async () => await refreshMenu(), refreshInterval);
+        setInterval(async () => await refreshFileMenu(pathRefreshFile, false), refreshIntervalWithFile);
+    }
 });

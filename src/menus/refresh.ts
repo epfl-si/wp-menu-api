@@ -131,11 +131,45 @@ export async function refreshMenu() {
     info('End refresh from API', { url: '', method: 'refreshMenu'});
 }
 
-    if (errors !== '') {
-        console.log(errors);  //TODO where we should write errors?
+export async function refreshFileMenu(pathRefreshFile: string, withRefreshMemory: boolean) {
+    info('Start writing files', { withRefreshMemory: withRefreshMemory, method: 'refreshFileMenu'});
+    if (withRefreshMemory) {
+        await refreshMenu();
     }
 
-    return errors;
+    writeRefreshFile(pathRefreshFile.concat('/menusFR.json'),JSON.stringify(arrayMenusFR));
+    writeRefreshFile(pathRefreshFile.concat('/menusEN.json'),JSON.stringify(arrayMenusEN));
+    writeRefreshFile(pathRefreshFile.concat('/menusDE.json'),JSON.stringify(arrayMenusDE));
+
+    info('End writing files', { withRefreshMemory: withRefreshMemory, method: 'refreshFileMenu'});
+}
+
+function writeRefreshFile(path: string, json: string)  {
+    try {
+        fs.writeFile(path, json, (err) => {
+            if (err) {
+                error(getErrorMessage(err), { url: path, method: 'writeRefreshFile'});
+            } else {
+                info('Successfully wrote file', { url: path, method: 'writeRefreshFile'});
+            }
+        });
+    } catch (e) {
+        error(getErrorMessage(e), { url: path, method: 'writeRefreshFile'});
+    }
+}
+
+export function readRefreshFile(pathRefreshFile: string)  {
+    info('Start reading from file', { url: pathRefreshFile, method: 'readRefreshFile'});
+    try {
+        const menusFR = fs.readFileSync(pathRefreshFile.concat('/menusFR.json'), 'utf8');
+        arrayMenusFR = JSON.parse(menusFR);
+        const menusEN = fs.readFileSync(pathRefreshFile.concat('/menusEN.json'), 'utf8');
+        arrayMenusEN = JSON.parse(menusEN);
+        const menusDE = fs.readFileSync(pathRefreshFile.concat('/menusDE.json'), 'utf8');
+        arrayMenusDE = JSON.parse(menusDE);
+    } catch (e) {
+        error(getErrorMessage(e), { url: pathRefreshFile, method: 'readRefreshFile'});
+    }
 }
 
 export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | undefined {
