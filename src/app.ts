@@ -1,6 +1,6 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
-import {readRefreshFile, refreshFileMenu, refreshMenu} from "./menus/refresh";
+import {getExternalMenus, getHomepageCustomLinks, readRefreshFile, refreshFileMenu, refreshMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
 import {error, info} from "./utils/logger";
@@ -46,6 +46,34 @@ app.get('/menus/siblings', (req, res) => {
     res.status(200).json({
         status: "OK",
         result: getMenuItems(req.query.url as string, req.query.lang as string, "siblings")
+    })
+});
+
+app.use('/utils', (req, res, next) => {
+    const lang = req.query.lang;
+
+    if (!(lang && typeof lang === "string")) {
+        error('Lang parameter is missing', { lang: lang, method: '/utils'});
+        res.status(400).json({
+            status: "KO",
+            result: "lang parameter is missing"
+        })
+    } else {
+        next();
+    }
+})
+
+app.get('/utils/homepageCustomLinks', (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        result: getHomepageCustomLinks(req.query.lang as string)
+    })
+});
+
+app.get('/utils/externalMenus', (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        result: getExternalMenus(req.query.lang as string)
     })
 });
 

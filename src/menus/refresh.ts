@@ -19,6 +19,12 @@ const protocolHostAndPort: string = process.env.MENU_API_PROTOCOL_HOST_PORT || '
 let arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 let arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 let arrayMenusDE: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+const arrayCustomLinkFR: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const arrayCustomLinkEN: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const arrayCustomLinkDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const arrayExternalMenusFR: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const arrayExternalMenusEN: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const arrayExternalMenusDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
     info('Start getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
@@ -78,17 +84,8 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
         if (result.status && result.status === 'OK') {
             const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(protocolHostAndPort)+protocolHostAndPort.length);
 
-            switch ( lang ) {
-                case "fr":
-                    arrayMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-                    break;
-                case "de":
-                    arrayMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-                    break;
-                default: //en
-                    arrayMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-                    break;
-            }
+            setArrayResultsByLang(lang, result, siteUrlSubstring);
+
             info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
         } else {
@@ -101,6 +98,44 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
 
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
+}
+
+function setArrayResultsByLang(lang: string, result: MenuAPIResult, siteUrlSubstring: string) {
+    switch ( lang ) {
+        case "fr":
+            arrayMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+            if(result.items[0].object==='custom') {
+                arrayCustomLinkFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
+            }
+            result.items.forEach(item => {
+                if(item.object==='epfl-external-menu') {
+                    arrayExternalMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
+                }
+            });
+            break;
+        case "de":
+            arrayMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+            if(result.items[0].object==='custom') {
+                arrayCustomLinkDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
+            }
+            result.items.forEach(item => {
+                if(item.object==='epfl-external-menu') {
+                    arrayExternalMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
+                }
+            });
+            break;
+        default: //en
+            arrayMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+            if(result.items[0].object==='custom') {
+                arrayCustomLinkEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
+            }
+            result.items.forEach(item => {
+                if(item.object==='epfl-external-menu') {
+                    arrayExternalMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
+                }
+            });
+            break;
+    }
 }
 
 function getErrorMessage(e: any) {
@@ -188,4 +223,26 @@ export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | und
     }
 
     return siteArray;
+}
+
+export function getHomepageCustomLinks(lang: string) {
+    switch ( lang ) {
+        case "fr":
+            return arrayCustomLinkFR;
+        case "de":
+            return arrayCustomLinkDE;
+        default: //en
+            return arrayCustomLinkEN;
+    }
+}
+
+export function getExternalMenus(lang: string) {
+    switch ( lang ) {
+        case "fr":
+            return arrayExternalMenusFR;
+        case "de":
+            return arrayExternalMenusDE;
+        default: //en
+            return arrayExternalMenusEN;
+    }
 }
