@@ -3,6 +3,8 @@ import {Request} from "express";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
 import {SiteTree, SiteTreeInstance} from "../interfaces/siteTree";
 import {WpMenu} from "../interfaces/wpMenu";
+import fs from 'fs';
+import {error, info} from "../utils/logger";
 
 
 const headers: Headers = new Headers();
@@ -13,20 +15,24 @@ const restUrlEnd: string = 'wp-json/epfl/v1/menus/top?lang=';
 const openshiftEnv: string[] = JSON.parse(process.env.OPENSHIF_ENV || '["rmaggi"]');
 const wpVeritasURL: string = process.env.WPVERITAS_URL || 'https://wp-veritas-test.epfl.ch/api/v1/sites';
 const protocolHostAndPort: string = process.env.MENU_API_PROTOCOL_HOST_PORT || 'http://wp-httpd';
-let errors: string = '';
 
-const arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
-const arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
-const arrayMenusDE: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+let arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+let arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+let arrayMenusDE: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
+    info('Start getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
     const request: RequestInfo = new Request(wpVeritasURL, {
         method: 'GET',
         headers: headers
     });
 
     return fetch(request).then(res => res.json()).then(res => {
+        info('End getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
         return res as Site[];
+    }).catch ((e) => {
+        error(getErrorMessage(e), { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
+        return [];
     });
 }
 
@@ -56,6 +62,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     }
 
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
+    info('Start getting menu from wp-veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
     const request: RequestInfo = new Request(siteMenuURL, {
         method: 'GET',
         headers: headers
@@ -82,30 +89,34 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
                     arrayMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
                     break;
             }
-
+            info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
         } else {
-            errors = errors.concat("\n").concat(siteMenuURL).concat(" - ").concat(JSON.stringify(result));
-
+            error(JSON.stringify(result), { url: siteMenuURL, method: 'getMenuForSite'});
             return new ErrorResult(siteMenuURL.concat(" - ").concat(result.status));
         }
-    }).catch ((error) => {
-        let message: string = '';
-
-        if (typeof error === "string") {
-            message = error;
-        } else if (error instanceof Error) {
-            message = error.message;
-        }
-
-        errors = errors.concat("\n").concat(siteMenuURL).concat(" - ").concat(message);
+    }).catch ((e) => {
+        const message = getErrorMessage(e);
+        error(message, { url: siteMenuURL, method: 'getMenuForSite'});
 
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
 }
 
-export async function refreshMenu(): Promise<string> {
-    errors = '';
+function getErrorMessage(e: any) {
+    let message: string = '';
+
+    if (typeof e === "string") {
+        message = e;
+    } else if (e instanceof Error) {
+        message = e.message;
+    }
+
+    return message;
+}
+
+export async function refreshMenu() {
+    info('Start refresh from API', { url: '', method: 'refreshMenu'});
     const sites = await getSiteListFromWPVeritas();
     const filteredListOfSites: Site[] = sites.filter(function (site){
         return openshiftEnv.includes(site.openshiftEnv);
@@ -117,6 +128,8 @@ export async function refreshMenu(): Promise<string> {
     ];
 
     await Promise.all(promises);
+    info('End refresh from API', { url: '', method: 'refreshMenu'});
+}
 
     if (errors !== '') {
         console.log(errors);  //TODO where we should write errors?

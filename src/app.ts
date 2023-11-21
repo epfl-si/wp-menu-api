@@ -2,6 +2,8 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import {refreshMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
+import fs from 'fs';
+import {error, info} from "./utils/logger";
 
 const app = express()
 
@@ -14,11 +16,13 @@ app.use('/menus', (req, res, next) => {
     const lang = req.query.lang;
 
     if (!(url && typeof url === "string")) {
+        error('Url parameter is missing', { url: url, method: '/menus'});
         res.status(400).json({
             status: "KO",
             result: "url parameter is missing"
         })
     } else if (!(lang && typeof lang === "string")) {
+        error('Lang parameter is missing', { lang: lang, method: '/menus'});
         res.status(400).json({
             status: "KO",
             result: "lang parameter is missing"
