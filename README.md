@@ -16,7 +16,7 @@ An express server that can serves WordPress menu.
 
 ### Environment variables
 
-Environment variables are declareted in the 
+Environment variables are declared in the 
 - `.env.dev` file for local tests. Make sure to put right variables
 - `.env.test` file for wp-httpd container test
 - prod environment variables are declared inside ansible
