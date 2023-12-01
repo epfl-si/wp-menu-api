@@ -25,18 +25,14 @@ Environment variables are declared in the
 
 To run tests locally:
 `npm test`
-This command will run all tests with the `.env.dev` environment variables file as it is configured in the 
-`package.json --> script --> test`: 
-![package_json_scripts_test.png](package_json_scripts_test.png)
 
 ### NodeJS
 
 * `npm i`
 * Start the server locally:
   ```
-  npx -p dotenv -e dev ts-node ./src/app.ts
+  npx ts-node ./src/app.ts -p menu-api-configmap.yaml
   ```
-  The `dotenv -e dev` will take the `.env.dev` file for environment variables.
 
 * open your browser on
     * http://localhost:3001/menus/breadcrumb/?lang=en&url=http://wp-httpd/campus/services/en/it-services/security-it/

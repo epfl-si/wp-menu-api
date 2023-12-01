@@ -1,18 +1,39 @@
 import express from 'express';
-import * as dotenv from 'dotenv';
-import {getExternalMenus, getHomepageCustomLinks, readRefreshFile, refreshFileMenu, refreshMenu} from "./menus/refresh";
+import {
+    getExternalMenus,
+    getHomepageCustomLinks,
+    readRefreshFile,
+    refreshFileMenu,
+    refreshMenu,
+    configRefresh
+} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
-import {error, info} from "./utils/logger";
+import {error, getErrorMessage, info} from "./utils/logger";
+import {loadConfig, Config} from "./utils/configFileReader";
+import {configLinks} from "./utils/links";
 
 const app = express()
+const args = process.argv.slice(2);
+const configFileIndex = args.findIndex(arg => arg === '-p');
+let servicePort: number = 3000;
+let config: Config | undefined;
+let refreshInterval: number = 600000;
+let refreshIntervalWithFile: number = 1200000;
+let refreshFromFile: boolean =  true;
+let pathRefreshFile: string = '.';
 
-dotenv.config();
-const servicePort: number = parseInt(process.env.SERVICE_PORT || '3001', 10);
-const refreshInterval: number = parseInt(process.env.REFRESH_INTERVAL || '600000', 10);
-const refreshIntervalWithFile: number = parseInt(process.env.REFRESH_INTERVAL_WITH_FILE || '1200000', 10);
-const refreshFromFile: boolean =  JSON.parse(process.env.REFRESH_FROM_FILE || 'true');
-const pathRefreshFile: string =  process.env.PATH_REFRESH_FILE || '.';
+if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
+    const configFilePath = args[configFileIndex + 1];
+    info(`Using config file path: ${configFilePath}`);
+
+    config = loadConfig(configFilePath);
+    refreshInterval = config?.REFRESH_INTERVAL || 600000;
+    refreshIntervalWithFile = config?.REFRESH_INTERVAL_WITH_FILE || 1200000;
+    refreshFromFile = config?.REFRESH_FROM_FILE || true;
+    pathRefreshFile = config?.PATH_REFRESH_FILE || '.';
+    servicePort = config?.SERVICE_PORT || 3001;
+}
 
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
@@ -78,21 +99,29 @@ app.get('/utils/externalMenus', (req, res) => {
 });
 
 app.listen(servicePort, async () => {
-    console.log(`Server is running on port ${servicePort}`);
-    info(`Server is running on port ${servicePort}`);
-    if (refreshFromFile) {
-        info('Server running in refresh from file mode');
-        if (!fs.existsSync(pathRefreshFile.concat('/menusFR.json')) ||
-            !fs.existsSync(pathRefreshFile.concat('/menusEN.json')) ||
-            !fs.existsSync(pathRefreshFile.concat('/menusDE.json'))) {
-            await refreshFileMenu(pathRefreshFile, true);
+    if (config) {
+        console.log(`Server is running on port ${servicePort}`);
+        info(`Server is running on port ${servicePort}`);
+
+        configRefresh(config);
+        configLinks(config);
+
+        if (refreshFromFile) {
+            info('Server running in refresh from file mode');
+            if (!fs.existsSync(pathRefreshFile.concat('/menusFR.json')) ||
+              !fs.existsSync(pathRefreshFile.concat('/menusEN.json')) ||
+              !fs.existsSync(pathRefreshFile.concat('/menusDE.json'))) {
+                await refreshFileMenu(pathRefreshFile, true);
+            } else {
+                readRefreshFile(pathRefreshFile);
+            }
         } else {
-            readRefreshFile(pathRefreshFile);
+            info('Server running in refresh from API mode');
+            await refreshMenu();  //Run immediately the first time and every refreshInterval after
+            setInterval(async () => await refreshMenu(), refreshInterval);
+            setInterval(async () => await refreshFileMenu(pathRefreshFile, false), refreshIntervalWithFile);
         }
     } else {
-        info('Server running in refresh from API mode');
-        await refreshMenu();  //Run immediately the first time and every refreshInterval after
-        setInterval(async () => await refreshMenu(), refreshInterval);
-        setInterval(async () => await refreshFileMenu(pathRefreshFile, false), refreshIntervalWithFile);
+        error('Please provide a configuration file path using -p', { url: '', method: 'writeRefreshFile'});
     }
 });

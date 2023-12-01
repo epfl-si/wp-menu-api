@@ -6,15 +6,17 @@ import {WpMenu} from "../interfaces/wpMenu";
 import fs from 'fs';
 import {error, info} from "../utils/logger";
 
+import * as fs from 'fs';
+import {Config} from "../utils/configFileReader";
 
 const headers: Headers = new Headers();
 headers.set('Content-Type', 'application/json');
 headers.set('Accept', 'application/json');
 
-const restUrlEnd: string = 'wp-json/epfl/v1/menus/top?lang=';
-const openshiftEnv: string[] = JSON.parse(process.env.OPENSHIF_ENV || '["rmaggi"]');
-const wpVeritasURL: string = process.env.WPVERITAS_URL || 'https://wp-veritas-test.epfl.ch/api/v1/sites';
-const protocolHostAndPort: string = process.env.MENU_API_PROTOCOL_HOST_PORT || 'http://wp-httpd';
+let restUrlEnd: string = '';
+let openshiftEnv: string[] = [];
+let wpVeritasURL: string = '';
+let protocolHostAndPort: string = '';
 
 let arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
 let arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
@@ -25,6 +27,13 @@ const arrayCustomLinkDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
 const arrayExternalMenusFR: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
 const arrayExternalMenusEN: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
 const arrayExternalMenusDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+
+export function configRefresh(configFile: Config | undefined) {
+    restUrlEnd = configFile?.REST_URL_END || 'wp-json/epfl/v1/menus/top?lang=';
+    openshiftEnv = configFile?.OPENSHIFT_ENV || ["labs", "www"];
+    wpVeritasURL = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
+    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
+}
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
     info('Start getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
