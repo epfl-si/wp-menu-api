@@ -3,8 +3,7 @@ import {Request} from "express";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
 import {SiteTree, SiteTreeInstance} from "../interfaces/siteTree";
 import {WpMenu} from "../interfaces/wpMenu";
-import fs from 'fs';
-import {error, info} from "../utils/logger";
+import {error, info, getErrorMessage} from "../utils/logger";
 
 import * as fs from 'fs';
 import {Config} from "../utils/configFileReader";
@@ -145,18 +144,6 @@ function setArrayResultsByLang(lang: string, result: MenuAPIResult, siteUrlSubst
             });
             break;
     }
-}
-
-function getErrorMessage(e: any) {
-    let message: string = '';
-
-    if (typeof e === "string") {
-        message = e;
-    } else if (e instanceof Error) {
-        message = e.message;
-    }
-
-    return message;
 }
 
 export async function refreshMenu() {

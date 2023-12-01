@@ -22,3 +22,14 @@ export function info(message: string, metadata: object = {}) {
     log(message, 'info', metadata);
 }
 
+export function getErrorMessage(e: any): string {
+    let message: string = '';
+
+    if (typeof e === "string") {
+        message = e;
+    } else if (e instanceof Error) {
+        message = e.message;
+    }
+
+    return message;
+}
