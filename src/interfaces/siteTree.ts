@@ -73,7 +73,7 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
                     }
                 }
                 return child;//for normal menus or external not found menus
-            });
+            });  //TODO add warning log
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
@@ -106,18 +106,40 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
             return itemsByID[urlInstanceRestUrl][idItem];
         },
         findItemByUrl(pageURL: string) {
-            const result: { [urlInstance: string]: WpMenu } = {};
+            const result: { [urlInstance: string]: WpMenu }[] = [];
             for (const url in itemsByID) {
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];
                     if (item.url && item.url===pageURL){
-                        result[url] = item;
-                        return result;
+                        const menu: { [urlInstance: string]: WpMenu } = {};
+                        menu[url] = item;
+                        result.push(menu);
                     }
                 }
             }
-            return undefined;
+
+            if (result.length === 1 ) {
+                return result[0];
+            }else if (result.length === 0) {
+                return undefined;
+            } else {
+                let res: { [urlInstance: string]: WpMenu } | undefined;
+                result.forEach((obj) => {
+                    Object.keys(obj).forEach((urlInstance) => {
+                        const wpMenuValue = obj[urlInstance];
+                        if (wpMenuValue.object !== 'custom') {
+                            res = {};
+                            res[urlInstance] = wpMenuValue;
+                        }
+                    });
+                });
+                if (res) {
+                    return res;
+                } else {
+                    return result[0];
+                }
+            }
         }
     }
 }
