@@ -51,14 +51,24 @@ describe("End To End Menu", function() {
             assert(items.length == 2);
             expect(items.find(f => f.url == 'https://www.epfl.ch/labs/en/laboratories/')).not.be.undefined;
         });
-        it('has no Assoc parent', async function() {
+        it('has Student Assoc and campus as parents', async function() {
             const items = getMenuItems("https://www.epfl.ch/campus/associations/list/en/all-associations/", "en", "breadcrumb");
-            assert(items.length == 1);
+            expect(items.find(f => f.url == 'https://www.epfl.ch/campus/associations/en/student-associations/')).not.be.undefined;
+            expect(items.find(f => f.url == 'https://www.epfl.ch/campus/en/campusenglish/')).not.be.undefined;
         });
         it('has Assoc as parent', async function() {
             const items = getMenuItems("https://www.epfl.ch/campus/associations/list/spaceat/en/spaceyourservice/", "en", "breadcrumb");
-            assert(items.length == 2);
+            assert(items.length == 4);
             expect(items.find(f => f.url == 'https://www.epfl.ch/campus/associations/list/en/all-associations/')).not.be.undefined;
+        });
+        it('has campus in parents', async function() {
+            const items = getMenuItems("https://www.epfl.ch/campus/associations/list/adec/index-html/the-comitee/", "en", "breadcrumb");
+            assert(items.length == 5);
+            expect(items.find(f => f.url == 'https://www.epfl.ch/campus/en/campusenglish/')).not.be.undefined;
+        });
+        it('has one list assoc item', async function() {
+            const items = getMenuItems("https://www.epfl.ch/campus/associations/list/en/all-associations/", "en", "breadcrumb");
+            assert(items.filter(f => f.url == 'https://www.epfl.ch/campus/associations/list/en/all-associations/').length == 1);
         });
     });
     describe("Siblings", function() {
@@ -81,6 +91,10 @@ describe("End To End Menu", function() {
         it('has Storage as sibling', async function() {
             const items = getMenuItems("https://www.epfl.ch/schools/sb/research/isic/platforms/it-and-data-management-platform/purchasing-procedure/", "en", "siblings");
             expect(items.find(f => f.url=='https://www.epfl.ch/campus/services/en/it-services/storage-of-documents/')).not.be.undefined;
+        });
+        it('has 7 siblings in the level 0', async function() {
+            const items = getMenuItems("https://www.epfl.ch/campus/en/campusenglish/", "en", "siblings");
+            assert(items.length == 7);
         });
     });
 });
