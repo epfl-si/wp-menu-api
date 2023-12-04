@@ -29,7 +29,12 @@ const arrayExternalMenusDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = 
 
 export function configRefresh(configFile: Config | undefined) {
     restUrlEnd = configFile?.REST_URL_END || 'wp-json/epfl/v1/menus/top?lang=';
-    openshiftEnv = configFile?.OPENSHIFT_ENV || ["labs", "www"];
+    let  openshiftEnvFromConfig: string | undefined = configFile?.OPENSHIFT_ENV;
+    if (openshiftEnvFromConfig) {
+        openshiftEnv = openshiftEnvFromConfig.split('\n').filter(Boolean);
+    } else {
+        openshiftEnv = ["labs", "www"];
+    }
     wpVeritasURL = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
     protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
 }
