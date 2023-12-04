@@ -15,11 +15,44 @@ export function getLabsLink(lang: string) : string {
   }
 }
 
-export function getAssocLink(lang: string) : string {
+export function getMenuBarLinks(lang: string) : string[] {
+  let listLinksFromConfig: string | undefined;
   switch ( lang ) {
     case "fr":
-      return config?.ASSOC_LINK_URL_FR || 'https://www.epfl.ch/campus/associations/list/fr/toutes-les-associations/';
+      listLinksFromConfig = config?.MENU_BAR_LINKS_FR;
+      break;
+    case "de":
+      listLinksFromConfig = config?.MENU_BAR_LINKS_DE;
+      break;
     default: //en
-      return config?.ASSOC_LINK_URL_EN || 'https://www.epfl.ch/campus/associations/list/en/all-associations/';
+      listLinksFromConfig = config?.MENU_BAR_LINKS_EN;
+      break;
   }
+  if (listLinksFromConfig) {
+    return listLinksFromConfig.split('\n').filter(Boolean);
+  } else {
+    return [];
+  }
+}
+
+export function getAssocBreadcrumb(lang: string) : string[] {
+  let listLinksFromConfig: string | undefined;
+  switch ( lang ) {
+    case "fr":
+      listLinksFromConfig = config?.ASSOC_BREADCRUMB_FR;
+      break;
+    default: //en
+      listLinksFromConfig = config?.ASSOC_BREADCRUMB_EN;
+      break;
+  }
+  if (listLinksFromConfig) {
+    return listLinksFromConfig.split('\n').filter(Boolean);
+  } else {
+    return [];
+  }
+}
+
+export function getBaseUrl(pageUrl: string): string {
+  const parts: string[] = pageUrl.split('/');
+  return parts.slice(0, -2).join('/').concat('/');
 }
