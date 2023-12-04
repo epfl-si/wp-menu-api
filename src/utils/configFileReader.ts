@@ -3,7 +3,7 @@ import * as yaml from 'js-yaml';
 import {error, getErrorMessage} from "./logger";
 
 export interface Config {
-  OPENSHIFT_ENV: string[];
+  OPENSHIFT_ENV: string;
   WPVERITAS_URL: string;
   MENU_API_PROTOCOL_HOST_PORT: string;
   SERVICE_PORT: number;
@@ -15,8 +15,11 @@ export interface Config {
   REST_URL_END: string;
   LABS_LINK_URL_FR: string;
   LABS_LINK_URL_EN: string;
-  ASSOC_LINK_URL_FR: string;
-  ASSOC_LINK_URL_EN: string;
+  ASSOC_BREADCRUMB_EN: string;
+  ASSOC_BREADCRUMB_FR: string;
+  MENU_BAR_LINKS_EN: string;
+  MENU_BAR_LINKS_FR: string;
+  MENU_BAR_LINKS_DE: string;
 }
 
 interface ConfigMapData {
