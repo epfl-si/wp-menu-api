@@ -1,5 +1,6 @@
 import {WpMenu} from "./wpMenu";
 import {MenuAPIResult} from "./menuAPIResult";
+import {getBaseUrl} from "../utils/links";
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: WpMenu } | undefined
@@ -8,6 +9,7 @@ export interface SiteTreeInstance  {
     findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => WpMenu | undefined
     getSiblings : (urlInstanceRestUrl: string, idItem: number) => WpMenu[]
     findItemByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
+    findLevelZeroByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: WpMenu[] | undefined }[]) => SiteTreeInstance
@@ -114,6 +116,23 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
                     if (item.url && item.url===pageURL && item.object !== 'custom'){
                         result[url] = item
                         return result;
+                    }
+                }
+            }
+            return undefined;
+        },
+        findLevelZeroByUrl(pageURL: string) {
+            const result: { [urlInstance: string]: WpMenu } = {};
+            for (const url in itemsByID) {
+                const items = itemsByID[url];
+                for (const id in items) {
+                    const item = itemsByID[url][id];
+                    if (item.menu_item_parent.toString() === "0" && item.menu_order === 1 && item.url){
+                        const urlSiteWithoutHomePage: string = getBaseUrl(item.url);
+                        if (urlSiteWithoutHomePage == pageURL){
+                            result[url] = item
+                            return result;
+                        }
                     }
                 }
             }
