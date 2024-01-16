@@ -8,4 +8,4 @@ COPY src ./src
 
 RUN npm install
 
-CMD ["npm", "start"]
+CMD ["/app/node_modules/.bin/ts-node", "./src/app.ts", "-p", "/config/menu-api-config.yaml"]
