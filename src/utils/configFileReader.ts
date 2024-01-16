@@ -22,21 +22,17 @@ export interface Config {
   MENU_BAR_LINKS_DE: string;
 }
 
-interface ConfigMapData {
-  data: Config;
-}
-
 export function loadConfig(configFilePath: any): Config | undefined {
   try {
     const configFile = fs.readFileSync(configFilePath, 'utf8');
-    const parsedConfig = yaml.load(configFile) as ConfigMapData;
-    if (parsedConfig && parsedConfig.data) {
-      return parsedConfig.data;
+    const parsedConfig = yaml.load(configFile) as Config;
+    if (parsedConfig) {
+      return parsedConfig;
     } else {
-      error('Invalid or missing data section in the ConfigMap', { url: configFilePath, method: 'readConfigMapFile'});
+      error('Invalid or missing data section in the config', { url: configFilePath, method: 'readConfigFile'});
     }
   } catch (e) {
-    error(getErrorMessage(e), { url: configFilePath, method: 'readConfigMapFile'});
+    error(getErrorMessage(e), { url: configFilePath, method: 'readConfigFile'});
   }
   return undefined;
 }

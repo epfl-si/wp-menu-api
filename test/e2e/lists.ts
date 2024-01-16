@@ -9,7 +9,7 @@ import fs from "fs";
 
 describe("End To End Menu", function() {
     beforeEach(function(done){
-        const config = loadConfig('menu-api-configmap.yaml');
+        const config = loadConfig('menu-api-config.yaml');
         const pathRefreshFile = config?.PATH_REFRESH_FILE || ".";
 
         configRefresh(config);
