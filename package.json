@@ -4,7 +4,7 @@
   "description": "A menu API for WordPress",
   "main": "index.js",
   "scripts": {
-    "start": "npx ts-node ./src/app.ts",
+    "start": "npx ts-node ./src/app.ts -p ./menu-api-config.yaml",
     "test": "npx -p dotenv mocha './test/**/*.ts' --require ts-node/register --timeout 100000"
   },
   "author": "",

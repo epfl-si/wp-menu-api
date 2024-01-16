@@ -31,7 +31,7 @@ To run tests locally:
 * `npm i`
 * Start the server locally:
   ```
-  npx ts-node ./src/app.ts -p menu-api-configmap.yaml
+  npm start
   ```
 
 * open your browser on
