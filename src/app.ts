@@ -22,6 +22,7 @@ let refreshInterval: number = 600000;
 let refreshIntervalWithFile: number = 1200000;
 let refreshFromFile: boolean =  true;
 let pathRefreshFile: string = '.';
+const version: string = "2";
 
 if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     const configFilePath = args[configFileIndex + 1];
@@ -100,8 +101,8 @@ app.get('/utils/externalMenus', (req, res) => {
 
 app.listen(servicePort, async () => {
     if (config) {
-        console.log(`Server is running on port ${servicePort}`);
-        info(`Server is running on port ${servicePort}`);
+        console.log(`Menu API server version ${version} is running on port ${servicePort}`);
+        info(`Menu API server version ${version} is running on port ${servicePort}`);
 
         configRefresh(config);
         configLinks(config);
