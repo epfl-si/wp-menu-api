@@ -22,7 +22,9 @@ let refreshInterval: number = 600000;
 let refreshIntervalWithFile: number = 1200000;
 let refreshFromFile: boolean =  true;
 let pathRefreshFile: string = '.';
-const version: string = "2";
+
+const pjson = require('../package.json');
+const version = pjson.version;
 
 if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     const configFilePath = args[configFileIndex + 1];
