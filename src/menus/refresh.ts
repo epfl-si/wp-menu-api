@@ -47,8 +47,9 @@ function getSiteListFromWPVeritas(): Promise<Site[]> {
     });
 
     return fetch(request).then(res => res.json()).then(res => {
-        info('End getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
-        return res as Site[];
+        const sites: Site[] = res;
+        info('End getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas', totalSites: sites.length});
+        return sites;
     }).catch ((e) => {
         error(getErrorMessage(e), { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
         return [];
@@ -157,6 +158,8 @@ export async function refreshMenu() {
     const filteredListOfSites: Site[] = sites.filter(function (site){
         return openshiftEnv.includes(site.openshiftEnv);
     });
+
+    info('Start getting menus in parallel', { url: '', method: 'refreshMenu', totalFilteredSiteList: filteredListOfSites.length});
     const promises: Promise<MenuAPIResult[]>[] = [
         getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),
         getMenusInParallel(filteredListOfSites, "fr", getMenuForSite, 10),
