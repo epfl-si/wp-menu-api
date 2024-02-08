@@ -9,7 +9,7 @@ import {
 } from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
-import {error, getErrorMessage, info} from "./utils/logger";
+import {error, getErrorMessage, getHttpRequestCounter, getRegister, info} from "./utils/logger";
 import {loadConfig, Config} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 
@@ -38,21 +38,33 @@ if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     servicePort = config?.SERVICE_PORT || 3001;
 }
 
+app.get('/metrics', function(req, res)
+{
+    res.setHeader('Content-Type',getRegister().contentType)
+    getRegister().metrics().then((data: string) => res.status(200).send(data))
+});
+
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
     const lang = req.query.lang;
 
     if (!(url && typeof url === "string")) {
-        error('Url parameter is missing', { url: url, method: '/menus'});
+        const mess = 'Url parameter is missing';
+        error(mess, { url: url, method: '/menus'});
+        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
+            statusCode: res.statusCode, message: mess}).inc();
         res.status(400).json({
             status: "KO",
-            result: "url parameter is missing"
+            result: mess
         })
     } else if (!(lang && typeof lang === "string")) {
-        error('Lang parameter is missing', { lang: lang, method: '/menus'});
+        const mess = 'Lang parameter is missing';
+        error(mess, { lang: lang, method: '/menus'});
+        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
+            statusCode: res.statusCode, message: mess}).inc();
         res.status(400).json({
             status: "KO",
-            result: "lang parameter is missing"
+            result: mess
         })
     } else {
         next();
@@ -60,13 +72,17 @@ app.use('/menus', (req, res, next) => {
 })
 
 app.get('/menus/breadcrumb', (req, res) => {
-    res.status(200).json({
+    getHttpRequestCounter().labels({method: req.method, route: "breadcrumb", lang: req.query.lang, url: req.query.url,
+        statusCode: res.statusCode}).inc();
+    res.json({
         status: "OK",
         result: getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb")
     })
 });
 
 app.get('/menus/siblings', (req, res) => {
+    getHttpRequestCounter().labels({method: req.method, route: "siblings", lang: req.query.lang, url: req.query.url,
+        statusCode: res.statusCode}).inc();
     res.status(200).json({
         status: "OK",
         result: getMenuItems(req.query.url as string, req.query.lang as string, "siblings")
@@ -75,12 +91,14 @@ app.get('/menus/siblings', (req, res) => {
 
 app.use('/utils', (req, res, next) => {
     const lang = req.query.lang;
-
+    const mess = 'Lang parameter is missing';
     if (!(lang && typeof lang === "string")) {
-        error('Lang parameter is missing', { lang: lang, method: '/utils'});
+        error(mess, { lang: lang, method: '/utils'});
+        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
+            statusCode: res.statusCode, message: mess}).inc();
         res.status(400).json({
             status: "KO",
-            result: "lang parameter is missing"
+            result: mess
         })
     } else {
         next();
@@ -88,6 +106,8 @@ app.use('/utils', (req, res, next) => {
 })
 
 app.get('/utils/homepageCustomLinks', (req, res) => {
+    getHttpRequestCounter().labels({method: req.method, route: "homepageCustomLinks", lang: req.query.lang, url: '',
+        statusCode: res.statusCode}).inc();
     res.status(200).json({
         status: "OK",
         result: getHomepageCustomLinks(req.query.lang as string)
@@ -95,6 +115,8 @@ app.get('/utils/homepageCustomLinks', (req, res) => {
 });
 
 app.get('/utils/externalMenus', (req, res) => {
+    getHttpRequestCounter().labels({method: req.method, route: "externalMenus", lang: req.query.lang, url: '',
+        statusCode: res.statusCode}).inc();
     res.status(200).json({
         status: "OK",
         result: getExternalMenus(req.query.lang as string)

@@ -37,6 +37,7 @@ export function configRefresh(configFile: Config | undefined) {
     }
     wpVeritasURL = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
     protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
+    info('Config: ', { wpVeritasURL: wpVeritasURL, openshiftEnv: openshiftEnv, protocolHostAndPort: protocolHostAndPort, method: 'configRefresh'});
 }
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
@@ -159,7 +160,7 @@ export async function refreshMenu() {
         return openshiftEnv.includes(site.openshiftEnv);
     });
 
-    info('Start getting menus in parallel', { url: '', method: 'refreshMenu', totalFilteredSiteList: filteredListOfSites.length});
+    info('Start getting menus in parallel', { url: '', method: 'refreshMenu', openshiftEnv: openshiftEnv, totalFilteredSiteList: filteredListOfSites.length});
     const promises: Promise<MenuAPIResult[]>[] = [
         getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),
         getMenusInParallel(filteredListOfSites, "fr", getMenuForSite, 10),
