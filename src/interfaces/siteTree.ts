@@ -1,6 +1,7 @@
 import {WpMenu} from "./wpMenu";
 import {MenuAPIResult} from "./menuAPIResult";
 import {getBaseUrl} from "../utils/links";
+import {warn} from "../utils/logger";
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: WpMenu } | undefined
@@ -75,7 +76,9 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
                     }
                 }
                 return child;//for normal menus or external not found menus
-            });  //TODO add warning log
+            });
+            const externalMenu = childrenList.filter(c => c.object == 'epfl-external-menu');
+            externalMenu.map(em => warn("External detached menu found", {url: em.url, method: 'siteTree/getChildren'}))
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {

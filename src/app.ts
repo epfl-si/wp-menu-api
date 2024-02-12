@@ -9,7 +9,11 @@ import {
 } from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
-import {error, getErrorMessage, getHttpRequestCounter, getRegister, info} from "./utils/logger";
+import {
+    error,
+    getRegister, http_request_counter,
+    info, refresh_files_size, total_refresh_files
+} from "./utils/logger";
 import {loadConfig, Config} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 
@@ -38,54 +42,73 @@ if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     servicePort = config?.SERVICE_PORT || 3001;
 }
 
-app.get('/metrics', function(req, res)
-{
+app.get('/metrics', function(req, res){
     res.setHeader('Content-Type',getRegister().contentType)
     getRegister().metrics().then((data: string) => res.status(200).send(data))
 });
+
+function sendError(mess: string, route: string, req: any, res: any) {
+    http_request_counter.labels({route: route, message: mess, statusCode: 400, lang: req.query.lang as string}).inc();
+    res.status(400).json({
+        status: "KO",
+        result: mess
+    })
+}
+
+function checkRefreshFile(filename: string) {
+    if (fs.existsSync(pathRefreshFile.concat(filename))) {
+        total_refresh_files.labels({fileName: filename}).set(1);
+        refresh_files_size.labels({fileName: filename}).set(fs.statSync(pathRefreshFile.concat(filename)).size);
+    } else {
+        total_refresh_files.labels({fileName: filename}).set(0);
+        refresh_files_size.labels({fileName: filename}).set(0);
+    }
+}
 
 app.use('/menus', (req, res, next) => {
     const url = req.query.url;
     const lang = req.query.lang;
 
+    checkRefreshFile('/menusFR.json');
+    checkRefreshFile('/menusEN.json');
+    checkRefreshFile('/menusDE.json');
+
     if (!(url && typeof url === "string")) {
         const mess = 'Url parameter is missing';
         error(mess, { url: url, method: '/menus'});
-        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
-            statusCode: res.statusCode, message: mess}).inc();
-        res.status(400).json({
-            status: "KO",
-            result: mess
-        })
+        sendError(mess, 'menus', req, res);
     } else if (!(lang && typeof lang === "string")) {
         const mess = 'Lang parameter is missing';
         error(mess, { lang: lang, method: '/menus'});
-        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
-            statusCode: res.statusCode, message: mess}).inc();
-        res.status(400).json({
-            status: "KO",
-            result: mess
-        })
+        sendError(mess, 'menus', req, res);
     } else {
         next();
     }
 })
 
 app.get('/menus/breadcrumb', (req, res) => {
-    getHttpRequestCounter().labels({method: req.method, route: "breadcrumb", lang: req.query.lang, url: req.query.url,
-        statusCode: res.statusCode}).inc();
-    res.json({
-        status: "OK",
-        result: getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb")
+    const result = getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb");
+    let status = 200;
+    if (result.errors > 0) {
+        status = 500;
+    }
+    http_request_counter.labels({route: "breadcrumb", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status == 200 ? "OK" : "KO",
+        result: result.list
     })
 });
 
 app.get('/menus/siblings', (req, res) => {
-    getHttpRequestCounter().labels({method: req.method, route: "siblings", lang: req.query.lang, url: req.query.url,
-        statusCode: res.statusCode}).inc();
-    res.status(200).json({
-        status: "OK",
-        result: getMenuItems(req.query.url as string, req.query.lang as string, "siblings")
+    const result = getMenuItems(req.query.url as string, req.query.lang as string, "siblings");
+    let status = 200;
+    if (result.errors > 0) {
+        status = 500;
+    }
+    http_request_counter.labels({route: "siblings", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status == 200 ? "OK" : "KO",
+        result: result.list
     })
 });
 
@@ -94,20 +117,14 @@ app.use('/utils', (req, res, next) => {
     const mess = 'Lang parameter is missing';
     if (!(lang && typeof lang === "string")) {
         error(mess, { lang: lang, method: '/utils'});
-        getHttpRequestCounter().labels({method: req.method, route: "menus", lang: req.query.lang, url: req.query.url,
-            statusCode: res.statusCode, message: mess}).inc();
-        res.status(400).json({
-            status: "KO",
-            result: mess
-        })
+        sendError(mess, 'utils', req, res);
     } else {
         next();
     }
 })
 
 app.get('/utils/homepageCustomLinks', (req, res) => {
-    getHttpRequestCounter().labels({method: req.method, route: "homepageCustomLinks", lang: req.query.lang, url: '',
-        statusCode: res.statusCode}).inc();
+    http_request_counter.labels({route: "homepageCustomLinks", statusCode: 200, lang: req.query.lang as string}).inc();
     res.status(200).json({
         status: "OK",
         result: getHomepageCustomLinks(req.query.lang as string)
@@ -115,8 +132,7 @@ app.get('/utils/homepageCustomLinks', (req, res) => {
 });
 
 app.get('/utils/externalMenus', (req, res) => {
-    getHttpRequestCounter().labels({method: req.method, route: "externalMenus", lang: req.query.lang, url: '',
-        statusCode: res.statusCode}).inc();
+    http_request_counter.labels({route: "externalMenus", statusCode: 200, lang: req.query.lang as string}).inc();
     res.status(200).json({
         status: "OK",
         result: getExternalMenus(req.query.lang as string)
@@ -147,6 +163,6 @@ app.listen(servicePort, async () => {
             setInterval(async () => await refreshFileMenu(pathRefreshFile, false), refreshIntervalWithFile);
         }
     } else {
-        error('Please provide a configuration file path using -p', { url: '', method: 'writeRefreshFile'});
+        error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
     }
 });

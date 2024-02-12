@@ -68,7 +68,8 @@ function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): WpMenu | undef
     return undefined
 }
 
-export function getMenuItems (url: string, lang: string, type: string) : WpMenu[] {
+export function getMenuItems (url: string, lang: string, type: string) : {list: WpMenu[], errors: number} {
+    let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
     let items: WpMenu[] = [];
     let siteArray: SiteTreeInstance | undefined = getArraySiteTreeByLanguage(lang);
@@ -112,10 +113,12 @@ export function getMenuItems (url: string, lang: string, type: string) : WpMenu[
             }
         } else {
             error('First site not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
+            err ++;
         }
     } else {
         error('Array menu by language not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
+        err ++;
     }
 
-    return items;
+    return {list: items, errors: err};
 }

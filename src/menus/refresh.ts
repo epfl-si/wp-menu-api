@@ -3,7 +3,7 @@ import {Request} from "express";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
 import {SiteTree, SiteTreeInstance} from "../interfaces/siteTree";
 import {WpMenu} from "../interfaces/wpMenu";
-import {error, info, getErrorMessage} from "../utils/logger";
+import {error, info, getErrorMessage, refresh_memory_array_size, total_WPV_sites} from "../utils/logger";
 
 import * as fs from 'fs';
 import {Config} from "../utils/configFileReader";
@@ -36,8 +36,8 @@ export function configRefresh(configFile: Config | undefined) {
         openshiftEnv = ["labs", "www"];
     }
     wpVeritasURL = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
-    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
-    info('Config: ', { wpVeritasURL: wpVeritasURL, openshiftEnv: openshiftEnv, protocolHostAndPort: protocolHostAndPort, method: 'configRefresh'});
+    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch'; //TODO
+    //info('Config: ', { wpVeritasURL: wpVeritasURL, openshiftEnv: openshiftEnv, protocolHostAndPort: protocolHostAndPort, method: 'configRefresh'});
 }
 
 function getSiteListFromWPVeritas(): Promise<Site[]> {
@@ -49,7 +49,7 @@ function getSiteListFromWPVeritas(): Promise<Site[]> {
 
     return fetch(request).then(res => res.json()).then(res => {
         const sites: Site[] = res;
-        info('End getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas', totalSites: sites.length});
+        info(`End getting wp-veritas sites. Total sites: ${sites.length}`, { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
         return sites;
     }).catch ((e) => {
         error(getErrorMessage(e), { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
@@ -154,13 +154,16 @@ function setArrayResultsByLang(lang: string, result: MenuAPIResult, siteUrlSubst
 }
 
 export async function refreshMenu() {
-    info('Start refresh from API', { url: '', method: 'refreshMenu'});
+    info('Start refresh from API', { method: 'refreshMenu'});
     const sites = await getSiteListFromWPVeritas();
     const filteredListOfSites: Site[] = sites.filter(function (site){
         return openshiftEnv.includes(site.openshiftEnv);
     });
 
-    info('Start getting menus in parallel', { url: '', method: 'refreshMenu', openshiftEnv: openshiftEnv, totalFilteredSiteList: filteredListOfSites.length});
+    total_WPV_sites.labels({openshiftEnvironment: openshiftEnv.join('-')}).set(filteredListOfSites.length);
+
+    info(`Start getting menus in parallel. ${filteredListOfSites.length} sites on the '${openshiftEnv}' openshift environment`,
+      { method: 'refreshMenu'});
     const promises: Promise<MenuAPIResult[]>[] = [
         getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),
         getMenusInParallel(filteredListOfSites, "fr", getMenuForSite, 10),
@@ -168,11 +171,12 @@ export async function refreshMenu() {
     ];
 
     await Promise.all(promises);
-    info('End refresh from API', { url: '', method: 'refreshMenu'});
+    info('End refresh from API', {method: 'refreshMenu'});
 }
 
 export async function refreshFileMenu(pathRefreshFile: string, withRefreshMemory: boolean) {
-    info('Start writing files', { withRefreshMemory: withRefreshMemory, method: 'refreshFileMenu'});
+    info(`Start writing files ${withRefreshMemory ? 'after doing refresh from API' : 'without doing refresh from API'}`,
+      { method: 'refreshFileMenu'});
     if (withRefreshMemory) {
         await refreshMenu();
     }
@@ -180,8 +184,8 @@ export async function refreshFileMenu(pathRefreshFile: string, withRefreshMemory
     writeRefreshFile(pathRefreshFile.concat('/menusFR.json'),JSON.stringify(arrayMenusFR));
     writeRefreshFile(pathRefreshFile.concat('/menusEN.json'),JSON.stringify(arrayMenusEN));
     writeRefreshFile(pathRefreshFile.concat('/menusDE.json'),JSON.stringify(arrayMenusDE));
-
-    info('End writing files', { withRefreshMemory: withRefreshMemory, method: 'refreshFileMenu'});
+    info(`End writing files ${withRefreshMemory ? 'after doing refresh from API' : 'without doing refresh from API'}`,
+      { method: 'refreshFileMenu'});
 }
 
 function writeRefreshFile(path: string, json: string)  {
@@ -214,6 +218,10 @@ export function readRefreshFile(pathRefreshFile: string)  {
 
 export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | undefined {
     let siteArray: SiteTreeInstance;
+
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(arrayMenusFR.length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(arrayMenusDE.length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(arrayMenusEN.length);
 
     switch ( lang ) {
         case "fr":

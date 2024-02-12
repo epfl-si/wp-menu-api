@@ -1,28 +1,61 @@
+import * as url from "url";
+
 const Prometheus = require('prom-client');
 const register = new Prometheus.Registry();
-const http_request_counter = new Prometheus.Counter({
+const error_counter = new Prometheus.Counter({
+    name: 'menu_api_error_count',
+    help: 'Count of errors obtained in menu-api',
+    labelNames: ['url', 'lang', 'message', 'method'],
+});
+const info_counter = new Prometheus.Counter({
+    name: 'menu_api_info_count',
+    help: 'Count all the info messages in menu-api',
+    labelNames: ['url', 'lang', 'message', 'method'],
+});
+export const http_request_counter = new Prometheus.Counter({
     name: 'menu_api_http_request_count',
     help: 'Count of HTTP requests made to menu-api',
-    labelNames: ['method', 'route', 'statusCode', 'lang', 'url', 'message', 'level', 'timestamp', 'wpVeritasURL',
-    'openshiftEnv', 'totalSites', 'totalFilteredSiteList', 'withRefreshMemory', 'protocolHostAndPort'],
+    labelNames: ['route', 'statusCode', 'message', 'lang'],
 });
+export const total_refresh_files = new Prometheus.Gauge({
+   name: 'menu_api_total_refresh_files',
+   help: 'Check if the there are always 3 refresh files, one for each language',
+   labelNames: ['fileName']
+});
+export const refresh_files_size = new Prometheus.Gauge({
+    name: 'menu_api_refresh_files_size',
+    help: 'Check the size of refresh files',
+    labelNames: ['fileName']
+});
+export const refresh_memory_array_size = new Prometheus.Gauge({
+    name: 'menu_api_refresh_memory_array_size',
+    help: 'Check the size of the memory array',
+    labelNames: ['arrayName']
+});
+export const total_WPV_sites = new Prometheus.Gauge({
+    name: 'menu_api_total_WPV_sites',
+    help: 'Check the number of wp veritas sites per openshift environment',
+    labelNames: ['openshiftEnvironment']
+});
+
 register.setDefaultLabels({
     app: 'menu-api'
 })
-Prometheus.collectDefaultMetrics({register})
+Prometheus.collectDefaultMetrics({register});
 register.registerMetric(http_request_counter);
+register.registerMetric(info_counter);
+register.registerMetric(error_counter);
+register.registerMetric(total_refresh_files);
+register.registerMetric(refresh_files_size);
+register.registerMetric(refresh_memory_array_size);
+register.registerMetric(total_WPV_sites);
 
 export function getRegister() {
     return register;
 }
 
-export function getHttpRequestCounter() {
-    return http_request_counter;
-}
-
 function log(message: string, level: string = 'info', metadata: object = {}) {
     const logObject = {
-        level,
         message,
         //timestamp: new Date().toISOString(),
         ...metadata,
@@ -30,7 +63,17 @@ function log(message: string, level: string = 'info', metadata: object = {}) {
 
     // Assuming sending logs to console, you can replace this with your preferred logging mechanism
     console.log(JSON.stringify(logObject));
-    http_request_counter.labels(logObject).inc();
+    switch ( level ) {
+        case 'info':
+            info_counter.labels(logObject).inc();
+            break;
+        case 'error':
+            error_counter.labels(logObject).inc();
+            break;
+        case 'warning':
+            error_counter.labels(logObject).inc();
+            break;
+    }
 }
 
 export function error(message: string, metadata: object = {}) {
