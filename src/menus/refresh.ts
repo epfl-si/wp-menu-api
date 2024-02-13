@@ -219,10 +219,6 @@ export function readRefreshFile(pathRefreshFile: string)  {
 export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | undefined {
     let siteArray: SiteTreeInstance;
 
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(arrayMenusFR.length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(arrayMenusDE.length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(arrayMenusEN.length);
-
     switch ( lang ) {
         case "fr":
             siteArray = SiteTree(arrayMenusFR);
@@ -258,4 +254,10 @@ export function getExternalMenus(lang: string) {
         default: //en
             return arrayExternalMenusEN;
     }
+}
+
+export function checkMemoryArray() {
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(arrayMenusFR.length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(arrayMenusDE.length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(arrayMenusEN.length);
 }

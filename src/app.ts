@@ -5,7 +5,7 @@ import {
     readRefreshFile,
     refreshFileMenu,
     refreshMenu,
-    configRefresh
+    configRefresh, checkMemoryArray
 } from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
@@ -26,6 +26,7 @@ let refreshInterval: number = 600000;
 let refreshIntervalWithFile: number = 1200000;
 let refreshFromFile: boolean =  true;
 let pathRefreshFile: string = '.';
+const prometheusInterval: number = 10000;
 
 const pjson = require('../package.json');
 const version = pjson.version;
@@ -65,13 +66,16 @@ function checkRefreshFile(filename: string) {
     }
 }
 
-app.use('/menus', (req, res, next) => {
-    const url = req.query.url;
-    const lang = req.query.lang;
-
+function prometheusChecks () {
     checkRefreshFile('/menusFR.json');
     checkRefreshFile('/menusEN.json');
     checkRefreshFile('/menusDE.json');
+    checkMemoryArray();
+}
+
+app.use('/menus', (req, res, next) => {
+    const url = req.query.url;
+    const lang = req.query.lang;
 
     if (!(url && typeof url === "string")) {
         const mess = 'Url parameter is missing';
@@ -165,4 +169,5 @@ app.listen(servicePort, async () => {
     } else {
         error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
     }
+    setInterval(() => prometheusChecks(), prometheusInterval);
 });
