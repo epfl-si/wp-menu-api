@@ -1,5 +1,4 @@
 import {Site} from "../interfaces/site";
-import {Request} from "express";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
 import {SiteTree, SiteTreeInstance} from "../interfaces/siteTree";
 import {WpMenu} from "../interfaces/wpMenu";
@@ -83,13 +82,14 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     }
 
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
+    const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(protocolHostAndPort)+protocolHostAndPort.length);
     info('Start getting menu from wp-veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
     const request: RequestInfo = new Request(siteMenuURL, {
         method: 'GET',
         headers: headers
     });
-    const timeoutPromise = new Promise<MenuAPIResult>(resolve => {
-        setTimeout(resolve.bind(null, new ErrorResult(siteMenuURL.concat(" - Timeout 10s"))), 10000);
+    const timeoutPromise = new Promise<never>((resolve, reject) => {
+        setTimeout(reject.bind(null, new Error(siteMenuURL.concat(" - Timeout 10s"))), 10000);
     });
 
     return Promise.race([
@@ -97,7 +97,6 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
-            const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(protocolHostAndPort)+protocolHostAndPort.length);
 
             setArrayResultsByLang(lang, result, siteUrlSubstring);
 
@@ -105,12 +104,17 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
             return result;
         } else {
             error(JSON.stringify(result), { url: siteMenuURL, method: 'getMenuForSite'});
-            return new ErrorResult(siteMenuURL.concat(" - ").concat(result.status));
+            throw new Error(siteMenuURL.concat(" - ").concat(result.status))
         }
     }).catch ((e) => {
         const message = getErrorMessage(e);
+        console.log(e);
         error(message, { url: siteMenuURL, method: 'getMenuForSite'});
 
+        const item: { [urlInstance : string]: WpMenu } | undefined = getArraySiteTreeByLanguage(lang)?.findItemByUrl(siteUrlSubstring);
+        if (item) {
+
+        }
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
 }
@@ -174,18 +178,14 @@ export async function refreshMenu() {
     info('End refresh from API', {method: 'refreshMenu'});
 }
 
-export async function refreshFileMenu(pathRefreshFile: string, withRefreshMemory: boolean) {
-    info(`Start writing files ${withRefreshMemory ? 'after doing refresh from API' : 'without doing refresh from API'}`,
-      { method: 'refreshFileMenu'});
-    if (withRefreshMemory) {
-        await refreshMenu();
-    }
+export async function refreshFileMenu(pathRefreshFile: string) {
+    info(`Start refresh from API`,{ method: 'refreshFileMenu'});
+    await refreshMenu();
 
     writeRefreshFile(pathRefreshFile.concat('/menusFR.json'),JSON.stringify(arrayMenusFR));
     writeRefreshFile(pathRefreshFile.concat('/menusEN.json'),JSON.stringify(arrayMenusEN));
     writeRefreshFile(pathRefreshFile.concat('/menusDE.json'),JSON.stringify(arrayMenusDE));
-    info(`End writing files ${withRefreshMemory ? 'after doing refresh from API' : 'without doing refresh from API'}`,
-      { method: 'refreshFileMenu'});
+    info(`End refresh from API`,{ method: 'refreshFileMenu'});
 }
 
 function writeRefreshFile(path: string, json: string)  {

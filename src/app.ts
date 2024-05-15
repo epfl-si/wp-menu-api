@@ -22,9 +22,6 @@ const args = process.argv.slice(2);
 const configFileIndex = args.findIndex(arg => arg === '-p');
 let servicePort: number = 3000;
 let config: Config | undefined;
-let refreshInterval: number = 600000;
-let refreshIntervalWithFile: number = 1200000;
-let refreshFromFile: boolean =  true;
 let pathRefreshFile: string = '.';
 const prometheusInterval: number = 10000;
 
@@ -36,9 +33,6 @@ if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     info(`Using config file path: ${configFilePath}`);
 
     config = loadConfig(configFilePath);
-    refreshInterval = config?.REFRESH_INTERVAL || 600000;
-    refreshIntervalWithFile = config?.REFRESH_INTERVAL_WITH_FILE || 1200000;
-    refreshFromFile = config?.REFRESH_FROM_FILE || true;
     pathRefreshFile = config?.PATH_REFRESH_FILE || '.';
     servicePort = config?.SERVICE_PORT || 3001;
 }
@@ -143,6 +137,15 @@ app.get('/utils/externalMenus', (req, res) => {
     })
 });
 
+app.get('/refresh', async (req, res) => {
+    await refreshFileMenu(pathRefreshFile);
+    http_request_counter.labels({route: "refresh", statusCode: 200}).inc();
+    res.status(200).json({
+        status: "OK",
+        result: "Refresh done, see logs for details"
+    })
+});
+
 app.listen(servicePort, async () => {
     if (config) {
         console.log(`Menu API server version ${version} is running on port ${servicePort}`);
@@ -151,21 +154,8 @@ app.listen(servicePort, async () => {
         configRefresh(config);
         configLinks(config);
 
-        if (refreshFromFile) {
-            info('Server running in refresh from file mode');
-            if (!fs.existsSync(pathRefreshFile.concat('/menusFR.json')) ||
-              !fs.existsSync(pathRefreshFile.concat('/menusEN.json')) ||
-              !fs.existsSync(pathRefreshFile.concat('/menusDE.json'))) {
-                await refreshFileMenu(pathRefreshFile, true);
-            } else {
-                readRefreshFile(pathRefreshFile);
-            }
-        } else {
-            info('Server running in refresh from API mode');
-            await refreshMenu();  //Run immediately the first time and every refreshInterval after
-            setInterval(async () => await refreshMenu(), refreshInterval);
-            setInterval(async () => await refreshFileMenu(pathRefreshFile, false), refreshIntervalWithFile);
-        }
+        readRefreshFile(pathRefreshFile);
+        await refreshFileMenu(pathRefreshFile);
     } else {
         error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
     }

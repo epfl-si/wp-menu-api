@@ -77,8 +77,8 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
                 }
                 return child;//for normal menus or external not found menus
             });
-            const externalMenu = childrenList.filter(c => c.object == 'epfl-external-menu');
-            externalMenu.map(em => warn("External detached menu found", {url: em.title, method: 'siteTree/getChildren'}))
+            const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
+            detachedMenus.map(em => warn("External detached menu found", {url: em.title, method: 'siteTree/getChildren'}))
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
