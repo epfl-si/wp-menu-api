@@ -1,7 +1,8 @@
 import {WpMenu} from "./wpMenu";
 import {MenuAPIResult} from "./menuAPIResult";
 import {getBaseUrl} from "../utils/links";
-import {warn} from "../utils/logger";
+import {error, getErrorMessage, info, warn} from "../utils/logger";
+import fs from "fs";
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: WpMenu } | undefined
@@ -15,7 +16,7 @@ export interface SiteTreeInstance  {
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: WpMenu[] | undefined }[]) => SiteTreeInstance
 
-export const SiteTree : SiteTreeConstructor = function(menus) {
+export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : number]: WpMenu } } = {};
     const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: WpMenu } } = {};
     const children: { [urlInstanceRestUrl : string]: { [idParent : number]: WpMenu[] } } = {};
@@ -141,5 +142,66 @@ export const SiteTree : SiteTreeConstructor = function(menus) {
             }
             return undefined;
         }
+    }
+}
+
+export class SiteTreeMutable {
+    private menus: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+
+    getMenus() {
+        return SiteTreeReadOnly(this.menus);
+    }
+
+    get length() {
+        return this.menus.length;
+    }
+
+    getCustomMenus () {
+        const customMenus : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        for (let menu of this.menus) {
+            if(menu.entries[0].object === 'custom') {
+                customMenus.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: menu.entries[0] } );
+            }
+        }
+        return customMenus;
+    }
+
+    getExternalMenus () {
+        const externalMenus : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        for (let menu of this.menus) {
+            for (let entry of menu.entries) {
+                if(entry.object === 'epfl-external-menu') {
+                    externalMenus.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
+                }
+            }
+        }
+        return externalMenus;
+    }
+
+    updateMenu(siteUrlSubstring: string, result: MenuAPIResult){
+        this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+    }
+
+    load(path: string) {
+        this.menus = JSON.parse(fs.readFileSync(path, 'utf8'));
+    }
+
+    save(path: string) {
+        writeRefreshFile(path,JSON.stringify(this.menus));
+    }
+}
+
+
+function writeRefreshFile(path: string, json: string)  {
+    try {
+        fs.writeFile(path, json, (err) => {
+            if (err) {
+                error(getErrorMessage(err), { url: path, method: 'writeRefreshFile'});
+            } else {
+                info('Successfully wrote file', { url: path, method: 'writeRefreshFile'});
+            }
+        });
+    } catch (e) {
+        error(getErrorMessage(e), { url: path, method: 'writeRefreshFile'});
     }
 }

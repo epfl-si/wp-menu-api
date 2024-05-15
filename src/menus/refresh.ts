@@ -1,6 +1,6 @@
 import {Site} from "../interfaces/site";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
-import {SiteTree, SiteTreeInstance} from "../interfaces/siteTree";
+import {SiteTreeReadOnly, SiteTreeInstance, SiteTreeMutable} from "../interfaces/siteTree";
 import {WpMenu} from "../interfaces/wpMenu";
 import {error, info, getErrorMessage, refresh_memory_array_size, total_WPV_sites} from "../utils/logger";
 
@@ -16,15 +16,11 @@ let openshiftEnv: string[] = [];
 let wpVeritasURL: string = '';
 let protocolHostAndPort: string = '';
 
-let arrayMenusFR: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
-let arrayMenusEN: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
-let arrayMenusDE: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
-const arrayCustomLinkFR: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-const arrayCustomLinkEN: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-const arrayCustomLinkDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-const arrayExternalMenusFR: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-const arrayExternalMenusEN: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-const arrayExternalMenusDE: { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+const menus: {[lang: string]: SiteTreeMutable } = {
+    fr: new SiteTreeMutable(),
+    en: new SiteTreeMutable(),
+    de: new SiteTreeMutable()
+}
 
 export function configRefresh(configFile: Config | undefined) {
     restUrlEnd = configFile?.REST_URL_END || 'wp-json/epfl/v1/menus/top?lang=';
@@ -98,7 +94,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
 
-            setArrayResultsByLang(lang, result, siteUrlSubstring);
+            menus[lang].updateMenu(siteUrlSubstring, result);
 
             info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
@@ -117,44 +113,6 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
         }
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
-}
-
-function setArrayResultsByLang(lang: string, result: MenuAPIResult, siteUrlSubstring: string) {
-    switch ( lang ) {
-        case "fr":
-            arrayMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-            if(result.items[0].object==='custom') {
-                arrayCustomLinkFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
-            }
-            result.items.forEach(item => {
-                if(item.object==='epfl-external-menu') {
-                    arrayExternalMenusFR.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
-                }
-            });
-            break;
-        case "de":
-            arrayMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-            if(result.items[0].object==='custom') {
-                arrayCustomLinkDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
-            }
-            result.items.forEach(item => {
-                if(item.object==='epfl-external-menu') {
-                    arrayExternalMenusDE.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
-                }
-            });
-            break;
-        default: //en
-            arrayMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-            if(result.items[0].object==='custom') {
-                arrayCustomLinkEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items[0] } );
-            }
-            result.items.forEach(item => {
-                if(item.object==='epfl-external-menu') {
-                    arrayExternalMenusEN.push( { urlInstanceRestUrl: siteUrlSubstring, entries: item } );
-                }
-            });
-            break;
-    }
 }
 
 export async function refreshMenu() {
@@ -182,82 +140,37 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     info(`Start refresh from API`,{ method: 'refreshFileMenu'});
     await refreshMenu();
 
-    writeRefreshFile(pathRefreshFile.concat('/menusFR.json'),JSON.stringify(arrayMenusFR));
-    writeRefreshFile(pathRefreshFile.concat('/menusEN.json'),JSON.stringify(arrayMenusEN));
-    writeRefreshFile(pathRefreshFile.concat('/menusDE.json'),JSON.stringify(arrayMenusDE));
+    menus['fr'].save(pathRefreshFile.concat('/menusFR.json'));
+    menus['en'].save(pathRefreshFile.concat('/menusEN.json'));
+    menus['de'].save(pathRefreshFile.concat('/menusDE.json'));
     info(`End refresh from API`,{ method: 'refreshFileMenu'});
-}
-
-function writeRefreshFile(path: string, json: string)  {
-    try {
-        fs.writeFile(path, json, (err) => {
-            if (err) {
-                error(getErrorMessage(err), { url: path, method: 'writeRefreshFile'});
-            } else {
-                info('Successfully wrote file', { url: path, method: 'writeRefreshFile'});
-            }
-        });
-    } catch (e) {
-        error(getErrorMessage(e), { url: path, method: 'writeRefreshFile'});
-    }
 }
 
 export function readRefreshFile(pathRefreshFile: string)  {
     info('Start reading from file', { url: pathRefreshFile, method: 'readRefreshFile'});
     try {
-        const menusFR = fs.readFileSync(pathRefreshFile.concat('/menusFR.json'), 'utf8');
-        arrayMenusFR = JSON.parse(menusFR);
-        const menusEN = fs.readFileSync(pathRefreshFile.concat('/menusEN.json'), 'utf8');
-        arrayMenusEN = JSON.parse(menusEN);
-        const menusDE = fs.readFileSync(pathRefreshFile.concat('/menusDE.json'), 'utf8');
-        arrayMenusDE = JSON.parse(menusDE);
+        menus['fr'].load(pathRefreshFile.concat('/menusFR.json'));
+        menus['en'].load(pathRefreshFile.concat('/menusEN.json'));
+        menus['de'].load(pathRefreshFile.concat('/menusDE.json'));
     } catch (e) {
         error(getErrorMessage(e), { url: pathRefreshFile, method: 'readRefreshFile'});
     }
 }
 
 export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | undefined {
-    let siteArray: SiteTreeInstance;
-
-    switch ( lang ) {
-        case "fr":
-            siteArray = SiteTree(arrayMenusFR);
-            break;
-        case "de":
-            siteArray = SiteTree(arrayMenusDE);
-            break;
-        default: //en
-            siteArray = SiteTree(arrayMenusEN);
-            break;
-    }
-
-    return siteArray;
+    return menus[lang].getMenus();
 }
 
 export function getHomepageCustomLinks(lang: string) {
-    switch ( lang ) {
-        case "fr":
-            return arrayCustomLinkFR;
-        case "de":
-            return arrayCustomLinkDE;
-        default: //en
-            return arrayCustomLinkEN;
-    }
+    return menus[lang].getCustomMenus();
 }
 
 export function getExternalMenus(lang: string) {
-    switch ( lang ) {
-        case "fr":
-            return arrayExternalMenusFR;
-        case "de":
-            return arrayExternalMenusDE;
-        default: //en
-            return arrayExternalMenusEN;
-    }
+    return menus[lang].getExternalMenus();
 }
 
 export function checkMemoryArray() {
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(arrayMenusFR.length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(arrayMenusDE.length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(arrayMenusEN.length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(menus['fr'].length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(menus['de'].length);
+    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(menus['en'].length);
 }
