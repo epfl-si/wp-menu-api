@@ -18,7 +18,7 @@ describe("End To End Menu", function() {
         done();
     });
     describe("Breadcrumb", function() {
-        it('has at list one parent', async function() {
+        it('has at least one parent', async function() {
             const items = getMenuItems("https://www.epfl.ch/campus/services/website/en/website/", "en", "breadcrumb").list;
             assert(items.length>1);
         });
