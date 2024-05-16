@@ -1,21 +1,18 @@
 import express from 'express';
 import {
+    checkMemoryArray,
+    configRefresh,
     getExternalMenus,
     getHomepageCustomLinks,
     readRefreshFile,
-    refreshFileMenu,
-    refreshMenu,
-    configRefresh, checkMemoryArray
+    refreshFileMenu
 } from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
-import {
-    error,
-    getRegister, http_request_counter,
-    info, refresh_files_size, total_refresh_files
-} from "./utils/logger";
-import {loadConfig, Config} from "./utils/configFileReader";
+import {error, getRegister, http_request_counter, info, refresh_files_size, total_refresh_files} from "./utils/logger";
+import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
+import {getSiteListFromWPVeritas} from "./utils/source";
 
 const app = express()
 const args = process.argv.slice(2);
@@ -138,15 +135,23 @@ app.get('/utils/externalMenus', (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    await refreshFileMenu(pathRefreshFile);
-    http_request_counter.labels({route: "refresh", statusCode: 200}).inc();
-    res.status(200).json({
-        status: "OK",
-        result: "Refresh done, see logs for details"
+    const statusCode = await refreshCache();
+    http_request_counter.labels({route: "refresh", statusCode: statusCode}).inc();
+    res.status(statusCode).json({
+        status: statusCode,
+        result: statusCode == 200 ? "Refresh done, see logs for details" : "An error occurred, see logs for details."
     })
 });
 
 app.listen(servicePort, async () => {
+    const statusCode = await refreshCache();
+    if (statusCode == 400) {
+        error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
+    }
+    setInterval(() => prometheusChecks(), prometheusInterval);
+});
+
+async function refreshCache() {
     if (config) {
         console.log(`Menu API server version ${version} is running on port ${servicePort}`);
         info(`Menu API server version ${version} is running on port ${servicePort}`);
@@ -155,9 +160,10 @@ app.listen(servicePort, async () => {
         configLinks(config);
 
         readRefreshFile(pathRefreshFile);
-        await refreshFileMenu(pathRefreshFile);
+        const sites = await getSiteListFromWPVeritas(config);
+        await refreshFileMenu(pathRefreshFile, sites);
+        return 200;
     } else {
-        error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
+        return 400
     }
-    setInterval(() => prometheusChecks(), prometheusInterval);
-});
+}
