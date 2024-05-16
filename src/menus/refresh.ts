@@ -1,19 +1,13 @@
 import {Site} from "../interfaces/site";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
-import {SiteTreeReadOnly, SiteTreeInstance, SiteTreeMutable} from "../interfaces/siteTree";
-import {WpMenu} from "../interfaces/wpMenu";
-import {error, info, getErrorMessage, refresh_memory_array_size, total_WPV_sites} from "../utils/logger";
-
-import * as fs from 'fs';
+import {SiteTreeInstance, SiteTreeMutable} from "../interfaces/siteTree";
+import {error, getErrorMessage, info, refresh_memory_array_size, total_WPV_sites} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
+import {callWebService} from "../utils/webServiceCall";
 
-const headers: Headers = new Headers();
-headers.set('Content-Type', 'application/json');
-headers.set('Accept', 'application/json');
 
 let restUrlEnd: string = '';
 let openshiftEnv: string[] = [];
-let wpVeritasURL: string = '';
 let protocolHostAndPort: string = '';
 
 const menus: {[lang: string]: SiteTreeMutable } = {
@@ -30,26 +24,7 @@ export function configRefresh(configFile: Config | undefined) {
     } else {
         openshiftEnv = ["labs", "www"];
     }
-    wpVeritasURL = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
-    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch'; //TODO
-    //info('Config: ', { wpVeritasURL: wpVeritasURL, openshiftEnv: openshiftEnv, protocolHostAndPort: protocolHostAndPort, method: 'configRefresh'});
-}
-
-function getSiteListFromWPVeritas(): Promise<Site[]> {
-    info('Start getting wp-veritas sites', { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
-    const request: RequestInfo = new Request(wpVeritasURL, {
-        method: 'GET',
-        headers: headers
-    });
-
-    return fetch(request).then(res => res.json()).then(res => {
-        const sites: Site[] = res;
-        info(`End getting wp-veritas sites. Total sites: ${sites.length}`, { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
-        return sites;
-    }).catch ((e) => {
-        error(getErrorMessage(e), { url: wpVeritasURL, method: 'getSiteListFromWPVeritas'});
-        return [];
-    });
+    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
 }
 
 async function getMenusInParallel(
@@ -79,45 +54,30 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
 
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
     const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(protocolHostAndPort)+protocolHostAndPort.length);
-    info('Start getting menu from wp-veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
-    const request: RequestInfo = new Request(siteMenuURL, {
-        method: 'GET',
-        headers: headers
-    });
     const timeoutPromise = new Promise<never>((resolve, reject) => {
-        setTimeout(reject.bind(null, new Error(siteMenuURL.concat(" - Timeout 10s"))), 10000);
+        setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
     });
 
     return Promise.race([
-        fetch(request).then((res) => res.json()).then((res) => res as MenuAPIResult),
+        callWebService(siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
-
             menus[lang].updateMenu(siteUrlSubstring, result);
-
             info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
         } else {
-            error(JSON.stringify(result), { url: siteMenuURL, method: 'getMenuForSite'});
-            throw new Error(siteMenuURL.concat(" - ").concat(result.status))
+            throw new Error(result.status);
         }
     }).catch ((e) => {
         const message = getErrorMessage(e);
-        console.log(e);
         error(message, { url: siteMenuURL, method: 'getMenuForSite'});
-
-        const item: { [urlInstance : string]: WpMenu } | undefined = getArraySiteTreeByLanguage(lang)?.findItemByUrl(siteUrlSubstring);
-        if (item) {
-
-        }
         return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
     });
 }
 
-export async function refreshMenu() {
+export async function refreshMenu(sites: Site[]) {
     info('Start refresh from API', { method: 'refreshMenu'});
-    const sites = await getSiteListFromWPVeritas();
     const filteredListOfSites: Site[] = sites.filter(function (site){
         return openshiftEnv.includes(site.openshiftEnv);
     });
@@ -136,9 +96,9 @@ export async function refreshMenu() {
     info('End refresh from API', {method: 'refreshMenu'});
 }
 
-export async function refreshFileMenu(pathRefreshFile: string) {
+export async function refreshFileMenu(pathRefreshFile: string, sites: Site[]) {
     info(`Start refresh from API`,{ method: 'refreshFileMenu'});
-    await refreshMenu();
+    await refreshMenu(sites);
 
     menus['fr'].save(pathRefreshFile.concat('/menusFR.json'));
     menus['en'].save(pathRefreshFile.concat('/menusEN.json'));
