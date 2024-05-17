@@ -180,6 +180,7 @@ export class SiteTreeMutable {
 
     updateMenu(siteUrlSubstring: string, result: MenuAPIResult){
         this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+        //  TODO save modifications
     }
 
     load(path: string) {
@@ -190,7 +191,6 @@ export class SiteTreeMutable {
         writeRefreshFile(path,JSON.stringify(this.menus));
     }
 }
-
 
 function writeRefreshFile(path: string, json: string)  {
     try {

@@ -1,8 +1,8 @@
 import {WpMenu} from "../interfaces/wpMenu";
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {getArraySiteTreeByLanguage} from "./refresh";
 import {error, info} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
+import {getCachedMenus} from "./refresh";
 
 function searchAllParentsEntriesByID(entry: WpMenu, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): WpMenu[] {
     const parent: { [urlInstance : string]: WpMenu } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -72,7 +72,8 @@ export function getMenuItems (url: string, lang: string, type: string) : {list: 
     let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
     let items: WpMenu[] = [];
-    let siteArray: SiteTreeInstance | undefined = getArraySiteTreeByLanguage(lang);
+    const m = getCachedMenus();
+    let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
 
     if (siteArray) {
         let firstSite: { [urlInstance: string]: WpMenu } | undefined = siteArray.findItemByUrl(url);

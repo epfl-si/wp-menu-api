@@ -1,17 +1,18 @@
 import {Config} from "./configFileReader";
+import {MenusCache} from "./cache";
 
-let config: Config | undefined;
+let config: Config;
 
-export function configLinks(conf: Config | undefined) {
+export function configLinks(conf: Config) {
   config = conf;
 }
 
 export function getLabsLink(lang: string) : string {
   switch ( lang ) {
     case "fr":
-      return config?.LABS_LINK_URL_FR || 'https://www.epfl.ch/labs/fr/laboratoires/';
+      return config.LABS_LINK_URL_FR;
     default: //en
-      return config?.LABS_LINK_URL_EN || 'https://www.epfl.ch/labs/en/laboratories/';
+      return config.LABS_LINK_URL_EN;
   }
 }
 
@@ -19,13 +20,13 @@ export function getMenuBarLinks(lang: string) : string[] {
   let listLinksFromConfig: string | undefined;
   switch ( lang ) {
     case "fr":
-      listLinksFromConfig = config?.MENU_BAR_LINKS_FR;
+      listLinksFromConfig = config.MENU_BAR_LINKS_FR;
       break;
     case "de":
-      listLinksFromConfig = config?.MENU_BAR_LINKS_DE;
+      listLinksFromConfig = config.MENU_BAR_LINKS_DE;
       break;
     default: //en
-      listLinksFromConfig = config?.MENU_BAR_LINKS_EN;
+      listLinksFromConfig = config.MENU_BAR_LINKS_EN;
       break;
   }
   if (listLinksFromConfig) {
@@ -39,10 +40,10 @@ export function getAssocBreadcrumb(lang: string) : string[] {
   let listLinksFromConfig: string | undefined;
   switch ( lang ) {
     case "fr":
-      listLinksFromConfig = config?.ASSOC_BREADCRUMB_FR;
+      listLinksFromConfig = config.ASSOC_BREADCRUMB_FR;
       break;
     default: //en
-      listLinksFromConfig = config?.ASSOC_BREADCRUMB_EN;
+      listLinksFromConfig = config.ASSOC_BREADCRUMB_EN;
       break;
   }
   if (listLinksFromConfig) {

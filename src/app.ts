@@ -1,18 +1,11 @@
 import express from 'express';
-import {
-    checkMemoryArray,
-    configRefresh,
-    getExternalMenus,
-    getHomepageCustomLinks,
-    readRefreshFile,
-    refreshFileMenu
-} from "./menus/refresh";
+import {configRefresh, getExternalMenus, getHomepageCustomLinks, refreshFileMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
 import {error, getRegister, http_request_counter, info, refresh_files_size, total_refresh_files} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
-import {getSiteListFromWPVeritas} from "./utils/source";
+import {prometheusChecks} from "./utils/metrics";
 
 const app = express()
 const args = process.argv.slice(2);
@@ -45,23 +38,6 @@ function sendError(mess: string, route: string, req: any, res: any) {
         status: "KO",
         result: mess
     })
-}
-
-function checkRefreshFile(filename: string) {
-    if (fs.existsSync(pathRefreshFile.concat(filename))) {
-        total_refresh_files.labels({fileName: filename}).set(1);
-        refresh_files_size.labels({fileName: filename}).set(fs.statSync(pathRefreshFile.concat(filename)).size);
-    } else {
-        total_refresh_files.labels({fileName: filename}).set(0);
-        refresh_files_size.labels({fileName: filename}).set(0);
-    }
-}
-
-function prometheusChecks () {
-    checkRefreshFile('/menusFR.json');
-    checkRefreshFile('/menusEN.json');
-    checkRefreshFile('/menusDE.json');
-    checkMemoryArray();
 }
 
 app.use('/menus', (req, res, next) => {
@@ -139,7 +115,7 @@ app.get('/refresh', async (req, res) => {
     http_request_counter.labels({route: "refresh", statusCode: statusCode}).inc();
     res.status(statusCode).json({
         status: statusCode,
-        result: statusCode == 200 ? "Refresh done, see logs for details" : "An error occurred, see logs for details."
+        result: statusCode == 200 ? "Refresh done" : "An error occurred, see logs for details."
     })
 });
 
@@ -148,7 +124,7 @@ app.listen(servicePort, async () => {
     if (statusCode == 400) {
         error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
     }
-    setInterval(() => prometheusChecks(), prometheusInterval);
+    setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
 });
 
 async function refreshCache() {
@@ -159,9 +135,7 @@ async function refreshCache() {
         configRefresh(config);
         configLinks(config);
 
-        readRefreshFile(pathRefreshFile);
-        const sites = await getSiteListFromWPVeritas(config);
-        await refreshFileMenu(pathRefreshFile, sites);
+        await refreshFileMenu(pathRefreshFile);
         return 200;
     } else {
         return 400

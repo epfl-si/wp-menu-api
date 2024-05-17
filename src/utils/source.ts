@@ -4,7 +4,7 @@ import {Config} from "./configFileReader";
 import {callWebService} from "./webServiceCall";
 
 export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site[]> {
-	let wpVeritasURL: string = configFile?.WPVERITAS_URL || 'https://wp-veritas.epfl.ch/api/v1/sites';
+	let wpVeritasURL: string = configFile.WPVERITAS_URL;
 
 	return await callWebService(wpVeritasURL, callBackFunctionFromWPVeritas);
 }

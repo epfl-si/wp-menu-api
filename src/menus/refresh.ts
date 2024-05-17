@@ -1,30 +1,22 @@
 import {Site} from "../interfaces/site";
 import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
-import {SiteTreeInstance, SiteTreeMutable} from "../interfaces/siteTree";
-import {error, getErrorMessage, info, refresh_memory_array_size, total_WPV_sites} from "../utils/logger";
+import {error, getErrorMessage, info, total_WPV_sites} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {callWebService} from "../utils/webServiceCall";
-
+import {MenusCache} from "../utils/cache";
+import {getSiteListFromWPVeritas} from "../utils/source";
 
 let restUrlEnd: string = '';
 let openshiftEnv: string[] = [];
 let protocolHostAndPort: string = '';
+const cachedMenus: MenusCache = new MenusCache();
+let config: Config;
 
-const menus: {[lang: string]: SiteTreeMutable } = {
-    fr: new SiteTreeMutable(),
-    en: new SiteTreeMutable(),
-    de: new SiteTreeMutable()
-}
-
-export function configRefresh(configFile: Config | undefined) {
-    restUrlEnd = configFile?.REST_URL_END || 'wp-json/epfl/v1/menus/top?lang=';
-    let  openshiftEnvFromConfig: string | undefined = configFile?.OPENSHIFT_ENV;
-    if (openshiftEnvFromConfig) {
-        openshiftEnv = openshiftEnvFromConfig.split('\n').filter(Boolean);
-    } else {
-        openshiftEnv = ["labs", "www"];
-    }
-    protocolHostAndPort = configFile?.MENU_API_PROTOCOL_HOST_PORT || 'https://www.epfl.ch';
+export function configRefresh(configFile: Config) {
+    config = configFile;
+    restUrlEnd = configFile.REST_URL_END;
+    openshiftEnv = configFile.OPENSHIFT_ENV.split('\n').filter(Boolean);
+    protocolHostAndPort = configFile.MENU_API_PROTOCOL_HOST_PORT;
 }
 
 async function getMenusInParallel(
@@ -63,7 +55,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
-            menus[lang].updateMenu(siteUrlSubstring, result);
+            cachedMenus.menus[lang].updateMenu(siteUrlSubstring, result);
             info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
         } else {
@@ -72,7 +64,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     }).catch ((e) => {
         const message = getErrorMessage(e);
         error(message, { url: siteMenuURL, method: 'getMenuForSite'});
-        return new ErrorResult(siteMenuURL.concat(" - ").concat(message));
+        return new ErrorResult(siteMenuURL.concat(" - ").concat(message)); //TODO update with old value
     });
 }
 
@@ -96,41 +88,27 @@ export async function refreshMenu(sites: Site[]) {
     info('End refresh from API', {method: 'refreshMenu'});
 }
 
-export async function refreshFileMenu(pathRefreshFile: string, sites: Site[]) {
+export async function refreshFileMenu(pathRefreshFile: string) {
+    cachedMenus.read(pathRefreshFile);
     info(`Start refresh from API`,{ method: 'refreshFileMenu'});
+    const sites = await getSiteListFromWPVeritas(config);
     await refreshMenu(sites);
-
-    menus['fr'].save(pathRefreshFile.concat('/menusFR.json'));
-    menus['en'].save(pathRefreshFile.concat('/menusEN.json'));
-    menus['de'].save(pathRefreshFile.concat('/menusDE.json'));
+    cachedMenus.write(pathRefreshFile);
     info(`End refresh from API`,{ method: 'refreshFileMenu'});
 }
 
-export function readRefreshFile(pathRefreshFile: string)  {
-    info('Start reading from file', { url: pathRefreshFile, method: 'readRefreshFile'});
-    try {
-        menus['fr'].load(pathRefreshFile.concat('/menusFR.json'));
-        menus['en'].load(pathRefreshFile.concat('/menusEN.json'));
-        menus['de'].load(pathRefreshFile.concat('/menusDE.json'));
-    } catch (e) {
-        error(getErrorMessage(e), { url: pathRefreshFile, method: 'readRefreshFile'});
-    }
+export function initializeCachedMenus(pathRefreshFile: string) {
+    cachedMenus.read(pathRefreshFile);
 }
 
-export function getArraySiteTreeByLanguage(lang: string): SiteTreeInstance | undefined {
-    return menus[lang].getMenus();
+export function getCachedMenus(): MenusCache {
+    return cachedMenus;
 }
 
 export function getHomepageCustomLinks(lang: string) {
-    return menus[lang].getCustomMenus();
+    return cachedMenus.menus[lang].getCustomMenus();
 }
 
 export function getExternalMenus(lang: string) {
-    return menus[lang].getExternalMenus();
-}
-
-export function checkMemoryArray() {
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusFR'}).set(menus['fr'].length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusDE'}).set(menus['de'].length);
-    refresh_memory_array_size.labels({arrayName: 'arrayMenusEN'}).set(menus['en'].length);
+    return cachedMenus.menus[lang].getExternalMenus();
 }

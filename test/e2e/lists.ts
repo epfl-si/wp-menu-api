@@ -1,21 +1,23 @@
 import 'mocha';
 import {assert, expect} from "chai";
 import {getMenuItems} from "../../src/menus/lists";
-import {configRefresh, readRefreshFile, refreshFileMenu, refreshMenu} from "../../src/menus/refresh";
+import {configRefresh, initializeCachedMenus} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import {configLinks} from "../../src/utils/links";
-import {info} from "../../src/utils/logger";
-import fs from "fs";
 
 describe("End To End Menu", function() {
     beforeEach(function(done){
         const config = loadConfig('menu-api-config.yaml');
-        const pathRefreshFile = config?.PATH_REFRESH_FILE || ".";
+        if (config) {
+            const pathRefreshFile = config?.PATH_REFRESH_FILE || ".";
 
-        configRefresh(config);
-        configLinks(config);
-        readRefreshFile(pathRefreshFile);
-        done();
+            configRefresh(config);
+            configLinks(config);
+            initializeCachedMenus(pathRefreshFile);
+            done();
+        } else {
+            throw new Error("Config not present");
+        }
     });
     describe("Breadcrumb", function() {
         it('has at least one parent', async function() {
