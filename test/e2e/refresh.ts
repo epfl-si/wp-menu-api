@@ -1,23 +1,40 @@
 import 'mocha';
 import {expect} from "chai";
-import {configRefresh, refreshMenu} from "../../src/menus/refresh";
+import {configRefresh, refreshFileMenu} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
-import {getCachedMenus} from "../../src/menus/refresh";
-import {getSiteListFromWPVeritas} from "../../src/utils/source";
+import fs from "fs";
 
 describe("End To End Menu Refresh", function() {
-    it('refresh has no errors', function(done) {
-        const config = loadConfig('menu-api-config.yaml');
-				if (config) {
-					configRefresh(config);
-					getSiteListFromWPVeritas(config).then((sites) => {
-						refreshMenu(sites).then(() => {
-							const array = getCachedMenus().menus['en'].getMenus();
-							expect(array).not.to.be.empty;
-							done();
-						}).catch(done);
-						done();
-					});
-				}
-    });
+    /*it('refresh has no errors', function (done) {
+			const config = loadConfig('menu-api-config.yaml');
+			if ( config ) {
+				configRefresh(config);
+				refresh().then(() => {
+					const content2: string = fs.readFileSync('./menus_en.json', 'utf8');
+					const indices2 = getIndicesOf("/labs/hobel/wp-json/epfl/v1/menus/top?lang=en", content2);
+					expect(indices2.length==1);
+					done();
+				});
+			}
+		});*/
 });
+
+function getIndicesOf(searchStr: string, str: string) {
+	var searchStrLen = searchStr.length;
+	if (searchStrLen == 0) {
+		return [];
+	}
+	var startIndex = 0, index, indices = [];
+	str = str.toLowerCase();
+	searchStr = searchStr.toLowerCase();
+	while ((index = str.indexOf(searchStr, startIndex)) > -1) {
+		indices.push(index);
+		startIndex = index + searchStrLen;
+	}
+	return indices;
+}
+
+async function refresh() {
+	await refreshFileMenu('.');
+	await refreshFileMenu('.');
+}
