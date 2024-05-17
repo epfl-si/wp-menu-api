@@ -1,5 +1,5 @@
 import {Site} from "../interfaces/site";
-import {ErrorResult, MenuAPIResult} from "../interfaces/menuAPIResult";
+import {MenuAPIResult} from "../interfaces/menuAPIResult";
 import {error, getErrorMessage, info, total_WPV_sites} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {callWebService} from "../utils/webServiceCall";
@@ -56,7 +56,6 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
             cachedMenus.menus[lang].updateMenu(siteUrlSubstring, result);
-            info('End getting menu from wp veritas url', { url: siteMenuURL, method: 'getMenuForSite'});
             return result;
         } else {
             throw new Error(result.status);
@@ -64,7 +63,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     }).catch ((e) => {
         const message = getErrorMessage(e);
         error(message, { url: siteMenuURL, method: 'getMenuForSite'});
-        return new ErrorResult(siteMenuURL.concat(" - ").concat(message)); //TODO update with old value
+        return {status: siteMenuURL.concat(" - ").concat(message), items: [],  _links: {}};
     });
 }
 
