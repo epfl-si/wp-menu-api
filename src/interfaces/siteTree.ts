@@ -179,8 +179,17 @@ export class SiteTreeMutable {
     }
 
     updateMenu(siteUrlSubstring: string, result: MenuAPIResult){
-        this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
-        //  TODO save modifications
+        let index = -1;
+        for (let i = 0; i < this.menus.length; i++) {
+            if (this.menus[i].urlInstanceRestUrl === siteUrlSubstring) {
+                index = i;
+            }
+        }
+        if (index > -1) {
+            this.menus.splice(index, 1, { urlInstanceRestUrl: siteUrlSubstring, entries: result.items });
+        } else {
+            this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+        }
     }
 
     load(path: string) {
