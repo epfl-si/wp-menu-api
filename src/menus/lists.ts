@@ -68,7 +68,8 @@ function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): WpMenu | undef
     return undefined
 }
 
-export function getMenuItems (url: string, lang: string, type: string) : {list: WpMenu[], errors: number} {
+export function getMenuItems (url: string, lang: string, type: string, pageType: string, mainPostPageName: string,
+                              mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: WpMenu[], errors: number} {
     let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
     let items: WpMenu[] = [];
@@ -82,38 +83,37 @@ export function getMenuItems (url: string, lang: string, type: string) : {list: 
             const restUrl = Object.keys(firstSite)[0];
             info('First site found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
 
-            if (firstSite[restUrl]) {
-                console.log('first site',firstSite[restUrl]);
-                switch ( type ) {
-                    case "siblings":
-                        items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
-
-                        //We create manually siblings list for level zero of menus (about, education, research, innovation, schools, campus, labs)
-                        if (items.length == 0 && firstSite[restUrl].menu_item_parent.toString() == "0" && firstSite[restUrl].menu_order === 1 && firstSite[restUrl].url) {
-                            const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-                            const urlSiteWithoutHomePage: string = getBaseUrl(firstSite[restUrl].url!);
-                            if (Array.isArray(listMenuBarLinks) && listMenuBarLinks.includes(urlSiteWithoutHomePage)) {
-                                listMenuBarLinks.forEach(u => {
-                                    const menu = siteArray!.findLevelZeroByUrl(u);
-                                    if (menu) {
-                                        const k = Object.keys(menu)[0];
-                                        if (menu[k]) {
-                                            items.push(menu[k]);
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                        break;
-                    case "breadcrumb":
-                        const labLink = getLabsLink(lang);
-                        const assocBreadcrumbs = getAssocBreadcrumb(lang);
-                        items = [...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray, labLink, assocBreadcrumbs), firstSite[restUrl]];
-                        break;
-                }
-            }
+            items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
         } else {
             error('First site not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
+            if (pageType == 'post' && type == 'breadcrumb') {
+                firstSite = siteArray.findLevelZeroByUrl(homePageUrl);
+
+                if (firstSite) {
+                    const restUrl = Object.keys(firstSite)[0];
+                    info('First site for post found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+
+                    items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
+
+                    const homePagePosts: WpMenu = {
+                        ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
+                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl};
+                    items.push(homePagePosts);
+
+                    if (url.indexOf(mainPostPageUrl) == -1){
+                        // the post page url is different from the main post page url:
+                        // the main post page url includes the post name
+                        // So we should include the post item only if the current url doesn't include the main post page url
+                        const postPage: WpMenu = {
+                            ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
+                            title: currentPostName, url: url};
+                        items.push(postPage);
+                    }
+                } else {
+                    error('First site for post not found', {url: homePageUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    err ++;
+                }
+            }
             err ++;
         }
     } else {
@@ -122,4 +122,41 @@ export function getMenuItems (url: string, lang: string, type: string) : {list: 
     }
 
     return {list: items, errors: err};
+}
+
+
+function getListFromFirstSite(firstSite: {
+    [p: string]: WpMenu
+}, restUrl: string, type: string, items: WpMenu[], siteArray: SiteTreeInstance, lang: string) : WpMenu[] {
+    if (firstSite[restUrl]) {
+        console.log('first site',firstSite[restUrl]);
+        switch ( type ) {
+            case "siblings":
+                items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
+
+                //We create manually siblings list for level zero of menus (about, education, research, innovation, schools, campus, labs)
+                if (items.length == 0 && firstSite[restUrl].menu_item_parent.toString() == "0" && firstSite[restUrl].menu_order === 1 && firstSite[restUrl].url) {
+                    const listMenuBarLinks: string[] = getMenuBarLinks(lang);
+                    const urlSiteWithoutHomePage: string = getBaseUrl(firstSite[restUrl].url!);
+                    if (Array.isArray(listMenuBarLinks) && listMenuBarLinks.includes(urlSiteWithoutHomePage)) {
+                        listMenuBarLinks.forEach(u => {
+                            const menu = siteArray!.findLevelZeroByUrl(u);
+                            if (menu) {
+                                const k = Object.keys(menu)[0];
+                                if (menu[k]) {
+                                    items.push(menu[k]);
+                                }
+                            }
+                        });
+                    }
+                }
+                break;
+            case "breadcrumb":
+                const labLink = getLabsLink(lang);
+                const assocBreadcrumbs = getAssocBreadcrumb(lang);
+                items = [...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray, labLink, assocBreadcrumbs), firstSite[restUrl]];
+                break;
+        }
+    }
+    return items;
 }

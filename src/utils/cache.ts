@@ -28,7 +28,7 @@ export class MenusCache {
 	write(path: string){
 		for (const lang in this.cachedMenus) {
 			if (this.cachedMenus.hasOwnProperty(lang)) {
-				this.cachedMenus[lang].save(path.concat('/menus_' + lang + '.json'));
+				this.cachedMenus[lang].save(path.concat('/menus_' + lang + '.json')); //TODO write in tmp file and do mv at the end
 			}
 		}
 	}

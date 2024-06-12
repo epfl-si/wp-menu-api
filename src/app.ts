@@ -58,7 +58,15 @@ app.use('/menus', (req, res, next) => {
 })
 
 app.get('/menus/breadcrumb', (req, res) => {
-    const result = getMenuItems(req.query.url as string, req.query.lang as string, "breadcrumb");
+    const result = getMenuItems(
+      req.query.url as string,
+      req.query.lang as string,
+      "breadcrumb",
+      req.query.pageType as string,
+      req.query.mainPostPageName as string,
+      req.query.mainPostPageUrl as string,
+      req.query.homePageUrl as string,
+      req.query.currentPostName as string);
     let status = 200;
     if (result.errors > 0) {
         status = 500;
@@ -71,7 +79,15 @@ app.get('/menus/breadcrumb', (req, res) => {
 });
 
 app.get('/menus/siblings', (req, res) => {
-    const result = getMenuItems(req.query.url as string, req.query.lang as string, "siblings");
+    const result = getMenuItems(
+      req.query.url as string,
+      req.query.lang as string,
+      "siblings",
+      req.query.pageType as string,
+      req.query.mainPostPageName as string,
+      req.query.mainPostPageUrl as string,
+      req.query.homePageUrl as string,
+      req.query.currentPostName as string);
     let status = 200;
     if (result.errors > 0) {
         status = 500;
