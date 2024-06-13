@@ -66,7 +66,7 @@ app.get('/menus/breadcrumb', (req, res) => {
       req.query.mainPostPageName as string,
       req.query.mainPostPageUrl as string,
       req.query.homePageUrl as string,
-      req.query.currentPostName as string);
+      req.query.postName as string);
     let status = 200;
     if (result.errors > 0) {
         status = 500;
@@ -87,7 +87,7 @@ app.get('/menus/siblings', (req, res) => {
       req.query.mainPostPageName as string,
       req.query.mainPostPageUrl as string,
       req.query.homePageUrl as string,
-      req.query.currentPostName as string);
+      req.query.postName as string);
     let status = 200;
     if (result.errors > 0) {
         status = 500;

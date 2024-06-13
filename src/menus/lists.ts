@@ -87,20 +87,25 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
         } else {
             error('First site not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
             if (pageType == 'post' && type == 'breadcrumb') {
+                //if the site is not found and we are looking for a post page not attached to the menu,
+                //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
                 firstSite = siteArray.findLevelZeroByUrl(homePageUrl);
 
                 if (firstSite) {
                     const restUrl = Object.keys(firstSite)[0];
-                    info('First site for post found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    info('Site home page for post found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
 
                     items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
 
+                    //we add the site post home page to the breadcrumb:
+                    // if the post home page is defined in wordpress we get his name ans url into the item,
+                    // otherwise we create the item manually
                     const homePagePosts: WpMenu = {
                         ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
-                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl};
+                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')};
                     items.push(homePagePosts);
 
-                    if (url.indexOf(mainPostPageUrl) == -1){
+                    if (url.indexOf(mainPostPageUrl) == -1 && url.indexOf('?post_type=post') == -1){
                         // the post page url is different from the main post page url:
                         // the main post page url includes the post name
                         // So we should include the post item only if the current url doesn't include the main post page url
@@ -110,7 +115,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                         items.push(postPage);
                     }
                 } else {
-                    error('First site for post not found', {url: homePageUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    error('Site home page for post not found', {url: homePageUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
                     err ++;
                 }
             }
