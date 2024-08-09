@@ -22,7 +22,7 @@ export function configRefresh(configFile: Config) {
 async function getMenusInParallel(
     sites: Site[],
     lang: string,
-    fn: (siteURL: string, language: string) => Promise<MenuAPIResult>, 
+    fn: (siteURL: string, language: string) => Promise<MenuAPIResult>,
     threads = 10
 ): Promise<MenuAPIResult[]> {
     const result: MenuAPIResult[][] = [];
@@ -51,7 +51,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     });
 
     return Promise.race([
-        callWebService(siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
+        callWebService(false, siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
