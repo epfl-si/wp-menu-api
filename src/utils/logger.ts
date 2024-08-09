@@ -94,7 +94,7 @@ export function getErrorMessage(e: any): string {
     if (typeof e === "string") {
         message = e;
     } else if (e instanceof Error) {
-        message = e.message;
+        message = e.message.concat(e.stack != undefined ? "---" + e.stack : '');
     }
 
     return message;
