@@ -51,7 +51,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     });
 
     return Promise.race([
-        callWebService(false, siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
+        callWebService(config, false, siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {

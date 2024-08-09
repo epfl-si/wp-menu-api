@@ -1,19 +1,20 @@
 import {error, getErrorMessage, info} from "./logger";
 import * as https from "https";
+import {Config} from "./configFileReader";
 
-export async function callWebService(wpVeritas: boolean, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const hostname = url.indexOf("https://www.epfl.ch/labs") > -1 ? 'httpd-labs' : 'httpd-www';
-	const path = url.replace("https://www.epfl.ch", "");
+export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
+	const hostname = url.indexOf("https://www.epfl.ch/labs") > -1 ? 'httpd-labs' : configFile.POD_NAME;
+	const path = url.replace("https://" + configFile.EPFL_HOSTNAME, "");
 
 	const options = {
-		hostname: wpVeritas ? 'wp-veritas.epfl.ch' : hostname,
+		hostname: wpVeritas ? configFile.WPVERITAS_HOSTNAME : hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
 		port: wpVeritas ? null : 8443,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 			'Accept': 'application/json',
-			'Host': wpVeritas ? 'wp-veritas.epfl.ch' : "www.epfl.ch",
+			'Host': wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.EPFL_HOSTNAME,
 		}
 	};
 

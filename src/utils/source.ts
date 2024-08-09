@@ -6,7 +6,7 @@ import {callWebService} from "./webServiceCall";
 export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site[]> {
 	let wpVeritasURL: string = configFile.WPVERITAS_URL;
 
-	return await callWebService(true, wpVeritasURL, callBackFunctionFromWPVeritas);
+	return await callWebService(configFile, true, wpVeritasURL, callBackFunctionFromWPVeritas);
 }
 
 function callBackFunctionFromWPVeritas(url: string, res: any){

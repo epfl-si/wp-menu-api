@@ -20,6 +20,9 @@ export interface Config {
   MENU_BAR_LINKS_EN: string;
   MENU_BAR_LINKS_FR: string;
   MENU_BAR_LINKS_DE: string;
+  WPVERITAS_HOSTNAME: string;
+  EPFL_HOSTNAME: string;
+  POD_NAME: string;
 }
 
 export function loadConfig(configFilePath: any): Config | undefined {

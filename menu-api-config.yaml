@@ -6,6 +6,9 @@ OPENSHIFT_ENV: |
   www
   labs
 WPVERITAS_URL: "https://wp-veritas.epfl.ch/api/v1/sites"
+WPVERITAS_HOSTNAME: "wp-veritas.epfl.ch"
+EPFL_HOSTNAME: "www.epfl.ch"
+POD_NAME: "httpd-www"
 MENU_API_PROTOCOL_HOST_PORT: "https://www.epfl.ch"
 SERVICE_PORT: "3001"
 NODE_TLS_REJECT_UNAUTHORIZED: "0"
