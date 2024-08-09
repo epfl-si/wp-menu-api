@@ -183,6 +183,7 @@ export class SiteTreeMutable {
         for (let i = 0; i < this.menus.length; i++) {
             if (this.menus[i].urlInstanceRestUrl === siteUrlSubstring) {
                 index = i;
+                break;
             }
         }
         if (index > -1) {
