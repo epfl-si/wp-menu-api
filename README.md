@@ -47,7 +47,7 @@ Inside wp-dev run:
 * Then you can use `docker logs -f menu-api`
 * And then to test inside the meni-api container:
 ```
-docker exec -it menu-api curl http://localhost:3001/refreshMenus ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
+docker exec -it menu-api curl http://localhost:3001/refresh ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
 ```
 
 _**N.B.**: The test container (wp-httpd) will take the `.env.test` file for environment variables as it is configured 
