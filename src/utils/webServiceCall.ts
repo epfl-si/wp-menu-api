@@ -1,34 +1,65 @@
 import {error, getErrorMessage, info} from "./logger";
+import * as https from "https";
 
 export async function callWebService(wpVeritas: boolean, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const headers: Headers = new Headers();
-	headers.set('Content-Type', 'application/json');
-	headers.set('Accept', 'application/json');
-	headers.set('Host', 'www.epfl.ch');
+	const hostname = url.indexOf("https://www.epfl.ch/labs") > -1 ? 'httpd-labs' : 'httpd-www';
+	const path = url.replace("https://www.epfl.ch", "");
 
-	let internalUrl = url;
-	if (!wpVeritas) {
-		internalUrl = url.replace("https://www.epfl.ch/labs", "https://httpd-labs:8443/labs")
-			.replace("https://www.epfl.ch", "https://httpd-www:8443");
-	}
-	info('Start web service call', { url: internalUrl, method: 'callWebService'});
-	const request: RequestInfo = new Request(internalUrl, {
+	const options = {
+		hostname: wpVeritas ? 'wp-veritas.epfl.ch' : hostname,
+		path: wpVeritas ? '/api/v1/sites' : path,
+		port: wpVeritas ? null : 8443,
 		method: 'GET',
-		headers: headers,
-		cache: 'no-cache'
-	});
-
-	try {
-		const result = await fetch(request);
-		if (!result.ok) {
-			console.log("request: ", request, "result: ", result)
-			throw new Error(`${result.status}: ${result.statusText}`);
+		headers: {
+			'Content-Type': 'application/json',
+			'Accept': 'application/json',
+			'Host': wpVeritas ? 'wp-veritas.epfl.ch' : "www.epfl.ch",
 		}
-		const res =  await result.json();
-		info(`End web service call`, { url: internalUrl, method: 'callWebService'});
-		return callBackFunction(url, res);
-	} catch ( e ) {
-		error(getErrorMessage(e), { url: internalUrl, method: 'callWebService'});
-		return [];
-	}
+	};
+
+	info('Start web service call', { url: hostname + path, method: 'callWebService'});
+	return new Promise((resolve, reject) => {
+		const req = https.request(options, (res) => {
+			let data = "";
+
+			res.setEncoding("utf8");
+			res.on("data", (chunk) => {
+				data += chunk;
+			});
+
+			res.on("end", () => {
+				try {
+					info(`End web service call`, {
+						url: path,
+						method: "callWebService",
+					});
+					resolve(callBackFunction(url, JSON.parse(data)));
+				} catch (e) {
+					error(getErrorMessage(e), {
+						url: path,
+						method: "callWebService",
+					});
+					reject(e);
+				}
+			});
+
+			res.on("error", (e) => {
+				error(getErrorMessage(e), {
+					url: path,
+					method: "callWebService",
+				});
+				reject(e);
+			});
+		});
+
+		req.on("error", (e) => {
+			error(getErrorMessage(e), {
+				url: path,
+				method: "callWebService",
+			});
+			reject(e);
+		});
+
+		req.end();
+	});
 }
