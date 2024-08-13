@@ -15,7 +15,8 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 			'Content-Type': 'application/json',
 			'Accept': 'application/json',
 			'Host': wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.EPFL_HOSTNAME,
-		}
+		},
+		rejectUnauthorized: false
 	};
 
 	info('Start web service call', { url: hostname + path, method: 'callWebService'});
