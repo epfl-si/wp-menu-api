@@ -54,3 +54,10 @@ _**N.B.**: The test container (wp-httpd) will take the `.env.test` file for envi
 in the **docker-compose.yml** file.
 Then the Dockerfile of the **menu-api** will be executed and so the `npm start`._
 
+
+### Deployment
+In the wp-ops directory run:
+
+- To deploy on test: `./ansible/wpsible -t menu_api`
+- To promote image on **production** environment run: `./ansible/wpsible -t menu_api --prod`
+
