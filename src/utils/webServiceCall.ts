@@ -3,11 +3,11 @@ import * as https from "https";
 import {Config} from "./configFileReader";
 
 export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const hostname = configFile.POD_NAME + openshiftEnv;
+	const hostname = wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.POD_NAME + openshiftEnv;
 	const path = url.replace("https://" + configFile.EPFL_HOSTNAME, "");
 
 	const options = {
-		hostname: wpVeritas ? configFile.WPVERITAS_HOSTNAME : hostname,
+		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
 		port: wpVeritas ? null : 8443,
 		method: 'GET',
