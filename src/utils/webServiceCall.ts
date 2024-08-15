@@ -2,8 +2,8 @@ import {error, getErrorMessage, info} from "./logger";
 import * as https from "https";
 import {Config} from "./configFileReader";
 
-export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const hostname = url.indexOf("https://www.epfl.ch/labs") > -1 ? 'httpd-labs' : configFile.POD_NAME;
+export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
+	const hostname = configFile.POD_NAME + openshiftEnv;
 	const path = url.replace("https://" + configFile.EPFL_HOSTNAME, "");
 
 	const options = {
