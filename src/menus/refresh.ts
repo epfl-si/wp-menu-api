@@ -69,12 +69,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
 
 export async function refreshMenu(sites: Site[]) {
     info('Start refresh from API', { method: 'refreshMenu'});
-    const filteredListOfSites: Site[] = sites.filter(function (site){
-        if (site.openshiftEnv == "form") {
-            console.log("URL-FORM", site.url)
-        }
-        return openshiftEnv.includes(site.openshiftEnv);
-    });
+    const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!=null);
     console.log("openshiftEnvironment for test" , openshiftEnv.join('-'));
 
     console.log("filteredListOfSites", filteredListOfSites);
