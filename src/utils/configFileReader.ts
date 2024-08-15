@@ -23,6 +23,7 @@ export interface Config {
   WPVERITAS_HOSTNAME: string;
   EPFL_HOSTNAME: string;
   POD_NAME: string;
+  DEBUG: boolean;
 }
 
 export function loadConfig(configFilePath: any): Config | undefined {

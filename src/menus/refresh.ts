@@ -22,7 +22,7 @@ export function configRefresh(configFile: Config) {
 async function getMenusInParallel(
     sites: Site[],
     lang: string,
-    fn: (siteURL: string, openshiftEnv: string, language: string) => Promise<MenuAPIResult>,
+    fn: (siteURL: string, osEnv: string, language: string) => Promise<MenuAPIResult>,
     threads = 10
 ): Promise<MenuAPIResult[]> {
     const result: MenuAPIResult[][] = [];
@@ -39,7 +39,7 @@ async function getMenusInParallel(
     return result.flat();
 }
 
-async function getMenuForSite(siteURL: string, openshiftEnv: string, lang: string): Promise<MenuAPIResult> {
+async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Promise<MenuAPIResult> {
     if (protocolHostAndPort.indexOf('wp-httpd')>-1) {
         siteURL = siteURL.replace("http://wp-httpd.epfl.ch",protocolHostAndPort);
     }
@@ -51,7 +51,7 @@ async function getMenuForSite(siteURL: string, openshiftEnv: string, lang: strin
     });
 
     return Promise.race([
-        callWebService(config, false, siteMenuURL, openshiftEnv, (url: string, res: any) => res as MenuAPIResult),
+        callWebService(config, false, siteMenuURL, osEnv, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
@@ -70,9 +70,14 @@ async function getMenuForSite(siteURL: string, openshiftEnv: string, lang: strin
 export async function refreshMenu(sites: Site[]) {
     info('Start refresh from API', { method: 'refreshMenu'});
     const filteredListOfSites: Site[] = sites.filter(function (site){
+        if (site.openshiftEnv == "form") {
+            console.log("URL-FORM", site.url)
+        }
         return openshiftEnv.includes(site.openshiftEnv);
     });
+    console.log("openshiftEnvironment for test" , openshiftEnv.join('-'));
 
+    console.log("filteredListOfSites", filteredListOfSites);
     total_WPV_sites.labels({openshiftEnvironment: openshiftEnv.join('-')}).set(filteredListOfSites.length);
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites on the '${openshiftEnv}' openshift environment`,

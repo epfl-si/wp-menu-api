@@ -1,4 +1,5 @@
 import * as url from "url";
+import {Config} from "./configFileReader";
 
 const Prometheus = require('prom-client');
 const register = new Prometheus.Registry();
@@ -54,6 +55,12 @@ export function getRegister() {
     return register;
 }
 
+let debug = false;
+
+export function configLogs(configFile: Config) {
+    debug = configFile.DEBUG;
+}
+
 function log(message: string, level: string = 'info', metadata: object = {}) {
     const logObject = {
         message,
@@ -81,11 +88,15 @@ export function error(message: string, metadata: object = {}) {
 }
 
 export function warn(message: string, metadata: object = {}) {
-    log(message, 'warning', metadata);
+    if (debug) {
+        log(message, 'warning', metadata);
+    }
 }
 
 export function info(message: string, metadata: object = {}) {
-    log(message, 'info', metadata);
+    if (debug) {
+        log(message, 'info', metadata);
+    }
 }
 
 export function getErrorMessage(e: any): string {

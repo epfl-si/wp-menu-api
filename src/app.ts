@@ -2,7 +2,15 @@ import express from 'express';
 import {configRefresh, getExternalMenus, getHomepageCustomLinks, refreshFileMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import fs from 'fs';
-import {error, getRegister, http_request_counter, info, refresh_files_size, total_refresh_files} from "./utils/logger";
+import {
+    configLogs,
+    error,
+    getRegister,
+    http_request_counter,
+    info,
+    refresh_files_size,
+    total_refresh_files
+} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {prometheusChecks} from "./utils/metrics";
@@ -150,6 +158,7 @@ async function refreshCache() {
 
         configRefresh(config);
         configLinks(config);
+        configLogs(config);
 
         await refreshFileMenu(pathRefreshFile);
         return 200;

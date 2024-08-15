@@ -6,6 +6,11 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 	const hostname = wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.POD_NAME + openshiftEnv;
 	const path = url.replace(/^https:\/\/(.*)\.epfl\.ch/gm, "");
 
+	const parsedUrl = new URL(url);
+
+	if (openshiftEnv == 'form') {
+		console.log("dans callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path)
+	}
 	const options = {
 		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
@@ -14,7 +19,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 		headers: {
 			'Content-Type': 'application/json',
 			'Accept': 'application/json',
-			'Host': wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.EPFL_HOSTNAME,
+			'Host': wpVeritas ? configFile.WPVERITAS_HOSTNAME : parsedUrl.hostname,
 		},
 		rejectUnauthorized: false
 	};
