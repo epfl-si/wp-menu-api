@@ -22,7 +22,7 @@ export function configRefresh(configFile: Config) {
 async function getMenusInParallel(
     sites: Site[],
     lang: string,
-    fn: (siteURL: string, language: string) => Promise<MenuAPIResult>,
+    fn: (siteURL: string, openshiftEnv: string, language: string) => Promise<MenuAPIResult>,
     threads = 10
 ): Promise<MenuAPIResult[]> {
     const result: MenuAPIResult[][] = [];
@@ -31,7 +31,7 @@ async function getMenusInParallel(
     sites.forEach(s => arr.push(s));
 
     while (arr.length) {
-        let subListOfSitesMenus: Promise<MenuAPIResult>[] = arr.splice(0, threads).map(x => fn(x.url, lang));
+        let subListOfSitesMenus: Promise<MenuAPIResult>[] = arr.splice(0, threads).map(x => fn(x.url, x.openshiftEnv, lang));
         const res: MenuAPIResult[] = await Promise.all(subListOfSitesMenus);
         result.push(res);
     }
@@ -39,7 +39,7 @@ async function getMenusInParallel(
     return result.flat();
 }
 
-async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIResult> {
+async function getMenuForSite(siteURL: string, openshiftEnv: string, lang: string): Promise<MenuAPIResult> {
     if (protocolHostAndPort.indexOf('wp-httpd')>-1) {
         siteURL = siteURL.replace("http://wp-httpd.epfl.ch",protocolHostAndPort);
     }
@@ -51,7 +51,7 @@ async function getMenuForSite(siteURL: string, lang: string): Promise<MenuAPIRes
     });
 
     return Promise.race([
-        callWebService(config, false, siteMenuURL, (url: string, res: any) => res as MenuAPIResult),
+        callWebService(config, false, siteMenuURL, openshiftEnv, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
