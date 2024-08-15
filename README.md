@@ -58,6 +58,8 @@ Then the Dockerfile of the **menu-api** will be executed and so the `npm start`.
 ### Deployment
 In the wp-ops directory run:
 
-- To deploy on test: `./ansible/wpsible -t menu_api`
+- To deploy on test: 
+  - Delete manually the image _menu-api-siblings_
+  - run `./ansible/wpsible -t menu_api`
 - To promote image on **production** environment run: `./ansible/wpsible -t menu_api --prod`
 
