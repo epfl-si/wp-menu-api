@@ -69,7 +69,9 @@ function log(message: string, level: string = 'info', metadata: object = {}) {
     };
 
     // Assuming sending logs to console, you can replace this with your preferred logging mechanism
-    console.log(JSON.stringify(logObject));
+    if (level == 'error' || debug) {
+        console.log(JSON.stringify(logObject));
+    }
     switch ( level ) {
         case 'info':
             info_counter.labels(logObject).inc();
@@ -88,15 +90,11 @@ export function error(message: string, metadata: object = {}) {
 }
 
 export function warn(message: string, metadata: object = {}) {
-    if (debug) {
-        log(message, 'warning', metadata);
-    }
+    log(message, 'warning', metadata);
 }
 
 export function info(message: string, metadata: object = {}) {
-    if (debug) {
-        log(message, 'info', metadata);
-    }
+    log(message, 'info', metadata);
 }
 
 export function getErrorMessage(e: any): string {
