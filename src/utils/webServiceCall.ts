@@ -8,9 +8,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 
 	const parsedUrl = new URL(url);
 
-	if (openshiftEnv == 'form') {
-		console.log("dans callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path)
-	}
+	console.log("dans callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
 	const options = {
 		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
