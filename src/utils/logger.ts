@@ -1,4 +1,3 @@
-import * as url from "url";
 import {Config} from "./configFileReader";
 
 const Prometheus = require('prom-client');
@@ -9,42 +8,41 @@ const error_counter = new Prometheus.Counter({
     labelNames: ['url', 'lang', 'message'],
 });
 export const http_request_counter = new Prometheus.Counter({
-    name: 'menu_api_http_request_count',
+    name: 'menu_api_http_requests_count',
     help: 'Count of HTTP requests made to menu-api',
     labelNames: ['route', 'statusCode', 'message', 'lang'],
 });
-export const total_refresh_files = new Prometheus.Gauge({
-   name: 'menu_api_total_refresh_files',
-   help: 'Check if the there are always 3 refresh files, one for each language',
-   labelNames: ['fileName']
-});
 export const refresh_files_size = new Prometheus.Gauge({
-    name: 'menu_api_refresh_files_size',
-    help: 'Check the size of refresh files',
+    name: 'menu_api_cache_files_bytes',
+    help: 'Cache files bytes',
     labelNames: ['fileName']
 });
 export const refresh_memory_array_size = new Prometheus.Gauge({
-    name: 'menu_api_refresh_memory_array_size',
-    help: 'Check the size of the memory array',
+    name: 'menu_api_menu_array_size',
+    help: 'Menu array size',
     labelNames: ['arrayName']
 });
 export const total_WPV_sites = new Prometheus.Gauge({
-    name: 'menu_api_total_WPV_sites',
-    help: 'Check the number of wp veritas sites per openshift environment',
+    name: 'menu_api_wpveritas_sites_total',
+    help: 'Number of wp veritas sites per openshift environment',
     labelNames: ['openshiftEnvironment']
+});
+export const total_retrieved_sites = new Prometheus.Gauge({
+    name: 'menu_api_retrieved_sites_total',
+    help: 'Number of retrieved sites per language',
+    labelNames: ['lang']
 });
 
 register.setDefaultLabels({
-    app: 'menu-api'
+    app: 'menu-api-siblings'
 })
 Prometheus.collectDefaultMetrics({register});
 register.registerMetric(http_request_counter);
-register.registerMetric(info_counter);
 register.registerMetric(error_counter);
-register.registerMetric(total_refresh_files);
 register.registerMetric(refresh_files_size);
 register.registerMetric(refresh_memory_array_size);
 register.registerMetric(total_WPV_sites);
+register.registerMetric(total_retrieved_sites);
 
 export function getRegister() {
     return register;
