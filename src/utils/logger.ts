@@ -4,14 +4,9 @@ import {Config} from "./configFileReader";
 const Prometheus = require('prom-client');
 const register = new Prometheus.Registry();
 const error_counter = new Prometheus.Counter({
-    name: 'menu_api_error_count',
+    name: 'menu_api_errors_count',
     help: 'Count of errors obtained in menu-api',
-    labelNames: ['url', 'lang', 'message', 'method'],
-});
-const info_counter = new Prometheus.Counter({
-    name: 'menu_api_info_count',
-    help: 'Count all the info messages in menu-api',
-    labelNames: ['url', 'lang', 'message', 'method'],
+    labelNames: ['url', 'lang', 'message'],
 });
 export const http_request_counter = new Prometheus.Counter({
     name: 'menu_api_http_request_count',
@@ -64,18 +59,13 @@ export function configLogs(configFile: Config) {
 function log(message: string, level: string = 'info', metadata: object = {}) {
     const logObject = {
         message,
-        //timestamp: new Date().toISOString(),
         ...metadata,
     };
 
-    // Assuming sending logs to console, you can replace this with your preferred logging mechanism
     if (level == 'error' || debug) {
-        console.log(JSON.stringify(logObject));
+        console.log(new Date().toISOString(), JSON.stringify(logObject));
     }
     switch ( level ) {
-        case 'info':
-            info_counter.labels(logObject).inc();
-            break;
         case 'error':
             error_counter.labels(logObject).inc();
             break;
@@ -103,7 +93,10 @@ export function getErrorMessage(e: any): string {
     if (typeof e === "string") {
         message = e;
     } else if (e instanceof Error) {
-        message = e.message.concat(e.stack != undefined ? "---" + e.stack : '');
+        message = e.message;
+        if (debug) {
+            message = message.concat(e.stack != undefined ? " --- " + e.stack : '');
+        }
     }
 
     return message;

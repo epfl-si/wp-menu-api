@@ -62,7 +62,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
         }
     }).catch ((e) => {
         const message = getErrorMessage(e);
-        error(message, { url: siteMenuURL, method: 'getMenuForSite'});
+        error(message, { url: siteMenuURL});
         return {status: siteMenuURL.concat(" - ").concat(message), items: [],  _links: {}};
     });
 }
@@ -72,7 +72,7 @@ export async function refreshMenu(sites: Site[]) {
     const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="");
     total_WPV_sites.labels({openshiftEnvironment: openshiftEnv.join('-')}).set(filteredListOfSites.length);
 
-    info(`Start getting menus in parallel. ${filteredListOfSites.length} sites on the '${openshiftEnv}' openshift environment`,
+    info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
       { method: 'refreshMenu'});
     const promises: Promise<MenuAPIResult[]>[] = [
         getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),

@@ -79,7 +79,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 return child;//for normal menus or external not found menus
             });
             const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
-            detachedMenus.map(em => warn("External detached menu found", {url: em.title, method: 'siteTree/getChildren'}))
+            detachedMenus.map(em => warn("External detached menu found", {url: em.title}))
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
@@ -206,12 +206,12 @@ function writeRefreshFile(path: string, json: string)  {
     try {
         fs.writeFile(path, json, (err) => {
             if (err) {
-                error(getErrorMessage(err), { url: path, method: 'writeRefreshFile'});
+                error(getErrorMessage(err), { url: path});
             } else {
                 info('Successfully wrote file', { url: path, method: 'writeRefreshFile'});
             }
         });
     } catch (e) {
-        error(getErrorMessage(e), { url: path, method: 'writeRefreshFile'});
+        error(getErrorMessage(e), { url: path});
     }
 }

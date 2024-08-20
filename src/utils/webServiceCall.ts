@@ -9,7 +9,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 	const parsedUrl = new URL(url);
 
 	if (configFile.DEBUG) {
-		console.log("dans callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
+		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
 	}
 	const options = {
 		hostname: hostname,
@@ -36,34 +36,19 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 
 			res.on("end", () => {
 				try {
-					info(`End web service call`, {
-						url: path,
-						method: "callWebService",
-					});
+					info(`End web service call`, {url: hostname + path, method: "callWebService"});
 					resolve(callBackFunction(url, JSON.parse(data)));
 				} catch (e) {
-					error(getErrorMessage(e), {
-						url: path,
-						method: "callWebService",
-					});
 					reject(e);
 				}
 			});
 
 			res.on("error", (e) => {
-				error(getErrorMessage(e), {
-					url: path,
-					method: "callWebService",
-				});
 				reject(e);
 			});
 		});
 
 		req.on("error", (e) => {
-			error(getErrorMessage(e), {
-				url: path,
-				method: "callWebService",
-			});
 			reject(e);
 		});
 

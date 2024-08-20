@@ -21,7 +21,7 @@ export class MenusCache {
 				}
 			}
 		} catch (e) {
-			error(getErrorMessage(e), { url: path, method: 'MenusCache.read'});
+			error(getErrorMessage(e), {});
 		}
 	}
 
