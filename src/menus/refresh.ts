@@ -1,22 +1,19 @@
 import {Site} from "../interfaces/site";
 import {MenuAPIResult} from "../interfaces/menuAPIResult";
-import {error, getErrorMessage, info, total_WPV_sites} from "../utils/logger";
+import {error, getErrorMessage, info} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {callWebService} from "../utils/webServiceCall";
 import {MenusCache} from "../utils/cache";
 import {getSiteListFromWPVeritas} from "../utils/source";
+import {getRetrievedSitesCount, getWPVeritasSitesForEnvironment} from "../utils/metrics";
 
 let restUrlEnd: string = '';
-let openshiftEnv: string[] = [];
-let protocolHostAndPort: string = '';
 const cachedMenus: MenusCache = new MenusCache();
 let config: Config;
 
 export function configRefresh(configFile: Config) {
     config = configFile;
     restUrlEnd = configFile.REST_URL_END;
-    openshiftEnv = configFile.OPENSHIFT_ENV.split('\n').filter(Boolean);
-    protocolHostAndPort = configFile.MENU_API_PROTOCOL_HOST_PORT;
 }
 
 async function getMenusInParallel(
@@ -40,12 +37,8 @@ async function getMenusInParallel(
 }
 
 async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Promise<MenuAPIResult> {
-    if (protocolHostAndPort.indexOf('wp-httpd')>-1) {
-        siteURL = siteURL.replace("http://wp-httpd.epfl.ch",protocolHostAndPort);
-    }
-
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
-    const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(protocolHostAndPort)+protocolHostAndPort.length);
+    const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(".epfl.ch")+".epfl.ch".length);
     const timeoutPromise = new Promise<never>((resolve, reject) => {
         setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
     });
@@ -70,7 +63,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
 export async function refreshMenu(sites: Site[]) {
     info('Start refresh from API', { method: 'refreshMenu'});
     const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="");
-    total_WPV_sites.labels({openshiftEnvironment: openshiftEnv.join('-')}).set(filteredListOfSites.length);
+    getWPVeritasSitesForEnvironment(filteredListOfSites);
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
       { method: 'refreshMenu'});
@@ -90,6 +83,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     const sites = await getSiteListFromWPVeritas(config);
     await refreshMenu(sites);
     cachedMenus.write(pathRefreshFile);
+    getRetrievedSitesCount(cachedMenus);
     info(`End refresh from API`,{ method: 'refreshFileMenu'});
 }
 
