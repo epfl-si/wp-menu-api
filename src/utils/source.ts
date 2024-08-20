@@ -1,12 +1,17 @@
 import {Site} from "../interfaces/site";
-import {info} from "./logger";
+import {error, getErrorMessage, info} from "./logger";
 import {Config} from "./configFileReader";
 import {callWebService} from "./webServiceCall";
 
 export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site[]> {
 	let wpVeritasURL: string = configFile.WPVERITAS_URL;
 
-	return await callWebService(configFile, true, wpVeritasURL, '', callBackFunctionFromWPVeritas);
+	try {
+		return await callWebService(configFile, true, wpVeritasURL, '', callBackFunctionFromWPVeritas);
+	} catch (e) {
+		error(getErrorMessage(e), { url: wpVeritasURL});
+		return [];
+	}
 }
 
 function callBackFunctionFromWPVeritas(url: string, res: any){
