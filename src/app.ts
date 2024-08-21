@@ -1,16 +1,7 @@
 import express from 'express';
 import {configRefresh, getExternalMenus, getHomepageCustomLinks, refreshFileMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
-import fs from 'fs';
-import {
-    configLogs,
-    error,
-    getRegister,
-    http_request_counter,
-    info,
-    refresh_files_size,
-    total_refresh_files
-} from "./utils/logger";
+import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {prometheusChecks} from "./utils/metrics";
@@ -54,11 +45,11 @@ app.use('/menus', (req, res, next) => {
 
     if (!(url && typeof url === "string")) {
         const mess = 'Url parameter is missing';
-        error(mess, { url: url, method: '/menus'});
+        error(mess, { url: url});
         sendError(mess, 'menus', req, res);
     } else if (!(lang && typeof lang === "string")) {
         const mess = 'Lang parameter is missing';
-        error(mess, { lang: lang, method: '/menus'});
+        error(mess, { lang: lang});
         sendError(mess, 'menus', req, res);
     } else {
         next();
@@ -111,7 +102,7 @@ app.use('/utils', (req, res, next) => {
     const lang = req.query.lang;
     const mess = 'Lang parameter is missing';
     if (!(lang && typeof lang === "string")) {
-        error(mess, { lang: lang, method: '/utils'});
+        error(mess, { lang: lang});
         sendError(mess, 'utils', req, res);
     } else {
         next();
@@ -146,14 +137,13 @@ app.get('/refresh', async (req, res) => {
 app.listen(servicePort, async () => {
     const statusCode = await refreshCache();
     if (statusCode == 400) {
-        error('Please provide a configuration file path using -p', { method: 'writeRefreshFile' });
+        error('Please provide a configuration file path using -p', {});
     }
     setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
 });
 
 async function refreshCache() {
     if (config) {
-        console.log(`Menu API server version ${version} is running on port ${servicePort}`);
         info(`Menu API server version ${version} is running on port ${servicePort}`);
 
         configRefresh(config);

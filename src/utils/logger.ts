@@ -1,55 +1,83 @@
-import * as url from "url";
 import {Config} from "./configFileReader";
 
 const Prometheus = require('prom-client');
 const register = new Prometheus.Registry();
 const error_counter = new Prometheus.Counter({
-    name: 'menu_api_error_count',
+    name: 'menu_api_errors_count',
     help: 'Count of errors obtained in menu-api',
-    labelNames: ['url', 'lang', 'message', 'method'],
-});
-const info_counter = new Prometheus.Counter({
-    name: 'menu_api_info_count',
-    help: 'Count all the info messages in menu-api',
-    labelNames: ['url', 'lang', 'message', 'method'],
+    labelNames: ['url', 'lang', 'message'],
 });
 export const http_request_counter = new Prometheus.Counter({
-    name: 'menu_api_http_request_count',
+    name: 'menu_api_http_requests_count',
     help: 'Count of HTTP requests made to menu-api',
     labelNames: ['route', 'statusCode', 'message', 'lang'],
 });
-export const total_refresh_files = new Prometheus.Gauge({
-   name: 'menu_api_total_refresh_files',
-   help: 'Check if the there are always 3 refresh files, one for each language',
-   labelNames: ['fileName']
-});
 export const refresh_files_size = new Prometheus.Gauge({
-    name: 'menu_api_refresh_files_size',
-    help: 'Check the size of refresh files',
+    name: 'menu_api_cache_files_bytes',
+    help: 'Cache files bytes',
     labelNames: ['fileName']
 });
 export const refresh_memory_array_size = new Prometheus.Gauge({
-    name: 'menu_api_refresh_memory_array_size',
-    help: 'Check the size of the memory array',
+    name: 'menu_api_menu_array_size',
+    help: 'Menu array size',
     labelNames: ['arrayName']
 });
 export const total_WPV_sites = new Prometheus.Gauge({
-    name: 'menu_api_total_WPV_sites',
-    help: 'Check the number of wp veritas sites per openshift environment',
+    name: 'menu_api_wpveritas_sites_total',
+    help: 'Number of wp veritas sites per openshift environment',
     labelNames: ['openshiftEnvironment']
+});
+export const total_retrieved_sites = new Prometheus.Gauge({
+    name: 'menu_api_retrieved_sites_total',
+    help: 'Number of retrieved sites per language',
+    labelNames: ['lang']
+});
+export const total_pages = new Prometheus.Gauge({
+    name: 'menu_api_pages_total',
+    help: 'Number of pages per language and site',
+    labelNames: ['lang', 'site']
+});
+export const total_posts = new Prometheus.Gauge({
+    name: 'menu_api_posts_total',
+    help: 'Number of posts per language and site',
+    labelNames: ['lang', 'site']
+});
+export const total_categories = new Prometheus.Gauge({
+    name: 'menu_api_categories_total',
+    help: 'Number of categories per language and site',
+    labelNames: ['lang', 'site']
+});
+export const external_detached_menus_counter = new Prometheus.Counter({
+    name: 'menu_api_external_detached_menus_total',
+    help: 'Number of external detached menus',
+    labelNames: ['url']
+});
+export const menu_api_refresh_duration_seconds = new Prometheus.Gauge({
+    name: 'menu_api_refresh_duration_seconds',
+    help: 'Refresh duration in seconds'
+});
+export const menu_api_wp_api_call_duration_seconds = new Prometheus.Gauge({
+    name: 'menu_api_wp_api_call_duration_seconds',
+    help: 'API call duration in seconds',
+    labelNames: ['url', 'lang']
 });
 
 register.setDefaultLabels({
-    app: 'menu-api'
+    app: 'menu-api-siblings'
 })
 Prometheus.collectDefaultMetrics({register});
 register.registerMetric(http_request_counter);
-register.registerMetric(info_counter);
 register.registerMetric(error_counter);
-register.registerMetric(total_refresh_files);
 register.registerMetric(refresh_files_size);
 register.registerMetric(refresh_memory_array_size);
 register.registerMetric(total_WPV_sites);
+register.registerMetric(total_retrieved_sites);
+register.registerMetric(total_pages);
+register.registerMetric(total_posts);
+register.registerMetric(total_categories);
+register.registerMetric(external_detached_menus_counter);
+register.registerMetric(menu_api_refresh_duration_seconds);
+register.registerMetric(menu_api_wp_api_call_duration_seconds);
 
 export function getRegister() {
     return register;
@@ -64,18 +92,13 @@ export function configLogs(configFile: Config) {
 function log(message: string, level: string = 'info', metadata: object = {}) {
     const logObject = {
         message,
-        //timestamp: new Date().toISOString(),
         ...metadata,
     };
 
-    // Assuming sending logs to console, you can replace this with your preferred logging mechanism
     if (level == 'error' || debug) {
-        console.log(JSON.stringify(logObject));
+        console.log(new Date().toISOString(), JSON.stringify(logObject));
     }
     switch ( level ) {
-        case 'info':
-            info_counter.labels(logObject).inc();
-            break;
         case 'error':
             error_counter.labels(logObject).inc();
             break;
@@ -103,7 +126,10 @@ export function getErrorMessage(e: any): string {
     if (typeof e === "string") {
         message = e;
     } else if (e instanceof Error) {
-        message = e.message.concat(e.stack != undefined ? "---" + e.stack : '');
+        message = e.message;
+        if (debug) {
+            message = message.concat(e.stack != undefined ? " --- " + e.stack : '');
+        }
     }
 
     return message;

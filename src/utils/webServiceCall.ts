@@ -3,28 +3,27 @@ import * as https from "https";
 import {Config} from "./configFileReader";
 
 export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const hostname = wpVeritas ? configFile.WPVERITAS_HOSTNAME : configFile.POD_NAME + openshiftEnv;
-	const path = url.replace(/^https:\/\/(.*)\.epfl\.ch/gm, "");
-
+	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "");
 	const parsedUrl = new URL(url);
+	const hostname = wpVeritas ? parsedUrl.hostname : configFile.POD_NAME.concat(url.indexOf('wp-httpd') > -1 ? '' : openshiftEnv);
 
 	if (configFile.DEBUG) {
-		console.log("dans callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
+		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
 	}
 	const options = {
 		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
-		port: wpVeritas ? null : 8443,
+		port: wpVeritas || configFile.LOCAL_ENV ? null : 8443,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
 			'Accept': 'application/json',
-			'Host': wpVeritas ? configFile.WPVERITAS_HOSTNAME : parsedUrl.hostname,
+			'Host': url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME : parsedUrl.hostname,
 		},
 		rejectUnauthorized: false
 	};
 
-	info('Start web service call', { url: hostname + path, method: 'callWebService'});
+	info('Start web service call', { url: hostname + path, method: 'callWebService' });
 	return new Promise((resolve, reject) => {
 		const req = https.request(options, (res) => {
 			let data = "";
@@ -36,34 +35,19 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 
 			res.on("end", () => {
 				try {
-					info(`End web service call`, {
-						url: path,
-						method: "callWebService",
-					});
+					info(`End web service call`, { url: hostname + path, method: "callWebService" });
 					resolve(callBackFunction(url, JSON.parse(data)));
 				} catch (e) {
-					error(getErrorMessage(e), {
-						url: path,
-						method: "callWebService",
-					});
 					reject(e);
 				}
 			});
 
 			res.on("error", (e) => {
-				error(getErrorMessage(e), {
-					url: path,
-					method: "callWebService",
-				});
 				reject(e);
 			});
 		});
 
 		req.on("error", (e) => {
-			error(getErrorMessage(e), {
-				url: path,
-				method: "callWebService",
-			});
 			reject(e);
 		});
 

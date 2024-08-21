@@ -81,11 +81,11 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
         if (firstSite) {
             const restUrl = Object.keys(firstSite)[0];
-            info('First site found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+            info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
             items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
         } else {
-            error('First site not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
+            error('orphan_page', {url: url, lang: lang});
             if (pageType == 'post' && type == 'breadcrumb') {
                 //if the site is not found and we are looking for a post page not attached to the menu,
                 //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
@@ -93,7 +93,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
                 if (firstSite) {
                     const restUrl = Object.keys(firstSite)[0];
-                    info('Site home page for post found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
                     items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
 
@@ -115,14 +115,14 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                         items.push(postPage);
                     }
                 } else {
-                    error('Site home page for post not found', {url: homePageUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    error('orphan_post', {url: homePageUrl, lang: lang});
                     err ++;
                 }
             }
             err ++;
         }
     } else {
-        error('Array menu by language not found', {url: url, lang: lang,  method: 'getMenuItems: '.concat(type)});
+        error('menu_array_not_found', {lang: lang});
         err ++;
     }
 
@@ -134,7 +134,6 @@ function getListFromFirstSite(firstSite: {
     [p: string]: WpMenu
 }, restUrl: string, type: string, items: WpMenu[], siteArray: SiteTreeInstance, lang: string) : WpMenu[] {
     if (firstSite[restUrl]) {
-        console.log('first site',firstSite[restUrl]);
         switch ( type ) {
             case "siblings":
                 items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
