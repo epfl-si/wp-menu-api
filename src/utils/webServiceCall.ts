@@ -5,7 +5,7 @@ import {Config} from "./configFileReader";
 export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
 	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "");
 	const parsedUrl = new URL(url);
-	const hostname = wpVeritas ? parsedUrl.hostname : configFile.POD_NAME;
+	const hostname = wpVeritas ? parsedUrl.hostname : configFile.POD_NAME.concat(url.indexOf('wp-httpd') > -1 ? '' : openshiftEnv);
 
 	if (configFile.DEBUG) {
 		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
