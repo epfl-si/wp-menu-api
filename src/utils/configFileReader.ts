@@ -30,10 +30,10 @@ export function loadConfig(configFilePath: any): Config | undefined {
     if (parsedConfig) {
       return parsedConfig;
     } else {
-      error('Invalid or missing data section in the config', { url: configFilePath});
+      error('Invalid or missing data section in the config', { url: configFilePath });
     }
   } catch (e) {
-    error(getErrorMessage(e), { url: configFilePath});
+    error(getErrorMessage(e), { url: configFilePath });
   }
   return undefined;
 }

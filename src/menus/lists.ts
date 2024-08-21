@@ -81,7 +81,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
         if (firstSite) {
             const restUrl = Object.keys(firstSite)[0];
-            info('Page found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+            info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
             items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
         } else {
@@ -93,7 +93,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
                 if (firstSite) {
                     const restUrl = Object.keys(firstSite)[0];
-                    info('Site home page for post found', {url: restUrl, lang: lang,  method: 'getMenuItems: '.concat(type)});
+                    info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
                     items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
 

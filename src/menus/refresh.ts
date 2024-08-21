@@ -68,7 +68,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
         }
     }).catch ((e) => {
         const message = getErrorMessage(e);
-        error(message, { url: siteMenuURL});
+        error(message, { url: siteMenuURL });
         return {status: siteMenuURL.concat(" - ").concat(message), items: [],  _links: {}};
     });
 
@@ -79,12 +79,12 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
 
 export async function refreshMenu(sites: Site[]) {
     const startTime = new Date().getTime();
-    info('Start refresh from API', { method: 'refreshMenu'});
+    info('Start refresh from API', { method: 'refreshMenu' });
     const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="");
     getWPVeritasSitesForEnvironment(filteredListOfSites);
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
-      { method: 'refreshMenu'});
+      { method: 'refreshMenu' });
     const promises: Promise<MenuAPIResult[]>[] = [
         getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),
         getMenusInParallel(filteredListOfSites, "fr", getMenuForSite, 10),
@@ -92,14 +92,14 @@ export async function refreshMenu(sites: Site[]) {
     ];
 
     await Promise.all(promises);
-    info('End refresh from API', {method: 'refreshMenu'});
+    info('End refresh from API', { method: 'refreshMenu' });
     const endTime = new Date().getTime();
     menu_api_refresh_duration_seconds.set((endTime - startTime)/1000)
 }
 
 export async function refreshFileMenu(pathRefreshFile: string) {
     cachedMenus.read(pathRefreshFile);
-    info(`Start refresh from API`,{ method: 'refreshFileMenu'});
+    info(`Start refresh from API`,{ method: 'refreshFileMenu' });
     const sites = await getSiteListFromWPVeritas(config);
     await refreshMenu(sites);
     cachedMenus.write(pathRefreshFile);
@@ -107,7 +107,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     getPagesCount(cachedMenus);
     getPostsCount(cachedMenus);
     getCategoriesCount(cachedMenus);
-    info(`End refresh from API`,{ method: 'refreshFileMenu'});
+    info(`End refresh from API`, { method: 'refreshFileMenu' });
 }
 
 export function initializeCachedMenus(pathRefreshFile: string) {

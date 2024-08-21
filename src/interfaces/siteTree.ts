@@ -245,12 +245,12 @@ function writeRefreshFile(path: string, json: string)  {
     try {
         fs.writeFile(path, json, (err) => {
             if (err) {
-                error(getErrorMessage(err), { url: path});
+                error(getErrorMessage(err), { url: path });
             } else {
-                info('Successfully wrote file', { url: path, method: 'writeRefreshFile'});
+                info('Successfully wrote file', { url: path, method: 'writeRefreshFile' });
             }
         });
     } catch (e) {
-        error(getErrorMessage(e), { url: path});
+        error(getErrorMessage(e), { url: path });
     }
 }
