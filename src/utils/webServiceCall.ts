@@ -23,7 +23,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 		rejectUnauthorized: false
 	};
 
-	info('Start web service call', {url: hostname + path, method: 'callWebService'});
+	info('Start web service call', { url: hostname + path, method: 'callWebService' });
 	return new Promise((resolve, reject) => {
 		const req = https.request(options, (res) => {
 			let data = "";
@@ -35,7 +35,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 
 			res.on("end", () => {
 				try {
-					info(`End web service call`, {url: hostname + path, method: "callWebService"});
+					info(`End web service call`, { url: hostname + path, method: "callWebService" });
 					resolve(callBackFunction(url, JSON.parse(data)));
 				} catch (e) {
 					reject(e);

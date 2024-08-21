@@ -9,13 +9,13 @@ export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site
 	try {
 		return await callWebService(configFile, true, wpVeritasURL, '', callBackFunctionFromWPVeritas);
 	} catch (e) {
-		error(getErrorMessage(e), { url: wpVeritasURL});
+		error(getErrorMessage(e), { url: wpVeritasURL });
 		return [];
 	}
 }
 
 function callBackFunctionFromWPVeritas(url: string, res: any){
 	const sites: Site[] = res;
-	info(`Total sites retrieved: ${sites.length}`, { url: url, method: 'callWebService'});
+	info(`Total sites retrieved: ${sites.length}`, { url: url, method: 'callWebService' });
 	return sites;
 }
