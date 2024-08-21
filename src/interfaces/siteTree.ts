@@ -79,7 +79,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 return child;//for normal menus or external not found menus
             });
             const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
-            detachedMenus.map(em => warn("External detached menu found", {url: em.title}))
+            detachedMenus.map(em => warn("External detached menu found", {url: em.title}))//TODO
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
@@ -176,6 +176,42 @@ export class SiteTreeMutable {
             }
         }
         return externalMenus;
+    }
+
+    getPages (): { urlInstanceRestUrl: string, entries: WpMenu }[] {
+        const pages : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        for (let menu of this.menus) {
+            for (let entry of menu.entries) {
+                if(entry.object === 'page') {
+                    pages.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
+                }
+            }
+        }
+        return pages;
+    }
+
+    getPosts () {
+        const posts : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        for (let menu of this.menus) {
+            for (let entry of menu.entries) {
+                if(entry.object === 'post') {
+                    posts.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
+                }
+            }
+        }
+        return posts;
+    }
+
+    getCategories () {
+        const categories : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        for (let menu of this.menus) {
+            for (let entry of menu.entries) {
+                if(entry.object === 'category') {
+                    categories.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
+                }
+            }
+        }
+        return categories;
     }
 
     updateMenu(siteUrlSubstring: string, result: MenuAPIResult){

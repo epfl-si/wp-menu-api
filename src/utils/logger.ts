@@ -32,6 +32,21 @@ export const total_retrieved_sites = new Prometheus.Gauge({
     help: 'Number of retrieved sites per language',
     labelNames: ['lang']
 });
+export const total_pages = new Prometheus.Gauge({
+    name: 'menu_api_pages_total',
+    help: 'Number of pages per language and site',
+    labelNames: ['lang', 'site']
+});
+export const total_posts = new Prometheus.Gauge({
+    name: 'menu_api_posts_total',
+    help: 'Number of posts per language and site',
+    labelNames: ['lang', 'site']
+});
+export const total_categories = new Prometheus.Gauge({
+    name: 'menu_api_categories_total',
+    help: 'Number of categories per language and site',
+    labelNames: ['lang', 'site']
+});
 
 register.setDefaultLabels({
     app: 'menu-api-siblings'
@@ -43,6 +58,9 @@ register.registerMetric(refresh_files_size);
 register.registerMetric(refresh_memory_array_size);
 register.registerMetric(total_WPV_sites);
 register.registerMetric(total_retrieved_sites);
+register.registerMetric(total_pages);
+register.registerMetric(total_posts);
+register.registerMetric(total_categories);
 
 export function getRegister() {
     return register;

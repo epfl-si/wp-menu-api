@@ -5,7 +5,13 @@ import {Config} from "../utils/configFileReader";
 import {callWebService} from "../utils/webServiceCall";
 import {MenusCache} from "../utils/cache";
 import {getSiteListFromWPVeritas} from "../utils/source";
-import {getRetrievedSitesCount, getWPVeritasSitesForEnvironment} from "../utils/metrics";
+import {
+    getCategoriesCount,
+    getPagesCount,
+    getPostsCount,
+    getRetrievedSitesCount,
+    getWPVeritasSitesForEnvironment
+} from "../utils/metrics";
 
 let restUrlEnd: string = '';
 const cachedMenus: MenusCache = new MenusCache();
@@ -84,6 +90,9 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     await refreshMenu(sites);
     cachedMenus.write(pathRefreshFile);
     getRetrievedSitesCount(cachedMenus);
+    getPagesCount(cachedMenus);
+    getPostsCount(cachedMenus);
+    getCategoriesCount(cachedMenus);
     info(`End refresh from API`,{ method: 'refreshFileMenu'});
 }
 
