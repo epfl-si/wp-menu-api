@@ -169,52 +169,32 @@ export class SiteTreeMutable {
         return customMenus;
     }
 
-    getExternalMenus () {
-        const externalMenus : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+    _getObject (objectTye: string) {
+        const object : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
         for (let menu of this.menus) {
             for (let entry of menu.entries) {
-                if(entry.object === 'epfl-external-menu') {
-                    externalMenus.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
+                if(entry.object === objectTye) {
+                    object.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
                 }
             }
         }
-        return externalMenus;
+        return object;
+    }
+
+    getExternalMenus () {
+        return this._getObject('epfl-external-menu');
     }
 
     getPages () {
-        const pages : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-        for (let menu of this.menus) {
-            for (let entry of menu.entries) {
-                if(entry.object === 'page') {
-                    pages.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
-                }
-            }
-        }
-        return pages;
+        return this._getObject('page');
     }
 
     getPosts () {
-        const posts : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-        for (let menu of this.menus) {
-            for (let entry of menu.entries) {
-                if(entry.object === 'post') {
-                    posts.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
-                }
-            }
-        }
-        return posts;
+        return this._getObject('post');
     }
 
     getCategories () {
-        const categories : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
-        for (let menu of this.menus) {
-            for (let entry of menu.entries) {
-                if(entry.object === 'category') {
-                    categories.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
-                }
-            }
-        }
-        return categories;
+        return this._getObject('category');
     }
 
     updateMenu(siteUrlSubstring: string, result: MenuAPIResult){
