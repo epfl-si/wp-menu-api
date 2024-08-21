@@ -1,6 +1,12 @@
 import {Site} from "../interfaces/site";
 import {MenuAPIResult} from "../interfaces/menuAPIResult";
-import {error, getErrorMessage, info} from "../utils/logger";
+import {
+    error,
+    getErrorMessage,
+    info,
+    menu_api_refresh_duration_seconds,
+    menu_api_wp_api_call_duration_seconds
+} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {callWebService} from "../utils/webServiceCall";
 import {MenusCache} from "../utils/cache";
@@ -43,13 +49,14 @@ async function getMenusInParallel(
 }
 
 async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Promise<MenuAPIResult> {
+    const startTime = new Date().getTime();
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
     const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(".epfl.ch")+".epfl.ch".length);
     const timeoutPromise = new Promise<never>((resolve, reject) => {
         setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
     });
 
-    return Promise.race([
+    const result = Promise.race([
         callWebService(config, false, siteMenuURL, osEnv, (url: string, res: any) => res as MenuAPIResult),
         timeoutPromise
     ]).then((result) => {
@@ -64,9 +71,14 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
         error(message, { url: siteMenuURL});
         return {status: siteMenuURL.concat(" - ").concat(message), items: [],  _links: {}};
     });
+
+    const endTime = new Date().getTime();
+    menu_api_wp_api_call_duration_seconds.labels({url: siteMenuURL, lang: lang}).set((endTime - startTime)/1000);
+    return result;
 }
 
 export async function refreshMenu(sites: Site[]) {
+    const startTime = new Date().getTime();
     info('Start refresh from API', { method: 'refreshMenu'});
     const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="");
     getWPVeritasSitesForEnvironment(filteredListOfSites);
@@ -81,6 +93,8 @@ export async function refreshMenu(sites: Site[]) {
 
     await Promise.all(promises);
     info('End refresh from API', {method: 'refreshMenu'});
+    const endTime = new Date().getTime();
+    menu_api_refresh_duration_seconds.set((endTime - startTime)/1000)
 }
 
 export async function refreshFileMenu(pathRefreshFile: string) {

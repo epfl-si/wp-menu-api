@@ -52,6 +52,15 @@ export const external_detached_menus_counter = new Prometheus.Counter({
     help: 'Number of external detached menus',
     labelNames: ['url']
 });
+export const menu_api_refresh_duration_seconds = new Prometheus.Gauge({
+    name: 'menu_api_refresh_duration_seconds',
+    help: 'Refresh duration in seconds'
+});
+export const menu_api_wp_api_call_duration_seconds = new Prometheus.Gauge({
+    name: 'menu_api_wp_api_call_duration_seconds',
+    help: 'API call duration in seconds',
+    labelNames: ['url', 'lang']
+});
 
 register.setDefaultLabels({
     app: 'menu-api-siblings'
@@ -67,6 +76,8 @@ register.registerMetric(total_pages);
 register.registerMetric(total_posts);
 register.registerMetric(total_categories);
 register.registerMetric(external_detached_menus_counter);
+register.registerMetric(menu_api_refresh_duration_seconds);
+register.registerMetric(menu_api_wp_api_call_duration_seconds);
 
 export function getRegister() {
     return register;
