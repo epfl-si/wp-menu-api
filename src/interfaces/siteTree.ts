@@ -181,7 +181,7 @@ export class SiteTreeMutable {
         return externalMenus;
     }
 
-    getPages (): { urlInstanceRestUrl: string, entries: WpMenu }[] {
+    getPages () {
         const pages : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
         for (let menu of this.menus) {
             for (let entry of menu.entries) {
