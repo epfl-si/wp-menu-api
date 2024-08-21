@@ -1,7 +1,7 @@
 import express from 'express';
 import {configRefresh, getExternalMenus, getHomepageCustomLinks, refreshFileMenu} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
-import {configLogs, error, getRegister, http_request_counter, info,} from "./utils/logger";
+import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {prometheusChecks} from "./utils/metrics";
