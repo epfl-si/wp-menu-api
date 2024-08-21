@@ -1,7 +1,7 @@
 import {WpMenu} from "./wpMenu";
 import {MenuAPIResult} from "./menuAPIResult";
 import {getBaseUrl} from "../utils/links";
-import {error, getErrorMessage, info, warn} from "../utils/logger";
+import {error, external_detached_menus_counter, getErrorMessage, info, warn} from "../utils/logger";
 import fs from "fs";
 
 export interface SiteTreeInstance  {
@@ -79,7 +79,10 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 return child;//for normal menus or external not found menus
             });
             const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
-            detachedMenus.map(em => warn("External detached menu found", {url: em.title}))//TODO
+            detachedMenus.map(em => {
+                warn("External detached menu found", {url: em.title});
+                external_detached_menus_counter.labels({url: em.title}).inc();
+            });
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {

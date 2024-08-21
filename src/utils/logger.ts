@@ -47,6 +47,11 @@ export const total_categories = new Prometheus.Gauge({
     help: 'Number of categories per language and site',
     labelNames: ['lang', 'site']
 });
+export const external_detached_menus_counter = new Prometheus.Counter({
+    name: 'menu_api_external_detached_menus_total',
+    help: 'Number of external detached menus',
+    labelNames: ['url']
+});
 
 register.setDefaultLabels({
     app: 'menu-api-siblings'
@@ -61,6 +66,7 @@ register.registerMetric(total_retrieved_sites);
 register.registerMetric(total_pages);
 register.registerMetric(total_posts);
 register.registerMetric(total_categories);
+register.registerMetric(external_detached_menus_counter);
 
 export function getRegister() {
     return register;
