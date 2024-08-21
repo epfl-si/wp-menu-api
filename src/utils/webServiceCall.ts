@@ -13,7 +13,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 	const options = {
 		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
-		port: wpVeritas || configFile.TEST_ENV ? null : 8443,
+		port: wpVeritas || configFile.LOCAL_ENV ? null : 8443,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',

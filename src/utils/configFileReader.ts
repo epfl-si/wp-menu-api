@@ -20,7 +20,7 @@ export interface Config {
   MENU_BAR_LINKS_DE: string;
   POD_NAME: string;
   DEBUG: boolean;
-  TEST_ENV: boolean;
+  LOCAL_ENV: boolean;
 }
 
 export function loadConfig(configFilePath: any): Config | undefined {
