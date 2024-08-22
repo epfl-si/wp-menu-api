@@ -81,7 +81,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
             detachedMenus.map(em => {
                 warn("External detached menu found", {url: em.title});
-                external_detached_menus_counter.labels({url: em.title}).inc();
+                external_detached_menus_counter.labels({url: em.title}).set(1);
             });
             return childrenList.filter(c => c.object !== 'epfl-external-menu');
         },

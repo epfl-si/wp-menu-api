@@ -47,7 +47,7 @@ export const total_categories = new Prometheus.Gauge({
     help: 'Number of categories per language and site',
     labelNames: ['lang', 'site']
 });
-export const external_detached_menus_counter = new Prometheus.Counter({
+export const external_detached_menus_counter = new Prometheus.Gauge({
     name: 'menu_api_external_detached_menus_total',
     help: 'Number of external detached menus',
     labelNames: ['url']
@@ -61,7 +61,7 @@ export const menu_api_wp_api_call_duration_seconds = new Prometheus.Gauge({
     help: 'API call duration in seconds',
     labelNames: ['url', 'lang']
 });
-export const orphan_pages_counter = new Prometheus.Counter({
+export const orphan_pages_counter = new Prometheus.Gauge({
     name: 'menu_api_orphan_pages_count',
     help: 'menu_api_orphan_pages_count Number of page that are not linked to any menus',
     labelNames: ['url', 'lang']

@@ -84,9 +84,10 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
             items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
+            orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
         } else {
             info('orphan_page', {url: url, lang: lang});
-            orphan_pages_counter.labels( {url: url, lang: lang });
+            orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
             if (pageType == 'post' && type == 'breadcrumb') {
                 //if the site is not found and we are looking for a post page not attached to the menu,
                 //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
@@ -115,9 +116,10 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                             title: currentPostName, url: url};
                         items.push(postPage);
                     }
+                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(0);
                 } else {
                     info('orphan_post', {url: homePageUrl, lang: lang});
-                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang });
+                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(1);
                     err ++;
                 }
             }
