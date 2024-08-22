@@ -8,6 +8,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY src ./src
 RUN mkdir ./data
+RUN chmod 1777 ./data
 
 RUN npm install
 
