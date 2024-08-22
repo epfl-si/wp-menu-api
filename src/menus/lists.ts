@@ -1,6 +1,6 @@
 import {WpMenu} from "../interfaces/wpMenu";
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {error, info} from "../utils/logger";
+import {error, info, orphan_pages_counter} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {getCachedMenus} from "./refresh";
 
@@ -85,7 +85,8 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
             items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
         } else {
-            error('orphan_page', {url: url, lang: lang});
+            info('orphan_page', {url: url, lang: lang});
+            orphan_pages_counter.labels( {url: url, lang: lang });
             if (pageType == 'post' && type == 'breadcrumb') {
                 //if the site is not found and we are looking for a post page not attached to the menu,
                 //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
@@ -115,7 +116,8 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                         items.push(postPage);
                     }
                 } else {
-                    error('orphan_post', {url: homePageUrl, lang: lang});
+                    info('orphan_post', {url: homePageUrl, lang: lang});
+                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang });
                     err ++;
                 }
             }

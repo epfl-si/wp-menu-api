@@ -61,6 +61,11 @@ export const menu_api_wp_api_call_duration_seconds = new Prometheus.Gauge({
     help: 'API call duration in seconds',
     labelNames: ['url', 'lang']
 });
+export const orphan_pages_counter = new Prometheus.Counter({
+    name: 'menu_api_orphan_pages_count',
+    help: 'menu_api_orphan_pages_count Number of page that are not linked to any menus',
+    labelNames: ['url', 'lang']
+});
 
 register.setDefaultLabels({
     app: 'menu-api-siblings'
@@ -78,6 +83,7 @@ register.registerMetric(total_categories);
 register.registerMetric(external_detached_menus_counter);
 register.registerMetric(menu_api_refresh_duration_seconds);
 register.registerMetric(menu_api_wp_api_call_duration_seconds);
+register.registerMetric(orphan_pages_counter);
 
 export function getRegister() {
     return register;
