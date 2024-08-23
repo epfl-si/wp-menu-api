@@ -77,27 +77,29 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
     let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
 
     if (siteArray) {
-        let firstSite: { [urlInstance: string]: WpMenu } | undefined = siteArray.findItemByUrl(url);
+        const firstSite: { result: { [urlInstance: string]: WpMenu } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
-        if (firstSite) {
-            const restUrl = Object.keys(firstSite)[0];
+        if (firstSite.result) {
+            const restUrl = Object.keys(firstSite.result)[0];
             info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
-            items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
+            items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
             orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
         } else {
             info('orphan_page', {url: url, lang: lang});
-            orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
+            if (firstSite.objectType != 'custom') {
+                orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
+            }
             if (pageType == 'post' && type == 'breadcrumb') {
                 //if the site is not found and we are looking for a post page not attached to the menu,
                 //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
-                firstSite = siteArray.findLevelZeroByUrl(homePageUrl);
+                const levelzero = siteArray.findLevelZeroByUrl(homePageUrl);
 
-                if (firstSite) {
-                    const restUrl = Object.keys(firstSite)[0];
+                if (levelzero) {
+                    const restUrl = Object.keys(levelzero)[0];
                     info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
-                    items = getListFromFirstSite(firstSite, restUrl, type, items, siteArray, lang );
+                    items = getListFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
 
                     //we add the site post home page to the breadcrumb:
                     // if the post home page is defined in wordpress we get his name ans url into the item,

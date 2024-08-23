@@ -11,6 +11,7 @@ export interface SiteTreeInstance  {
     findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => WpMenu | undefined
     getSiblings : (urlInstanceRestUrl: string, idItem: number) => WpMenu[]
     findItemByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
+    findItemAndObjectTypeByUrl: (pageURL: string) => { result: { [urlInstance: string]: WpMenu } | undefined, objectType: string}
     findLevelZeroByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
 }
 
@@ -120,13 +121,31 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];
-                    if (item.url && item.url===pageURL && item.object !== 'custom'){
+                    if (item.url && item.url===pageURL && item.object !== 'custom') {
                         result[url] = item
                         return result;
                     }
                 }
             }
             return undefined;
+        },
+        findItemAndObjectTypeByUrl(pageURL: string) {
+            const result: { [urlInstance: string]: WpMenu } = {};
+            let objectType: string = '';
+            for (const url in itemsByID) {
+                const items = itemsByID[url];
+                for (const id in items) {
+                    const item = itemsByID[url][id];
+                    if (item.url && item.url===pageURL){
+                        objectType = item.object;
+                        if (item.object !== 'custom') {
+                            result[url] = item
+                            return { result: result, objectType: objectType };
+                        }
+                    }
+                }
+            }
+            return { result: undefined, objectType: objectType };
         },
         findLevelZeroByUrl(pageURL: string) {
             const result: { [urlInstance: string]: WpMenu } = {};
