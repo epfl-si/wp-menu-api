@@ -86,8 +86,8 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
             orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
         } else {
-            info('orphan_page', {url: url, lang: lang});
             if (firstSite.objectType != 'custom') {
+                error('orphan_page', {url: url, lang: lang});
                 orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
             }
             if (pageType == 'post' && type == 'breadcrumb') {
