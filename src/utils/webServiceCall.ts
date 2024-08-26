@@ -10,6 +10,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 	if (configFile.DEBUG) {
 		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
 	}
+
 	const options = {
 		hostname: hostname,
 		path: wpVeritas ? '/api/v1/sites' : path,
@@ -22,6 +23,9 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 		},
 		rejectUnauthorized: false
 	};
+	if (url.indexOf('mt180') > -1 || url.indexOf('test-sous-page') > -1 || url.indexOf('dubrovnik.epfl.ch') > -1) {
+		console.log("options call", options);
+	}
 
 	info('Start web service call', { url: url, method: 'callWebService' });
 	return new Promise((resolve, reject) => {
@@ -34,6 +38,11 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 			});
 
 			res.on("end", () => {
+
+				if (url.indexOf('mt180') > -1 || url.indexOf('test-sous-page') > -1 || url.indexOf('dubrovnik.epfl.ch') > -1) {
+					console.log("response call", url, data);
+				}
+
 				try {
 					info(`End web service call`, { url: url, method: "callWebService" });
 					resolve(callBackFunction(url, JSON.parse(data)));
@@ -44,12 +53,18 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 			});
 
 			res.on("error", (e) => {
+				if (url.indexOf('mt180') > -1 || url.indexOf('test-sous-page') > -1 || url.indexOf('dubrovnik.epfl.ch') > -1) {
+					console.log("response call on error", url, e);
+				}
 				error(getErrorMessage(e), { url: url });
 				reject(e);
 			});
 		});
 
 		req.on("error", (e) => {
+			if (url.indexOf('mt180') > -1 || url.indexOf('test-sous-page') > -1 || url.indexOf('dubrovnik.epfl.ch') > -1) {
+				console.log("response call on error", url, e);
+			}
 			error(getErrorMessage(e), { url: url });
 			reject(e);
 		});
