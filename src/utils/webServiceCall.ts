@@ -38,16 +38,19 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 					info(`End web service call`, { url: hostname + path, method: "callWebService" });
 					resolve(callBackFunction(url, JSON.parse(data)));
 				} catch (e) {
+					error(getErrorMessage(e), { url: url });
 					reject(e);
 				}
 			});
 
 			res.on("error", (e) => {
+				error(getErrorMessage(e), { url: url });
 				reject(e);
 			});
 		});
 
 		req.on("error", (e) => {
+			error(getErrorMessage(e), { url: url });
 			reject(e);
 		});
 
