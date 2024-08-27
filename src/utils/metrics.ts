@@ -91,11 +91,19 @@ export function getCategoriesCount(cachedMenus: MenusCache) {
 
 function getGroupedArray(pages: {urlInstanceRestUrl: string, entries: WpMenu}[]) {
 	return pages.reduce((grouped: { [site: string]: WpMenu[] }, page: { urlInstanceRestUrl: string, entries: WpMenu }) => {
-		const site = page.urlInstanceRestUrl;
+		const site = cleanUrl(page.urlInstanceRestUrl);
 		if (!grouped[site]) {
 			grouped[site] = [];
 		}
 		grouped[site].push(page.entries);
 		return grouped;
 	}, {});
+}
+
+function cleanUrl(site: string) {
+	let subUrl = site;
+	if (site.indexOf("wp-json") > -1) {
+		subUrl = site.substring(site.indexOf("wp-json") + 7);
+	}
+	return subUrl;
 }
