@@ -89,6 +89,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
                 error('orphan_page', {url: url, lang: lang});
                 orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
+                err ++;
             }
             if (pageType == 'post' && type == 'breadcrumb') {
                 //if the site is not found and we are looking for a post page not attached to the menu,
@@ -125,7 +126,6 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                     err ++;
                 }
             }
-            err ++;
         }
     } else {
         error('menu_array_not_found', {lang: lang});
