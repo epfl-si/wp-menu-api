@@ -12,18 +12,8 @@ import {Site} from "../interfaces/site";
 import {MenusCache} from "./cache";
 import {WpMenu} from "../interfaces/wpMenu";
 
-function checkRefreshFile(pathRefreshFile: string) {
-	for (const lang in getCachedMenus()) {
-		if (fs.existsSync(pathRefreshFile.concat('/menus_' + lang + '.json'))) {
-			refresh_files_size.labels({fileName: '/menus_' + lang + '.json'}).set(fs.statSync(pathRefreshFile.concat('/menus_' + lang + '.json')).size);
-		} else {
-			refresh_files_size.labels({fileName: '/menus_' + lang + '.json'}).set(0);
-		}
-	}
-}
-
 export function prometheusChecks(pathRefreshFile: string) {
-	checkRefreshFile(pathRefreshFile);
+	getCachedMenus().checkFileCache(pathRefreshFile);
 	getCachedMenus().checkCache();
 }
 
