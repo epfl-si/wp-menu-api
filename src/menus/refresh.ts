@@ -79,7 +79,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
 export async function refreshMenu(sites: Site[]) {
     const startTime = new Date().getTime();
     info('Start refresh from API', { method: 'refreshMenu' });
-    const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="");
+    const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="" && s.wpInfra);
     getWPVeritasSitesForEnvironment(filteredListOfSites);
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
