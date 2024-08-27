@@ -51,7 +51,6 @@ async function getMenusInParallel(
 async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Promise<MenuAPIResult> {
     const startTime = new Date().getTime();
     const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
-    const siteUrlSubstring = siteMenuURL.substring(siteMenuURL.indexOf(".epfl.ch")+".epfl.ch".length);
     const timeoutPromise = new Promise<never>((resolve, reject) => {
         setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
     });
@@ -61,7 +60,7 @@ async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Pro
         timeoutPromise
     ]).then((result) => {
         if (result.status && result.status === 'OK') {
-            cachedMenus.menus[lang].updateMenu(siteUrlSubstring, result);
+            cachedMenus.menus[lang].updateMenu(siteMenuURL, result);
             return result;
         } else {
             throw new Error(result.status);
