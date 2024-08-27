@@ -86,7 +86,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
             orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
         } else {
-            if (firstSite.objectType != 'custom') {
+            if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
                 error('orphan_page', {url: url, lang: lang});
                 orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
             }
