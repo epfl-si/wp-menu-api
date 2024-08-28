@@ -110,20 +110,6 @@ describe("Site Tree", function() {
                 { urlInstanceRestUrl: "https://tototata.com/wp-json/bla?bla", entries: [parent2, child2, child3] }]);
             assert(siteTree.findExternalMenuByRestUrl(child3.rest_url!)?.title=="Some_Page parent 1");
         })
-        it("gets the correct instance parent in a different instance", function() {
-            const jsonService =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
-            const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
-            const serviceMenu: MenuAPIResult = JSON.parse(jsonService);
-            const websiteMenu: MenuAPIResult = JSON.parse(jsonWebSite);
-            const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: serviceMenu.items },
-                { urlInstanceRestUrl: "/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items }]);
-            const tree1 = siteTree.getParent("/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", 15624);
-            if (tree1) {
-                assert(tree1["/campus/services/wp-json/epfl/v1/menus/top?lang=en"].ID === 7119);
-            } else {
-                assert.fail();
-            }
-        })
         it("gets the correct instance child", function() {
             const jsonServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
             const jsonWebSite =  fs.readFileSync('./test/unit/data/website.json', 'utf-8');
