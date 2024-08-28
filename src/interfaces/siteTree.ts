@@ -51,6 +51,8 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
 
     return {
         getParent(urlInstanceRestUrl: string, idChild:number): { [urlInstance : string]: WpMenu } {
+            const parsedUrl = new URL(urlInstanceRestUrl);
+            const path = parsedUrl.pathname + parsedUrl.search;
             const result: { [urlInstance: string]: WpMenu } = {};
             const parent = parents[urlInstanceRestUrl][idChild];//it could be undefined;
             if (parent === undefined) {
@@ -58,7 +60,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                     const items = itemsByID[url];
                     for (const id in items) {
                         const item = itemsByID[url][id];
-                        if (item.object === "epfl-external-menu" && item.rest_url === urlInstanceRestUrl){
+                        if (item.object === "epfl-external-menu" && item.rest_url === path){
                             result[url] = itemsByID[url][item.menu_item_parent];
                             return result;
                         }
