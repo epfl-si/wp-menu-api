@@ -17,8 +17,8 @@ class Site {
     getMenuEntries(): MenuEntry[]{
         return []
     }
-    toString(): string {
-        return this.url;
+    get [Symbol.toStringTag]() {
+        return `<Site url="${this.url}">`;
     }
 }
 
