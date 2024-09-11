@@ -85,19 +85,28 @@ class Site {
         return 'https://' + URL.parse(this.url)!.hostname;
     }
 
+    private cachedLanguages : string[] | undefined;
+
     async getLanguages(): Promise<string[]> {
-        const langApiResponse = await fetch(`${this.url}/wp-json/epfl/v1/languages`);
-        try {
-            return await langApiResponse.json();
-        } catch (SyntaxError) {
-            return [];
+        if (this.cachedLanguages === undefined) {
+            const langApiResponse = await fetch(`${this.url}/wp-json/epfl/v1/languages`);
+            try {
+                this.cachedLanguages = await langApiResponse.json() as any[];
+            } catch (SyntaxError) {
+                this.cachedLanguages = [];
+            }
         }
+        return this.cachedLanguages;
     }
 
-    async getMenuEntries(lang: string): Promise<MenuEntry[]>{
-        const menusApiResponse = await fetch(`${this.url}wp-json/epfl/v1/menus/top?lang=${lang}`);
+    async getMenuEntries(): Promise<MenuEntry[]>{
+        let menuEntries : MenuEntry[] = [];
+        for (const lang of await this.getLanguages()) {
+            const menusApiResponse = await fetch(`${this.url}wp-json/epfl/v1/menus/top?lang=${lang}`);
             const menusItemsStruct: {items:any[]} =  await menusApiResponse.json();
-            return menusItemsStruct.items.map(m => MenuEntry.parse(this, m));
+            menuEntries.push(...menusItemsStruct.items.map(m => MenuEntry.parse(this, m)));
+        }
+        return menuEntries;
     }
 
     get [Symbol.toStringTag]() {
@@ -124,9 +133,9 @@ async function main () {
 
     for (let site of await inv.sites()) {
         for (let lang of await site.getLanguages()) {
-            const menus = await site.getMenuEntries(lang);
+            const menus = await site.getMenuEntries();
             menus.map(m => {
-                console.log(`${site} has language ${lang} and this menu: ${m.getTitle()} -> ${m.getFullUrl()}`);
+                console.log(`${site} has this menu: ${m.getTitle()} -> ${m.getFullUrl()}`);
             })
         }
     }
