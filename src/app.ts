@@ -1,24 +1,59 @@
-class MenuEntry {
+abstract class MenuEntry {
 
-    title: string;
     ownerSite: Site;
-    relativeRestURI: string;
+    title: string;
 
-    constructor (ownerSite: Site, title: string, relativeRestURI: string) {
-        this.title = title;
+    constructor (ownerSite: Site, jsonDatum: any) {
         this.ownerSite = ownerSite;
-        this.relativeRestURI = relativeRestURI;
-
+        this.title = jsonDatum.title;
     }
+
+    static parse (ownerSite: Site, jsonDatum : any) : MenuEntry {
+        if (jsonDatum.object === "epfl-external-menu") {
+            return new ExternalMenuEntry(ownerSite, jsonDatum);
+        } else if (jsonDatum.object === "page") {
+            return new PageMenuEntry(ownerSite, jsonDatum);
+        } else {
+            return new OtherMenuEntry(ownerSite, jsonDatum);
+        }
+    }
+
     getTitle(): string {
         return this.title;
     }
     getSite(): Site {
         return this.ownerSite;
     }
-    getFullUrl(): string {
 
+    abstract getFullUrl() : string;
+}
+
+class ExternalMenuEntry extends MenuEntry {
+    restUrl: string;
+    constructor (ownerSite : Site, jsonDatum : any) {
+        super(ownerSite, jsonDatum);
+        this.restUrl = jsonDatum.rest_url;
     }
+
+    getFullUrl() {
+        return `${this.ownerSite.getDomainUrl()}${this.restUrl}`;
+    }
+}
+
+class PageMenuEntry extends MenuEntry {
+    url: string;
+    constructor (ownerSite : Site, jsonDatum : any) {
+        super(ownerSite, jsonDatum);
+        this.url = jsonDatum.url;
+    }
+
+    getFullUrl() {
+        return this.url;
+    }
+}
+
+class OtherMenuEntry extends MenuEntry {
+    getFullUrl() { return "(Not sure)"; }
 }
 
 class Site {
@@ -28,8 +63,13 @@ class Site {
         this.url = url;
     }
     getUrl() : string {
-        return ""
+        return this.url;
     }
+
+    getDomainUrl() : string {
+        return 'https://' + URL.parse(this.url)!.hostname;
+    }
+
     async getLanguages(): Promise<string[]> {
         const langApiResponse = await fetch(`${this.url}/wp-json/epfl/v1/languages`);
         try {
@@ -42,7 +82,7 @@ class Site {
     async getMenuEntries(lang: string): Promise<MenuEntry[]>{
         const menusApiResponse = await fetch(`${this.url}wp-json/epfl/v1/menus/top?lang=${lang}`);
             const menusItemsStruct: {items:any[]} =  await menusApiResponse.json();
-            return menusItemsStruct.items.map(m => new MenuEntry(this, m.title, m.rest_url));
+            return menusItemsStruct.items.map(m => MenuEntry.parse(this, m));
     }
 
     get [Symbol.toStringTag]() {
@@ -71,7 +111,7 @@ async function main () {
         for (let lang of await site.getLanguages()) {
             const menus = await site.getMenuEntries(lang);
             menus.map(m => {
-                console.log(`${site} has language ${lang} and this menu: ${m.getTitle()}`);
+                console.log(`${site} has language ${lang} and this menu: ${m.getTitle()} -> ${m.getFullUrl()}`);
             })
         }
     }
