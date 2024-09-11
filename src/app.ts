@@ -1,3 +1,27 @@
+class MenuEntry {
+
+}
+
+class Site {
+    url: string;
+
+    constructor (url : string) {
+        this.url = url;
+    }
+    getUrl() : string {
+        return ""
+    }
+    getLanguages(): string[]{
+        return []
+    }
+    getMenuEntries(): MenuEntry[]{
+        return []
+    }
+    toString(): string {
+        return this.url;
+    }
+}
+
 class MenuInventory {
     wpVeritasUrl : string;
 
@@ -6,9 +30,10 @@ class MenuInventory {
     }
     async sites () {
         const resp = await fetch(this.wpVeritasUrl);
-        const data = await resp.json();
-        console.log(data);
-        return data;  // XXX
+        const inventory: any[] = await resp.json();
+        const arraySites = inventory.map(i =>  new Site(i.url))
+        console.log(arraySites.toString());
+        return arraySites;  // XXX
     }
 }
 
