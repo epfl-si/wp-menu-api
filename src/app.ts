@@ -32,8 +32,7 @@ class MenuInventory {
         const resp = await fetch(this.wpVeritasUrl);
         const inventory: any[] = await resp.json();
         const arraySites = inventory.map(i =>  new Site(i.url))
-        console.log(arraySites.toString());
-        return arraySites;  // XXX
+        return arraySites;
     }
 }
 
