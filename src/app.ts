@@ -11,9 +11,15 @@ class Site {
     getUrl() : string {
         return ""
     }
-    getLanguages(): string[]{
-        return []
+    async getLanguages(): Promise<string[]> {
+        const langApiResponse = await fetch(`${this.url}/wp-json/epfl/v1/languages`);
+        try {
+            return await langApiResponse.json();
+        } catch (SyntaxError) {
+            return [];
+        }
     }
+
     getMenuEntries(): MenuEntry[]{
         return []
     }
@@ -38,7 +44,12 @@ class MenuInventory {
 
 async function main () {
     const inv = new MenuInventory("https://wp-veritas.epfl.ch/api/v1/sites");
-    console.log(await inv.sites());
+
+    for (let site of await inv.sites()) {
+        for (let lang of await site.getLanguages()) {
+            console.log(`${site} has language ${lang}`);
+        }
+    }
 }
 
 main();
