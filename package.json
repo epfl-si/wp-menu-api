@@ -1,0 +1,46 @@
+{
+  "name": "menu-api",
+  "version": "2.0.0",
+  "description": "A menu API for WordPress",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx ts-node ./src/app.ts -p ./menu-api-config.yaml",
+    "test": "npx -p dotenv mocha './test/**/*.ts' --require ts-node/register --timeout 100000"
+  },
+  "author": "Rosa Maggi <rosa.maggi@epfl.ch>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.5.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "js-yaml": "^4.1.0",
+    "prom-client": "^13.2.0"
+  },
+  "devDependencies": {
+    "@types/assert": "^1.5.7",
+    "@types/chai": "^4.3.9",
+    "@types/express": "^4.17.19",
+    "@types/js-yaml": "^4.0.9",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "^20.8.6",
+    "assert": "^2.1.0",
+    "chai": "^4.3.10",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2"
+  },
+  "keywords": [],
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epfl-si/wp-menu-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/epfl-si/wp-menu-api/issues"
+  },
+  "homepage": "https://github.com/epfl-si/wp-menu-api#readme"
+}
