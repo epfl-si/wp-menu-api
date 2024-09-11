@@ -9,13 +9,12 @@ abstract class MenuEntry {
     }
 
     static parse (ownerSite: Site, jsonDatum : any) : MenuEntry {
-        if (jsonDatum.object === "epfl-external-menu") {
-            return new ExternalMenuEntry(ownerSite, jsonDatum);
-        } else if (jsonDatum.object === "page") {
-            return new PageMenuEntry(ownerSite, jsonDatum);
-        } else {
-            return new OtherMenuEntry(ownerSite, jsonDatum);
+        for (let cls of [PageMenuEntry, ExternalMenuEntry, OtherMenuEntry]) {
+            const parsed = cls.tryToParse(ownerSite, jsonDatum);
+            if (parsed) return parsed;
         }
+
+        throw new TypeError(`Decidedly don't know how to parse ${JSON.stringify(jsonDatum)}`);
     }
 
     getTitle(): string {
@@ -35,6 +34,12 @@ class ExternalMenuEntry extends MenuEntry {
         this.restUrl = jsonDatum.rest_url;
     }
 
+    static tryToParse (ownerSite : Site, jsonDatum : any) : ExternalMenuEntry | undefined {
+        if (jsonDatum.object === "epfl-external-menu") {
+            return new ExternalMenuEntry(ownerSite, jsonDatum);
+        }
+    }
+
     getFullUrl() {
         return `${this.ownerSite.getDomainUrl()}${this.restUrl}`;
     }
@@ -47,12 +52,22 @@ class PageMenuEntry extends MenuEntry {
         this.url = jsonDatum.url;
     }
 
+    static tryToParse (ownerSite : Site, jsonDatum : any) : PageMenuEntry | undefined {
+        if (jsonDatum.object === "page") {
+            return new PageMenuEntry(ownerSite, jsonDatum);
+        }
+    }
+
     getFullUrl() {
         return this.url;
     }
 }
 
 class OtherMenuEntry extends MenuEntry {
+    static tryToParse (ownerSite : Site, jsonDatum : any) : OtherMenuEntry | undefined {
+        return new OtherMenuEntry(ownerSite, jsonDatum);
+    }
+
     getFullUrl() { return "(Not sure)"; }
 }
 
