@@ -1,26 +1,25 @@
-import {WpMenu} from "./wpMenu";
-import {MenuAPIResult} from "./menuAPIResult";
 import {getBaseUrl} from "../utils/links";
 import {error, external_detached_menus_counter, getErrorMessage, info, warn} from "../utils/logger";
 import fs from "fs";
+import {MenuEntry} from "./MenuEntry";
 
 export interface SiteTreeInstance  {
-    getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: WpMenu } | undefined
-    getChildren : (urlInstanceRestUrl: string, idParent: number) => WpMenu[]
-    findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => WpMenu | undefined
-    findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => WpMenu | undefined
-    getSiblings : (urlInstanceRestUrl: string, idItem: number) => WpMenu[]
-    findItemByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
-    findItemAndObjectTypeByUrl: (pageURL: string) => { result: { [urlInstance: string]: WpMenu } | undefined, objectType: string}
-    findLevelZeroByUrl: (pageURL: string) => { [urlInstance: string]: WpMenu } | undefined
+    getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: MenuEntry } | undefined
+    getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntry[]
+    findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => MenuEntry | undefined
+    findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => MenuEntry | undefined
+    getSiblings : (urlInstanceRestUrl: string, idItem: number) => MenuEntry[]
+    findItemByUrl: (pageURL: string) => { [urlInstance: string]: MenuEntry } | undefined
+    findItemAndObjectTypeByUrl: (pageURL: string) => { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string}
+    findLevelZeroByUrl: (pageURL: string) => { [urlInstance: string]: MenuEntry } | undefined
 }
 
-export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: WpMenu[] | undefined }[]) => SiteTreeInstance
+export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
 
 export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
-    const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : number]: WpMenu } } = {};
-    const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: WpMenu } } = {};
-    const children: { [urlInstanceRestUrl : string]: { [idParent : number]: WpMenu[] } } = {};
+    const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : number]: MenuEntry } } = {};
+    const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: MenuEntry } } = {};
+    const children: { [urlInstanceRestUrl : string]: { [idParent : number]: MenuEntry[] } } = {};
 
     menus.forEach(menu =>{
         itemsByID[menu.urlInstanceRestUrl] = {};
@@ -50,17 +49,15 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     });
 
     return {
-        getParent(urlInstanceRestUrl: string, idChild:number): { [urlInstance : string]: WpMenu } {
-            const parsedUrl = new URL(urlInstanceRestUrl);
-            const path = parsedUrl.pathname + parsedUrl.search;
-            const result: { [urlInstance: string]: WpMenu } = {};
+        getParent(urlInstanceRestUrl: string, idChild:number): { [urlInstance : string]: MenuEntry } {
+            const result: { [urlInstance: string]: MenuEntry } = {};
             const parent = parents[urlInstanceRestUrl][idChild];//it could be undefined;
             if (parent === undefined) {
                 for (const url in itemsByID) {
                     const items = itemsByID[url];
                     for (const id in items) {
                         const item = itemsByID[url][id];
-                        if (item.object === "epfl-external-menu" && item.rest_url === path){
+                        if (item.object === "epfl-external-menu" && item.getFullUrl() === urlInstanceRestUrl){
                             result[url] = itemsByID[url][item.menu_item_parent];
                             return result;
                         }
@@ -74,7 +71,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
             const childrenList = childrenInTheSameSite.map(child => {
                 if (child.object === 'epfl-external-menu'){
-                    const foundExternalMenu = this.findExternalMenuByRestUrl(child.rest_url!);
+                    const foundExternalMenu = this.findExternalMenuByRestUrl(child.getFullUrl());
                     if (foundExternalMenu) {
                         return foundExternalMenu;
                     }
@@ -118,12 +115,12 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             return itemsByID[urlInstanceRestUrl][idItem];
         },
         findItemByUrl(pageURL: string) {
-            const result: { [urlInstance: string]: WpMenu } = {};
+            const result: { [urlInstance: string]: MenuEntry } = {};
             for (const url in itemsByID) {
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];
-                    if (item.url && item.url===pageURL && item.object !== 'custom') {
+                    if (item.getFullUrl() && item.getFullUrl()===pageURL && item.object !== 'custom') {
                         result[url] = item
                         return result;
                     }
@@ -132,13 +129,13 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             return undefined;
         },
         findItemAndObjectTypeByUrl(pageURL: string) {
-            const result: { [urlInstance: string]: WpMenu } = {};
+            const result: { [urlInstance: string]: MenuEntry } = {};
             let objectType: string = '';
             for (const url in itemsByID) {
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];
-                    if (item.url && item.url===pageURL){
+                    if (item.getFullUrl() && item.getFullUrl()===pageURL){
                         objectType = item.object;
                         if (item.object !== 'custom') {
                             result[url] = item
@@ -150,13 +147,13 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             return { result: undefined, objectType: objectType };
         },
         findLevelZeroByUrl(pageURL: string) {
-            const result: { [urlInstance: string]: WpMenu } = {};
+            const result: { [urlInstance: string]: MenuEntry } = {};
             for (const url in itemsByID) {
                 const items = itemsByID[url];
                 for (const id in items) {
                     const item = itemsByID[url][id];
-                    if (item.menu_item_parent.toString() === "0" && item.menu_order === 1 && item.url){
-                        const urlSiteWithoutHomePage: string = getBaseUrl(item.url);
+                    if (item.menu_item_parent.toString() === "0" && item.menu_order === 1 && item.getFullUrl()){
+                        const urlSiteWithoutHomePage: string = getBaseUrl(item.getFullUrl());
                         if (urlSiteWithoutHomePage == pageURL){
                             result[url] = item
                             return result;
@@ -170,7 +167,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
 }
 
 export class SiteTreeMutable {
-    private menus: { urlInstanceRestUrl: string, entries: WpMenu[] }[] = [];
+    private menus: { urlInstanceRestUrl: string, entries: MenuEntry[] }[] = [];
 
     getMenus() {
         return SiteTreeReadOnly(this.menus);
@@ -181,7 +178,7 @@ export class SiteTreeMutable {
     }
 
     getCustomMenus () {
-        const customMenus : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        const customMenus : { urlInstanceRestUrl: string, entries: MenuEntry }[] = [];
         for (let menu of this.menus) {
             if(menu.entries[0].object === 'custom') {
                 customMenus.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: menu.entries[0] } );
@@ -191,7 +188,7 @@ export class SiteTreeMutable {
     }
 
     _getObject (objectTye: string) {
-        const object : { urlInstanceRestUrl: string, entries: WpMenu }[] = [];
+        const object : { urlInstanceRestUrl: string, entries: MenuEntry }[] = [];
         for (let menu of this.menus) {
             for (let entry of menu.entries) {
                 if(entry.object === objectTye) {
@@ -218,7 +215,7 @@ export class SiteTreeMutable {
         return this._getObject('category');
     }
 
-    updateMenu(siteUrlSubstring: string, result: MenuAPIResult){
+    updateMenu(siteUrlSubstring: string, result: MenuEntry[]){
         let index = -1;
         for (let i = 0; i < this.menus.length; i++) {
             if (this.menus[i].urlInstanceRestUrl === siteUrlSubstring) {
@@ -227,9 +224,9 @@ export class SiteTreeMutable {
             }
         }
         if (index > -1) {
-            this.menus.splice(index, 1, { urlInstanceRestUrl: siteUrlSubstring, entries: result.items });
+            this.menus.splice(index, 1, { urlInstanceRestUrl: siteUrlSubstring, entries: result });
         } else {
-            this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result.items } );
+            this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result } );
         }
     }
 
@@ -246,12 +243,12 @@ function writeRefreshFile(path: string, json: string)  {
     try {
         fs.writeFile(path, json, (err) => {
             if (err) {
-                error(getErrorMessage(err), { url: path });
+                error("Cache file not written: " + getErrorMessage(err), { url: path });
             } else {
                 info('Successfully wrote file', { url: path, method: 'writeRefreshFile' });
             }
         });
     } catch (e) {
-        error(getErrorMessage(e), { url: path });
+        error("Cache file not written: " + getErrorMessage(e), { url: path });
     }
 }
