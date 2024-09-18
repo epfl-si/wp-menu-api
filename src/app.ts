@@ -5,11 +5,12 @@ import {configLogs, error, getRegister, http_request_counter, info} from "./util
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {prometheusChecks} from "./utils/metrics";
+import {configSite} from "./interfaces/site";
 
 const app = express()
 const args = process.argv.slice(2);
 const configFileIndex = args.findIndex(arg => arg === '-p');
-let servicePort: number = 3000;
+let servicePort: number = 3001;
 let config: Config | undefined;
 let pathRefreshFile: string = '.';
 const prometheusInterval: number = 10000;
@@ -149,6 +150,7 @@ async function refreshCache() {
         configRefresh(config);
         configLinks(config);
         configLogs(config);
+        configSite(config);
 
         await refreshFileMenu(pathRefreshFile);
         return 200;
