@@ -15,7 +15,8 @@ export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site
 }
 
 function callBackFunctionFromWPVeritas(url: string, res: any){
-	const sites: Site[] = res;
+	const inventory: any[] = res;
+	const sites = inventory.map(i =>  new Site(i.url, i.openshiftEnv, i.wpInfra));
 	info(`Total sites retrieved: ${sites.length}`, { url: url, method: 'callWebService' });
 	return sites;
 }
