@@ -5,7 +5,6 @@ NODE_TLS_REJECT_UNAUTHORIZED: "0"
 PATH_REFRESH_FILE: "./data"
 DEBUG: false
 LOCAL_ENV: false
-REST_URL_END: "wp-json/epfl/v1/menus/top?lang="
 LABS_LINK_URL_FR: "https://www.epfl.ch/labs/fr/laboratoires/"
 LABS_LINK_URL_EN: "https://www.epfl.ch/labs/en/laboratories/"
 ASSOC_BREADCRUMB_EN: |
