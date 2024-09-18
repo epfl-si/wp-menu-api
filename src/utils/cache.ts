@@ -3,11 +3,7 @@ import {error, getErrorMessage, info, refresh_files_size, refresh_memory_array_s
 import fs from "fs";
 
 export class MenusCache {
-	private cachedMenus: {[lang: string]: SiteTreeMutable } = {
-		fr: new SiteTreeMutable(),
-		en: new SiteTreeMutable(),
-		de: new SiteTreeMutable()
-	}
+	private cachedMenus: {[lang: string]: SiteTreeMutable } = {}
 
 	get menus() {
 		return this.cachedMenus;
