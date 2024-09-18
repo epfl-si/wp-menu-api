@@ -1,10 +1,9 @@
 import 'mocha';
 import {assert, expect} from "chai";
 import {getMenuItems} from "../../src/menus/lists";
-import {configRefresh, initializeCachedMenus, refreshFileMenu} from "../../src/menus/refresh";
+import {configRefresh, initializeCachedMenus} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import {configLinks} from "../../src/utils/links";
-import {configLogs} from "../../src/utils/logger";
 
 describe("End To End Menu", function() {
     beforeEach(function(done){
