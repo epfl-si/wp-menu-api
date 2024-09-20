@@ -40,20 +40,20 @@ export abstract class MenuEntry {
 }
 
 class ExternalMenuEntry extends MenuEntry {
-    restUrl: string;
+    rest_url: string;
     constructor (ownerSite : Site, jsonDatum : any) {
         super(ownerSite, jsonDatum);
-        this.restUrl = jsonDatum.rest_url;
+        this.rest_url = jsonDatum.rest_url;
     }
 
     static tryToParse (ownerSite : Site, jsonDatum : any) : ExternalMenuEntry | undefined {
-        if (jsonDatum.object === "epfl-external-menu") {
+        if (jsonDatum.object == "epfl-external-menu") {
             return new ExternalMenuEntry(ownerSite, jsonDatum);
         }
     }
 
     getFullUrl() {
-        return `${this.ownerSite.getDomainUrl()}${this.restUrl}`;
+        return `${this.ownerSite.getDomainUrl()}${this.rest_url}`;
     }
 }
 
