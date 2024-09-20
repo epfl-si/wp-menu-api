@@ -65,7 +65,9 @@ class OtherMenuEntry extends MenuEntry {
     }
 
     static tryToParse (ownerSite : Site, jsonDatum : any) : OtherMenuEntry | undefined {
-        return new OtherMenuEntry(ownerSite, jsonDatum);
+        if (jsonDatum.object != "epfl-external-menu") {
+            return new OtherMenuEntry(ownerSite, jsonDatum);
+        }
     }
 
     getFullUrl() {
