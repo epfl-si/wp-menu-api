@@ -13,23 +13,25 @@ An express server that can serves WordPress menu.
     * wp-httpd/campus
     * wp-httpd/campus/services
     * wp-httpd/campus/services/websites
+    * 
 
 ### Environment variables
 
-Environment variables are declared in the 
-- `.env.dev` file for local tests. Make sure to put right variables
-- `.env.test` file for wp-httpd container test
+Environment variables are declared in the `menu-api-config.yaml`
 - prod environment variables are declared inside ansible
 
 ## Run tests locally
 
 To run tests locally:
-`npm test`
+`npm test` from de test folder
+
+_N.B. you should already have the json file inside `data` folder_
 
 ### NodeJS
 
 * `npm i`
 * Start the server locally:
+* - set the `LOCAL_ENV=true`
   ```
   npm start
   ```
@@ -49,11 +51,6 @@ Inside wp-dev run:
 ```
 docker exec -it menu-api curl http://localhost:3001/refresh ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
 ```
-
-_**N.B.**: The test container (wp-httpd) will take the `.env.test` file for environment variables as it is configured 
-in the **docker-compose.yml** file.
-Then the Dockerfile of the **menu-api** will be executed and so the `npm start`._
-
 
 ### Deployment
 In the wp-ops directory run:
