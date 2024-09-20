@@ -12,11 +12,17 @@ export class MenusCache {
 	read(path: string){
 		info('Start reading from file', { url: path, method: 'MenusCache.read'});
 		try {
-			for (const lang in this.cachedMenus) {
-				if (this.cachedMenus.hasOwnProperty(lang)) {
-					this.cachedMenus[lang].load(path.concat('/menus_' + lang + '.json'));
-				}
-			}
+			fs.readdir(path, (err, files) => {
+				// Loop through the files
+				files.forEach(file => {
+					const lang = file.substring(file.indexOf('_') + 1, file.indexOf('.'));
+
+					if (!this.cachedMenus[lang]) {
+						this.cachedMenus[lang] = new SiteTreeMutable();
+					}
+					this.cachedMenus[lang].load(path + "/" + file);
+				});
+			});
 		} catch (e) {
 			error(getErrorMessage(e), {});
 		}
