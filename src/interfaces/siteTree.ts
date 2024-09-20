@@ -2,6 +2,7 @@ import {getBaseUrl} from "../utils/links";
 import {error, external_detached_menus_counter, getErrorMessage, info, warn} from "../utils/logger";
 import fs from "fs";
 import {MenuEntry} from "./MenuEntry";
+import {Site} from "./site";
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: MenuEntry } | undefined
@@ -21,7 +22,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: MenuEntry } } = {};
     const children: { [urlInstanceRestUrl : string]: { [idParent : number]: MenuEntry[] } } = {};
 
-    menus.forEach(menu =>{
+    menus.forEach(menu => {
         itemsByID[menu.urlInstanceRestUrl] = {};
         parents[menu.urlInstanceRestUrl] = {};
         children[menu.urlInstanceRestUrl] = {};
@@ -231,7 +232,15 @@ export class SiteTreeMutable {
     }
 
     load(path: string) {
-        this.menus = JSON.parse(fs.readFileSync(path, 'utf8'));
+        const json = JSON.parse(fs.readFileSync(path, 'utf8')) as any;
+        json.forEach((item: { urlInstanceRestUrl: string, entries: any }) => {
+            this.menus.push({
+                urlInstanceRestUrl: item.urlInstanceRestUrl,
+                entries: item.entries.map((m: any) => MenuEntry.parse(new Site(m.ownerSite? m.ownerSite.url : '',
+                        m.ownerSite? m.ownerSite.openshiftEnv : '', m.ownerSite? m.ownerSite.wpInfra : true),
+                        m))
+            })
+        })
     }
 
     save(path: string) {
