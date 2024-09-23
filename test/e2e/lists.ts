@@ -133,5 +133,11 @@ describe("End To End Menu", function() {
                 "", "").list;
             assert(items.length == 7);
         });
+        it('italian language has breadcrumb in english', async function() {
+            const items = getMenuItems("https://wp-httpd/campus/services/it/test-italiano/",
+                "it", "breadcrumb", "page", "", "",
+                "", "").list;
+            assert(items.length > 1);
+        });
     });
 });
