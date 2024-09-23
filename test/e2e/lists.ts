@@ -115,11 +115,17 @@ describe("End To End Menu", function() {
                 "", "").list;
             expect(items.find(f => f.url=='https://wp-httpd/campus/services/en/it-services/room-reservations/')).not.be.undefined;
         });
-        it('has Storage as sibling', async function() {
-            const items = getMenuItems("https://wp-httpd/schools/sb/research/isic/platforms/it-and-data-management-platform/purchasing-procedure/",
+        it('Services has Art&Culture as sibling', async function() {
+            const items = getMenuItems("https://wp-httpd/campus/services/en/homepage/",
                 "en", "siblings", "page", "", "",
                 "", "").list;
-            expect(items.find(f => f.url=='https://wp-httpd/campus/services/en/it-services/storage-of-documents/')).not.be.undefined;
+            expect(items.find(f => f.url=='https://wp-httpd/campus/art-culture/en/art-culture/')).not.be.undefined;
+        });
+        it('laptop has smartphone as sibling', async function() {
+            const items = getMenuItems("https://wp-httpd/campus/services/en/it-services/security-it/loss-of-laptop/",
+                "en", "siblings", "page", "", "",
+                "", "").list;
+            expect(items.find(f => f.url=='https://wp-httpd/campus/services/en/it-services/security-it/loss-of-smartphone/')).not.be.undefined;
         });
         it('has 7 siblings in the level 0', async function() {
             const items = getMenuItems("https://wp-httpd/campus/en/campusenglish/",
