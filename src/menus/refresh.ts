@@ -33,7 +33,8 @@ async function getMenusInParallel(
 
 async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
     const allEntries: MenuEntry[] = []
-    const languages = await site.getLanguages();
+    let languages = await site.getLanguages();
+    languages = Array.isArray(languages) ? languages : ["en"];
     for (const lang of languages) {
         const entries = await site.getMenuEntries(lang);
         allEntries.concat(entries.entries);
