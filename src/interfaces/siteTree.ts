@@ -217,13 +217,7 @@ export class SiteTreeMutable {
     }
 
     updateMenu(siteUrlSubstring: string, result: MenuEntry[]){
-        let index = -1;
-        for (let i = 0; i < this.menus.length; i++) {
-            if (this.menus[i].urlInstanceRestUrl === siteUrlSubstring) {
-                index = i;
-                break;
-            }
-        }
+        const index = this.menus.findIndex(menu => menu.urlInstanceRestUrl === siteUrlSubstring);
         if (index > -1) {
             this.menus.splice(index, 1, { urlInstanceRestUrl: siteUrlSubstring, entries: result });
         } else {
