@@ -1,5 +1,11 @@
 import express from 'express';
-import {configRefresh, getExternalMenus, getHomepageCustomLinks, refreshFileMenu} from "./menus/refresh";
+import {
+    configRefresh,
+    getExternalMenus,
+    getHomepageCustomLinks,
+    refreshFileMenu,
+    refreshFromAPI
+} from "./menus/refresh";
 import {getMenuItems} from "./menus/lists";
 import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
@@ -127,11 +133,11 @@ app.get('/utils/externalMenus', (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    const statusCode = await refreshCache();
+    const statusCode = await refreshFromAPI(pathRefreshFile);
     http_request_counter.labels({route: "refresh", statusCode: statusCode}).inc();
     res.status(statusCode).json({
         status: statusCode,
-        result: statusCode == 200 ? "Refresh done" : "An error occurred, see logs for details."
+        result: statusCode == 200 ? "Refresh done" : "Some error occurred, see logs for details."
     })
 });
 
@@ -139,6 +145,8 @@ app.listen(servicePort, async () => {
     const statusCode = await refreshCache();
     if (statusCode == 400) {
         error('Please provide a configuration file path using -p', {});
+    } else if (statusCode == 500) {
+        error('Some error occurred, see logs for details', {});
     }
     setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
 });
@@ -152,8 +160,7 @@ async function refreshCache() {
         configLogs(config);
         configSite(config);
 
-        await refreshFileMenu(pathRefreshFile);
-        return 200;
+        return await refreshFileMenu(pathRefreshFile);
     } else {
         return 400
     }

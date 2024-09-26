@@ -1,5 +1,5 @@
 import {Site} from "../interfaces/site";
-import {info, menu_api_refresh_duration_seconds} from "../utils/logger";
+import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {MenusCache} from "../utils/cache";
 import {getSiteListFromWPVeritas} from "../utils/source";
@@ -63,6 +63,11 @@ export async function refreshMenu(sites: Site[]) {
 
 export async function refreshFileMenu(pathRefreshFile: string) {
     cachedMenus.read(pathRefreshFile);
+    return await refreshFromAPI(pathRefreshFile);
+}
+
+export async function refreshFromAPI(pathRefreshFile: string) {
+    resetRefreshErrorCount();
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
     const sites = await getSiteListFromWPVeritas(config);
     await refreshMenu(sites);
@@ -72,6 +77,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     getPostsCount(cachedMenus);
     getCategoriesCount(cachedMenus);
     info(`End refresh from API`, { method: 'refreshFileMenu' });
+    return (getRefreshErrorCount() == 0 ? 200 : 500);
 }
 
 export function initializeCachedMenus(pathRefreshFile: string) {
