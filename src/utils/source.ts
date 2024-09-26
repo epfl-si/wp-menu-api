@@ -1,5 +1,5 @@
 import {Site} from "../interfaces/site";
-import {error, getErrorMessage, info} from "./logger";
+import {error, getErrorMessage, increaseRefreshErrorCount, info} from "./logger";
 import {Config} from "./configFileReader";
 import {callWebService} from "./webServiceCall";
 
@@ -9,6 +9,7 @@ export async function getSiteListFromWPVeritas(configFile: Config): Promise<Site
 	try {
 		return await callWebService(configFile, true, wpVeritasURL, '', callBackFunctionFromWPVeritas);
 	} catch (e) {
+		increaseRefreshErrorCount();
 		error(getErrorMessage(e), { url: wpVeritasURL });
 		return [];
 	}

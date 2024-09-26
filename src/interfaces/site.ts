@@ -1,6 +1,12 @@
 import {MenuEntry} from "./MenuEntry";
 import {callWebService} from "../utils/webServiceCall";
-import {error, getErrorMessage, info, menu_api_wp_api_call_duration_seconds} from "../utils/logger";
+import {
+    error,
+    getErrorMessage,
+    increaseRefreshErrorCount,
+    info,
+    menu_api_wp_api_call_duration_seconds
+} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 
 let config: Config;
@@ -32,6 +38,8 @@ export class Site {
         try {
             return await callWebService(config, false, `${this.url}wp-json/epfl/v1/languages`, this.openshiftEnv, callBackFunctionForLanguages)
         } catch (e) {
+            increaseRefreshErrorCount();
+            error(getErrorMessage(e), { url: `${this.url}wp-json/epfl/v1/languages` });
             return [];
         }
     }
@@ -53,6 +61,7 @@ export class Site {
                 throw new Error(menusApiResponse.status);
             }
         }).catch ((e) => {
+            increaseRefreshErrorCount();
             const message = getErrorMessage(e);
             error(message, { url: siteMenuURL });
             return {siteMenuURL: siteMenuURL, entries: []};

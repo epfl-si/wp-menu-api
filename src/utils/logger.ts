@@ -1,5 +1,6 @@
 import {Config} from "./configFileReader";
 
+let errorCountInRefresh = 0;
 const Prometheus = require('prom-client');
 const register = new Prometheus.Registry();
 const error_counter = new Prometheus.Counter({
@@ -139,4 +140,16 @@ export function getErrorMessage(e: any): string {
     }
 
     return message;
+}
+
+export function increaseRefreshErrorCount() {
+    errorCountInRefresh ++;
+}
+
+export function resetRefreshErrorCount() {
+    errorCountInRefresh = 0;
+}
+
+export function getRefreshErrorCount() {
+    return errorCountInRefresh ++;
 }
