@@ -1,17 +1,18 @@
-import {WpMenu} from "../interfaces/wpMenu";
 import {SiteTreeInstance} from "../interfaces/siteTree";
 import {error, info, orphan_pages_counter} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {getCachedMenus} from "./refresh";
+import {MenuEntry} from "../interfaces/MenuEntry";
+import {Site} from "../interfaces/site";
 
-function searchAllParentsEntriesByID(entry: WpMenu, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): WpMenu[] {
-    const parent: { [urlInstance : string]: WpMenu } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
+function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
+    const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
 
     if (parent) {
         const newUrl = Object.keys(parent)[0];
 
         if (parent[newUrl]) {
-            const parents: WpMenu[] = searchAllParentsEntriesByID(parent[newUrl], newUrl , siteArray, labLink, assocBreadcrumbs);
+            const parents: MenuEntry[] = searchAllParentsEntriesByID(parent[newUrl], newUrl , siteArray, labLink, assocBreadcrumbs);
             return [...parents, parent[newUrl]];
         } else {
             return searchParentForLabAndAssoc(urlInstanceRestUrl, siteArray, entry, labLink, assocBreadcrumbs);
@@ -21,8 +22,8 @@ function searchAllParentsEntriesByID(entry: WpMenu, urlInstanceRestUrl: string, 
     }
 }
 
-function searchParentForLabAndAssoc(url: string, siteArray: SiteTreeInstance, entry: WpMenu, labLink: string, assocBreadcrumbs: string[]) {
-    if (url.indexOf("/labs/") > -1 && entry.url !== labLink) {
+function searchParentForLabAndAssoc(url: string, siteArray: SiteTreeInstance, entry: MenuEntry, labLink: string, assocBreadcrumbs: string[]) {
+    if (url.indexOf("/labs/") > -1 && entry.getFullUrl() !== labLink) {
         const lab = getItemMenuByUrl(siteArray, labLink);
         if (lab) {
             return [lab];
@@ -30,12 +31,12 @@ function searchParentForLabAndAssoc(url: string, siteArray: SiteTreeInstance, en
             info('Get lab: parent undefined', {url: url, method: 'searchParent'});
         }
     } else if (url.indexOf('/associations/') > -1) {
-        const items: WpMenu[] = [];
+        const items: MenuEntry[] = [];
         assocBreadcrumbs.forEach(u => {
             const menu = siteArray!.findItemByUrl(u);
             if (menu) {
                 const k = Object.keys(menu)[0];
-                if (menu[k] && menu[k].url!==entry.url) {
+                if (menu[k] && menu[k].getFullUrl()!==entry.getFullUrl()) {
                     items.push(menu[k]);
                 }
             }
@@ -46,7 +47,7 @@ function searchParentForLabAndAssoc(url: string, siteArray: SiteTreeInstance, en
 }
 
 function getItemMenuByUrl(siteArray: SiteTreeInstance, url: string) {
-    const item: { [urlInstance : string]: WpMenu } | undefined = siteArray.findItemByUrl(url);
+    const item: { [urlInstance : string]: MenuEntry } | undefined = siteArray.findItemByUrl(url);
     if (item) {
         const itemUrl = Object.keys(item)[0];
         if (item[itemUrl]) {
@@ -56,8 +57,8 @@ function getItemMenuByUrl(siteArray: SiteTreeInstance, url: string) {
     return undefined;
 }
 
-function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): WpMenu | undefined {
-    const labsOrAssoc: { [urlInstance : string]: WpMenu } | undefined = siteArray.findItemByUrl(url);
+function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): MenuEntry | undefined {
+    const labsOrAssoc: { [urlInstance : string]: MenuEntry } | undefined = siteArray.findItemByUrl(url);
     if (labsOrAssoc) {
         const labUrl = Object.keys(labsOrAssoc)[0];
         if (labsOrAssoc[labUrl]) {
@@ -69,15 +70,15 @@ function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): WpMenu | undef
 }
 
 export function getMenuItems (url: string, lang: string, type: string, pageType: string, mainPostPageName: string,
-                              mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: WpMenu[], errors: number} {
+                              mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: {title: string, url: string, object: string}[], errors: number} {
     let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
-    let items: WpMenu[] = [];
+    let items: MenuEntry[] = [];
     const m = getCachedMenus();
     let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
 
     if (siteArray) {
-        const firstSite: { result: { [urlInstance: string]: WpMenu } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
+        const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
         if (firstSite.result) {
             const restUrl = Object.keys(firstSite.result)[0];
@@ -105,18 +106,18 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                     //we add the site post home page to the breadcrumb:
                     // if the post home page is defined in wordpress we get his name ans url into the item,
                     // otherwise we create the item manually
-                    const homePagePosts: WpMenu = {
+                    const homePagePosts: MenuEntry = MenuEntry.parse(new Site('', '', true), {
                         ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
-                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')};
+                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')});
                     items.push(homePagePosts);
 
                     if (url.indexOf(mainPostPageUrl) == -1 && url.indexOf('?post_type=post') == -1){
                         // the post page url is different from the main post page url:
                         // the main post page url includes the post name
                         // So we should include the post item only if the current url doesn't include the main post page url
-                        const postPage: WpMenu = {
+                        const postPage: MenuEntry = MenuEntry.parse(new Site('', '', true), {
                             ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
-                            title: currentPostName, url: url};
+                            title: currentPostName, url: url});
                         items.push(postPage);
                     }
                     orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(0);
@@ -132,22 +133,22 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
         err ++;
     }
 
-    return {list: items, errors: err};
+    return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object})), errors: err};
 }
 
 
 function getListFromFirstSite(firstSite: {
-    [p: string]: WpMenu
-}, restUrl: string, type: string, items: WpMenu[], siteArray: SiteTreeInstance, lang: string) : WpMenu[] {
+    [p: string]: MenuEntry
+}, restUrl: string, type: string, items: MenuEntry[], siteArray: SiteTreeInstance, lang: string) : MenuEntry[] {
     if (firstSite[restUrl]) {
         switch ( type ) {
             case "siblings":
                 items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
 
                 //We create manually siblings list for level zero of menus (about, education, research, innovation, schools, campus, labs)
-                if (items.length == 0 && firstSite[restUrl].menu_item_parent.toString() == "0" && firstSite[restUrl].menu_order === 1 && firstSite[restUrl].url) {
+                if (items.length == 0 && firstSite[restUrl].menu_item_parent.toString() == "0" && firstSite[restUrl].menu_order === 1 && firstSite[restUrl].getFullUrl()) {
                     const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-                    const urlSiteWithoutHomePage: string = getBaseUrl(firstSite[restUrl].url!);
+                    const urlSiteWithoutHomePage: string = getBaseUrl(firstSite[restUrl].getFullUrl()!);
                     if (Array.isArray(listMenuBarLinks) && listMenuBarLinks.includes(urlSiteWithoutHomePage)) {
                         listMenuBarLinks.forEach(u => {
                             const menu = siteArray!.findLevelZeroByUrl(u);

@@ -13,23 +13,46 @@ An express server that can serves WordPress menu.
     * wp-httpd/campus
     * wp-httpd/campus/services
     * wp-httpd/campus/services/websites
+* To make tests work you need to have these sites locally:
+```
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/ SITE_ANSIBLE_IDENTIFIER=www__campus RESTORED_SITE_DIR_NAME=campus ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/services/ SITE_ANSIBLE_IDENTIFIER=www__campus__services RESTORED_SITE_DIR_NAME=campus/services ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/services/website/ SITE_ANSIBLE_IDENTIFIER=www__campus__services__website RESTORED_SITE_DIR_NAME=campus/services/website ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/services/website/canari SITE_ANSIBLE_IDENTIFIER=www__campus__services__website__canari RESTORED_SITE_DIR_NAME=campus/services/website/canari ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/art-culture SITE_ANSIBLE_IDENTIFIER=www__campus__art_culture RESTORED_SITE_DIR_NAME=campus/art-culture ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/art-culture/museum-exhibitions SITE_ANSIBLE_IDENTIFIER=www__campus__art_culture__museum_exhibitions RESTORED_SITE_DIR_NAME=campus/art-culture/museum-exhibitions ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/art-culture/museum-exhibitions/archizoom SITE_ANSIBLE_IDENTIFIER=www__campus__art_culture__museum_exhibitions__archizoom RESTORED_SITE_DIR_NAME=campus/art-culture/museum-exhibitions/archizoom ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/labs SITE_ANSIBLE_IDENTIFIER=www__labs RESTORED_SITE_DIR_NAME=labs ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/labs/alice SITE_ANSIBLE_IDENTIFIER=www__labs__alice RESTORED_SITE_DIR_NAME=labs/alice ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/associations SITE_ANSIBLE_IDENTIFIER=www__campus__associations RESTORED_SITE_DIR_NAME=campus/associations ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/associations/list SITE_ANSIBLE_IDENTIFIER=www__campus__associations__list RESTORED_SITE_DIR_NAME=campus/associations/list ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/associations/list/adec SITE_ANSIBLE_IDENTIFIER=www__campus__associations__list__adec RESTORED_SITE_DIR_NAME=campus/associations/list/adec ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/campus/associations/list/spaceat SITE_ANSIBLE_IDENTIFIER=www__campus__associations__list__spaceat RESTORED_SITE_DIR_NAME=campus/associations/list/spaceat ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/about SITE_ANSIBLE_IDENTIFIER=www__about RESTORED_SITE_DIR_NAME=about ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/education SITE_ANSIBLE_IDENTIFIER=www__education RESTORED_SITE_DIR_NAME=education ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/research SITE_ANSIBLE_IDENTIFIER=www__research RESTORED_SITE_DIR_NAME=research ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/innovation SITE_ANSIBLE_IDENTIFIER=www__innovation RESTORED_SITE_DIR_NAME=innovation ./local-restore-from-restic.sh
+SITE_ORIGINAL_URL=https://www.epfl.ch/schools SITE_ANSIBLE_IDENTIFIER=www__schools RESTORED_SITE_DIR_NAME=schools ./local-restore-from-restic.sh
+```
+
 
 ### Environment variables
 
-Environment variables are declared in the 
-- `.env.dev` file for local tests. Make sure to put right variables
-- `.env.test` file for wp-httpd container test
+Environment variables are declared in the `menu-api-config.yaml`
 - prod environment variables are declared inside ansible
 
 ## Run tests locally
 
 To run tests locally:
-`npm test`
+`npm test` from de test folder
+
+_N.B. you should already have the json file inside `data` folder_
 
 ### NodeJS
 
 * `npm i`
 * Start the server locally:
+* - set the `LOCAL_ENV=true`
   ```
   npm start
   ```
@@ -49,11 +72,6 @@ Inside wp-dev run:
 ```
 docker exec -it menu-api curl http://localhost:3001/refresh ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
 ```
-
-_**N.B.**: The test container (wp-httpd) will take the `.env.test` file for environment variables as it is configured 
-in the **docker-compose.yml** file.
-Then the Dockerfile of the **menu-api** will be executed and so the `npm start`._
-
 
 ### Deployment
 In the wp-ops directory run:

@@ -10,7 +10,7 @@ import {
 import {getCachedMenus} from "../menus/refresh";
 import {Site} from "../interfaces/site";
 import {MenusCache} from "./cache";
-import {WpMenu} from "../interfaces/wpMenu";
+import {MenuEntry} from "../interfaces/MenuEntry";
 
 export function prometheusChecks(pathRefreshFile: string) {
 	getCachedMenus().checkFileCache(pathRefreshFile);
@@ -79,8 +79,8 @@ export function getCategoriesCount(cachedMenus: MenusCache) {
 	}
 }
 
-function getGroupedArray(pages: {urlInstanceRestUrl: string, entries: WpMenu}[]) {
-	return pages.reduce((grouped: { [site: string]: WpMenu[] }, page: { urlInstanceRestUrl: string, entries: WpMenu }) => {
+function getGroupedArray(pages: {urlInstanceRestUrl: string, entries: MenuEntry}[]) {
+	return pages.reduce((grouped: { [site: string]: MenuEntry[] }, page: { urlInstanceRestUrl: string, entries: MenuEntry }) => {
 		const site = cleanUrl(page.urlInstanceRestUrl);
 		if (!grouped[site]) {
 			grouped[site] = [];

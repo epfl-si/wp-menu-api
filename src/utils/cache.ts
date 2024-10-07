@@ -3,11 +3,7 @@ import {error, getErrorMessage, info, refresh_files_size, refresh_memory_array_s
 import fs from "fs";
 
 export class MenusCache {
-	private cachedMenus: {[lang: string]: SiteTreeMutable } = {
-		fr: new SiteTreeMutable(),
-		en: new SiteTreeMutable(),
-		de: new SiteTreeMutable()
-	}
+	private cachedMenus: {[lang: string]: SiteTreeMutable } = {}
 
 	get menus() {
 		return this.cachedMenus;
@@ -16,11 +12,17 @@ export class MenusCache {
 	read(path: string){
 		info('Start reading from file', { url: path, method: 'MenusCache.read'});
 		try {
-			for (const lang in this.cachedMenus) {
-				if (this.cachedMenus.hasOwnProperty(lang)) {
-					this.cachedMenus[lang].load(path.concat('/menus_' + lang + '.json'));
-				}
-			}
+			fs.readdir(path, (err, files) => {
+				// Loop through the files
+				files.forEach(file => {
+					const lang = file.substring(file.indexOf('_') + 1, file.indexOf('.'));
+
+					if (!this.cachedMenus[lang]) {
+						this.cachedMenus[lang] = new SiteTreeMutable();
+					}
+					this.cachedMenus[lang].load(path + "/" + file);
+				});
+			});
 		} catch (e) {
 			error(getErrorMessage(e), {});
 		}

@@ -1,14 +1,6 @@
 import {Site} from "../interfaces/site";
-import {MenuAPIResult} from "../interfaces/menuAPIResult";
-import {
-    error,
-    getErrorMessage,
-    info,
-    menu_api_refresh_duration_seconds,
-    menu_api_wp_api_call_duration_seconds
-} from "../utils/logger";
+import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
-import {callWebService} from "../utils/webServiceCall";
 import {MenusCache} from "../utils/cache";
 import {getSiteListFromWPVeritas} from "../utils/source";
 import {
@@ -18,62 +10,40 @@ import {
     getRetrievedSitesCount,
     getWPVeritasSitesForEnvironment
 } from "../utils/metrics";
+import {MenuEntry} from "../interfaces/MenuEntry";
+import {SiteTreeMutable} from "../interfaces/siteTree";
 
-let restUrlEnd: string = '';
 const cachedMenus: MenusCache = new MenusCache();
 let config: Config;
 
 export function configRefresh(configFile: Config) {
     config = configFile;
-    restUrlEnd = configFile.REST_URL_END;
 }
 
 async function getMenusInParallel(
     sites: Site[],
-    lang: string,
-    fn: (siteURL: string, osEnv: string, language: string) => Promise<MenuAPIResult>,
+    fn: (site: Site) => Promise<MenuEntry[]>,
     threads = 10
-): Promise<MenuAPIResult[]> {
-    const result: MenuAPIResult[][] = [];
-    const arr: Site[] = [];
-
-    sites.forEach(s => arr.push(s));
-
-    while (arr.length) {
-        let subListOfSitesMenus: Promise<MenuAPIResult>[] = arr.splice(0, threads).map(x => fn(x.url, x.openshiftEnv, lang));
-        const res: MenuAPIResult[] = await Promise.all(subListOfSitesMenus);
-        result.push(res);
+) {
+    while (sites.length) {
+        let subListOfSitesMenus: Promise<MenuEntry[]>[] = sites.splice(0, threads).map(x => fn(x));
+        await Promise.all(subListOfSitesMenus);
     }
-
-    return result.flat();
 }
 
-async function getMenuForSite(siteURL: string, osEnv: string, lang: string): Promise<MenuAPIResult> {
-    const startTime = new Date().getTime();
-    const siteMenuURL: string = siteURL.concat(restUrlEnd).concat(lang);
-    const timeoutPromise = new Promise<never>((resolve, reject) => {
-        setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
-    });
-
-    const result = Promise.race([
-        callWebService(config, false, siteMenuURL, osEnv, (url: string, res: any) => res as MenuAPIResult),
-        timeoutPromise
-    ]).then((result) => {
-        if (result.status && result.status === 'OK') {
-            cachedMenus.menus[lang].updateMenu(siteMenuURL, result);
-            return result;
-        } else {
-            throw new Error(result.status);
+async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
+    const allEntries: MenuEntry[] = []
+    let languages = await site.getLanguages();
+    languages = Array.isArray(languages) ? languages : ["en"];
+    for (const lang of languages) {
+        const entries = await site.getMenuEntries(lang);
+        allEntries.concat(entries.entries);
+        if (!cachedMenus.menus[lang]) {
+            cachedMenus.menus[lang] = new SiteTreeMutable();
         }
-    }).catch ((e) => {
-        const message = getErrorMessage(e);
-        error(message, { url: siteMenuURL });
-        return {status: siteMenuURL.concat(" - ").concat(message), items: [],  _links: {}};
-    });
-
-    const endTime = new Date().getTime();
-    menu_api_wp_api_call_duration_seconds.labels({url: siteMenuURL, lang: lang}).set((endTime - startTime)/1000);
-    return result;
+        cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
+    }
+    return allEntries;
 }
 
 export async function refreshMenu(sites: Site[]) {
@@ -84,13 +54,8 @@ export async function refreshMenu(sites: Site[]) {
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
       { method: 'refreshMenu' });
-    const promises: Promise<MenuAPIResult[]>[] = [
-        getMenusInParallel(filteredListOfSites, "en", getMenuForSite, 10),
-        getMenusInParallel(filteredListOfSites, "fr", getMenuForSite, 10),
-        getMenusInParallel(filteredListOfSites, "de", getMenuForSite, 10)
-    ];
+    await getMenusInParallel(filteredListOfSites, getMenuForSite, 10);
 
-    await Promise.all(promises);
     info('End refresh from API', { method: 'refreshMenu' });
     const endTime = new Date().getTime();
     menu_api_refresh_duration_seconds.set((endTime - startTime)/1000)
@@ -98,6 +63,11 @@ export async function refreshMenu(sites: Site[]) {
 
 export async function refreshFileMenu(pathRefreshFile: string) {
     cachedMenus.read(pathRefreshFile);
+    return await refreshFromAPI(pathRefreshFile);
+}
+
+export async function refreshFromAPI(pathRefreshFile: string) {
+    resetRefreshErrorCount();
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
     const sites = await getSiteListFromWPVeritas(config);
     await refreshMenu(sites);
@@ -107,6 +77,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
     getPostsCount(cachedMenus);
     getCategoriesCount(cachedMenus);
     info(`End refresh from API`, { method: 'refreshFileMenu' });
+    return (getRefreshErrorCount() == 0 ? 200 : 500);
 }
 
 export function initializeCachedMenus(pathRefreshFile: string) {
