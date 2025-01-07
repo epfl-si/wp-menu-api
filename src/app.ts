@@ -6,7 +6,7 @@ import {
     refreshFileMenu,
     refreshFromAPI
 } from "./menus/refresh";
-import {getMenuItems} from "./menus/lists";
+import {getMenuItems, getSiteTree} from "./menus/lists";
 import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -102,6 +102,21 @@ app.get('/menus/siblings', (req, res) => {
     res.status(status).json({
         status: status == 200 ? "OK" : "KO",
         result: result.list
+    })
+});
+
+app.get('/siteTree', async (req, res) => {
+    const result = await getSiteTree(req.query.url as string, config);
+    let status = 200;
+    if (result.error) {
+        status = 500;
+    } else if (result.children.length == 0) {
+        status = 404;
+    }
+    http_request_counter.labels({route: "siteChildren", statusCode: status}).inc();
+    res.status(status).json({
+        status: status,
+        result: {children: result.children, parent: result.parent}
     })
 });
 
