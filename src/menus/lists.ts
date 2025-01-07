@@ -1,9 +1,11 @@
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {error, info, orphan_pages_counter} from "../utils/logger";
+import {error, getErrorMessage, info, orphan_pages_counter} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {getCachedMenus} from "./refresh";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
+import {getSiteListFromWPVeritas} from "../utils/source";
+import {Config} from "../utils/configFileReader";
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -170,4 +172,24 @@ function getListFromFirstSite(firstSite: {
         }
     }
     return items;
+}
+
+
+export async function getSiteTree(siteURL: string, config: Config | undefined) {
+    try {
+        if (config) {
+            const sites = await getSiteListFromWPVeritas(config);
+            siteURL = siteURL.endsWith('/') ? siteURL : siteURL + '/';
+            const basePattern = `^${siteURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\\/]+\/?$`;
+            const regex = new RegExp(basePattern);
+            const children = sites.filter(site => regex.test(site.url));
+            const parentURL = siteURL.replace(/\/([^\/]+\/?)$/, '/');
+            const parent = sites.filter(site => site.url == parentURL);
+            return {children: children, parent: parent};
+        } else {
+            return {children: [], parent: [], error: "No configuration found"};
+        }
+    } catch (e) {
+        return {children: [], parent: [], error: getErrorMessage(e)};
+    }
 }

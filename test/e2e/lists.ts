@@ -1,6 +1,6 @@
 import 'mocha';
 import {assert, expect} from "chai";
-import {getMenuItems} from "../../src/menus/lists";
+import {getMenuItems, getSiteTree} from "../../src/menus/lists";
 import {configRefresh, initializeCachedMenus} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import {configLinks} from "../../src/utils/links";
@@ -138,6 +138,50 @@ describe("End To End Menu", function() {
                 "it", "breadcrumb", "page", "", "",
                 "", "").list;
             assert(items.length > 1);
+        });
+    });
+
+
+    describe("ChildrenSite", function() {
+        it('campus has some children', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+                config);
+            assert(items.children.length > 1);
+        });
+        it('campus has some children without /', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus",
+                config);
+            assert(items.children.length > 1);
+        });
+        it('campus has association as child', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+                config);
+            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/");
+            assert(filteredList.length == 1);
+        });
+        it('campus doesn\'t have association/list as child', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+                config);
+            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/list/");
+            assert(filteredList.length == 0);
+        });
+        it('campus doesn\'t have association/list as child', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
+                config);
+            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/list/");
+            assert(filteredList.length == 1);
+        });
+        it('campus is the parent of association', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
+                config);
+            const filteredList = items.parent.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/");
+            assert(filteredList.length == 1);
         });
     });
 });
