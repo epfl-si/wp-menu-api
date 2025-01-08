@@ -185,11 +185,25 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
             const children = sites.filter(site => regex.test(site.url));
             const parentURL = siteURL.replace(/\/([^\/]+\/?)$/, '/');
             const parent = sites.filter(site => site.url == parentURL);
-            return {children: children, parent: parent};
+            return {children: children.map(c => getURLJson(c.url)), parent: parent.map(p => getURLJson(p.url))};
         } else {
             return {children: [], parent: [], error: "No configuration found"};
         }
     } catch (e) {
         return {children: [], parent: [], error: getErrorMessage(e)};
     }
+}
+
+function getURLJson (link: string) {
+    const url = new URL(link);
+    return {
+        href: url.href,
+        protocol: url.protocol,
+        host: url.host,
+        hostname: url.hostname,
+        port: url.port,
+        pathname: url.pathname,
+        search: url.search,
+        hash: url.hash,
+    };
 }

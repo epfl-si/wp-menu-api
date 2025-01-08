@@ -159,28 +159,28 @@ describe("End To End Menu", function() {
             const config = loadConfig('menu-api-config.yaml');
             const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
                 config);
-            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/");
+            const filteredList = items.children.filter(site => site.href == "https://wp-httpd.epfl.ch/campus/associations/");
             assert(filteredList.length == 1);
         });
         it('campus doesn\'t have association/list as child', async function () {
             const config = loadConfig('menu-api-config.yaml');
             const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
                 config);
-            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/list/");
+            const filteredList = items.children.filter(site => site.href == "https://wp-httpd.epfl.ch/campus/associations/list/");
             assert(filteredList.length == 0);
         });
         it('campus doesn\'t have association/list as child', async function () {
             const config = loadConfig('menu-api-config.yaml');
             const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
                 config);
-            const filteredList = items.children.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/associations/list/");
+            const filteredList = items.children.filter(site => site.href == "https://wp-httpd.epfl.ch/campus/associations/list/");
             assert(filteredList.length == 1);
         });
         it('campus is the parent of association', async function () {
             const config = loadConfig('menu-api-config.yaml');
             const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
                 config);
-            const filteredList = items.parent.filter(site => site.url == "https://wp-httpd.epfl.ch/campus/");
+            const filteredList = items.parent.filter(site => site.href == "https://wp-httpd.epfl.ch/campus/");
             assert(filteredList.length == 1);
         });
     });
