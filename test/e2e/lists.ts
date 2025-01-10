@@ -139,6 +139,13 @@ describe("End To End Menu", function() {
                 "", "").list;
             assert(items.length > 1);
         });
+        it('crc is the child of IT Services & Resources', async function () {
+            const config = loadConfig('menu-api-config.yaml');
+            const items = getMenuItems("https://wp-httpd/campus/services/en/it-services/",
+                "en", "siblings", "page", "", "",
+                "https://wp-httpd/campus/services/en/", "IT Services & Resources").list;
+            assert(items.length > 1);
+        });
     });
 
 
