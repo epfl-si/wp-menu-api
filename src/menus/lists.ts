@@ -170,6 +170,9 @@ function getListFromFirstSite(firstSite: {
                 const assocBreadcrumbs = getAssocBreadcrumb(lang);
                 items = [...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray, labLink, assocBreadcrumbs), firstSite[restUrl]];
                 break;
+            case "children":
+                items = siteArray.getChildren(restUrl,firstSite[restUrl].ID);
+                break;
         }
     }
     return items;

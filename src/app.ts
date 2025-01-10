@@ -120,6 +120,37 @@ app.get('/siteTree', async (req, res) => {
     })
 });
 
+app.get('/menus/getStitchedMenus', async (req, res) => {
+    const siblings = getMenuItems(
+        req.query.url as string,
+        req.query.lang as string,
+        "siblings",
+        req.query.pageType as string,
+        req.query.mainPostPageName as string,
+        req.query.mainPostPageUrl as string,
+        req.query.homePageUrl as string,
+        req.query.postName as string);
+    let status = 200;
+    if (siblings.errors > 0) {
+        status = 500;
+    }
+    const children = getMenuItems(
+        req.query.url as string,
+        req.query.lang as string,
+        "children",
+        req.query.pageType as string,
+        req.query.mainPostPageName as string,
+        req.query.mainPostPageUrl as string,
+        req.query.homePageUrl as string,
+        req.query.postName as string);
+    http_request_counter.labels({route: "getStitchedMenus", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status == 200 ? "OK" : "KO",
+        siblings: siblings.list,
+        children: children.list
+    })
+});
+
 app.use('/utils', (req, res, next) => {
     const lang = req.query.lang;
     const mess = 'Lang parameter is missing';
