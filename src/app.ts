@@ -113,7 +113,7 @@ app.get('/siteTree', async (req, res) => {
     } else if (result.children.length == 0) {
         status = 404;
     }
-    http_request_counter.labels({route: "siteChildren", statusCode: status}).inc();
+    http_request_counter.labels({route: "siteTree", statusCode: status}).inc();
     res.status(status).json({
         status: status,
         result: {children: result.children, parent: result.parent}
