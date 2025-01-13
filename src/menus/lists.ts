@@ -6,7 +6,7 @@ import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
 import {getSiteListFromWPVeritas} from "../utils/source";
 import {Config} from "../utils/configFileReader";
-import { urlToHttpOptions } from 'node:url';
+import {urlToHttpOptions} from 'node:url';
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
