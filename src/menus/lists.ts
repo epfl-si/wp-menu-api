@@ -6,6 +6,7 @@ import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
 import {getSiteListFromWPVeritas} from "../utils/source";
 import {Config} from "../utils/configFileReader";
+import { urlToHttpOptions } from 'node:url';
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -185,25 +186,11 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
             const children = sites.filter(site => regex.test(site.url));
             const parentURL = siteURL.replace(/\/([^\/]+\/?)$/, '/');
             const parent = sites.filter(site => site.url == parentURL);
-            return {children: children.map(c => getURLJson(c.url)), parent: parent.map(p => getURLJson(p.url))};
+            return {children: children.map(c => urlToHttpOptions(new URL(c.url))), parent: parent.map(p =>urlToHttpOptions(new URL(p.url)))};
         } else {
             return {children: [], parent: [], error: "No configuration found"};
         }
     } catch (e) {
         return {children: [], parent: [], error: getErrorMessage(e)};
     }
-}
-
-function getURLJson (link: string) {
-    const url = new URL(link);
-    return {
-        href: url.href,
-        protocol: url.protocol,
-        host: url.host,
-        hostname: url.hostname,
-        port: url.port,
-        pathname: url.pathname,
-        search: url.search,
-        hash: url.hash,
-    };
 }
