@@ -2,7 +2,7 @@ import {error, getErrorMessage, info} from "./logger";
 import * as https from "https";
 import {Config} from "./configFileReader";
 
-export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
+export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, openshift4PodName: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
 	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "");
 	const parsedUrl = new URL(url);
 	const hostname = wpVeritas ? parsedUrl.hostname : configFile.POD_NAME.concat(url.indexOf('wp-httpd') > -1 ? '' : openshiftEnv);

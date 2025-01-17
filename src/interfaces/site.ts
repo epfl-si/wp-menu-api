@@ -34,9 +34,9 @@ export class Site {
         return 'https://' + parsedURL.hostname;
     }
 
-    async getLanguages(): Promise<string[]> {
+    async getLanguages(podName: string): Promise<string[]> {
         try {
-            return await callWebService(config, false, `${this.url}wp-json/epfl/v1/languages`, this.openshiftEnv, callBackFunctionForLanguages)
+            return await callWebService(config, false, `${this.url}wp-json/epfl/v1/languages`, this.openshiftEnv, podName, callBackFunctionForLanguages)
         } catch (e) {
             increaseRefreshErrorCount();
             error(getErrorMessage(e), { url: `${this.url}wp-json/epfl/v1/languages` });
@@ -44,7 +44,7 @@ export class Site {
         }
     }
 
-    async getMenuEntries(lang: string): Promise<{ siteMenuURL: string, entries: MenuEntry[] }> {
+    async getMenuEntries(lang: string, podName: string): Promise<{ siteMenuURL: string, entries: MenuEntry[] }> {
         const startTime = new Date().getTime();
         const siteMenuURL: string = `${this.url}wp-json/epfl/v1/menus/top?lang=${lang}`;
         const timeoutPromise = new Promise<never>((resolve, reject) => {
@@ -52,7 +52,7 @@ export class Site {
         });
 
         const res: Promise<{siteMenuURL: string, entries : MenuEntry[]}> = Promise.race([
-            callWebService(config, false, siteMenuURL, this.openshiftEnv, (url: string, res: any) => res as any),
+            callWebService(config, false, siteMenuURL, this.openshiftEnv, podName, (url: string, res: any) => res as any),
             timeoutPromise
         ]).then((menusApiResponse) => {
             if (menusApiResponse.status && menusApiResponse.status === 'OK') {
