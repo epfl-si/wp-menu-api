@@ -2,7 +2,7 @@ import {Site} from "../interfaces/site";
 import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {MenusCache} from "../utils/cache";
-import {getSiteListFromWPVeritas} from "../utils/source";
+import {getOpenshift4PodName, getSiteListFromInventory} from "../utils/source";
 import {
     getCategoriesCount,
     getPagesCount,
@@ -22,21 +22,22 @@ export function configRefresh(configFile: Config) {
 
 async function getMenusInParallel(
     sites: Site[],
-    fn: (site: Site) => Promise<MenuEntry[]>,
+    podName: string,
+    fn: (site: Site, podName: string) => Promise<MenuEntry[]>,
     threads = 10
 ) {
     while (sites.length) {
-        let subListOfSitesMenus: Promise<MenuEntry[]>[] = sites.splice(0, threads).map(x => fn(x));
+        let subListOfSitesMenus: Promise<MenuEntry[]>[] = sites.splice(0, threads).map(x => fn(x, podName));
         await Promise.all(subListOfSitesMenus);
     }
 }
 
-async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
+async function getMenuForSite(site: Site, podName: string): Promise<MenuEntry[]> {
     const allEntries: MenuEntry[] = []
-    let languages = await site.getLanguages();
+    let languages = await site.getLanguages(podName);
     languages = Array.isArray(languages) ? languages : ["en"];
     for (const lang of languages) {
-        const entries = await site.getMenuEntries(lang);
+        const entries = await site.getMenuEntries(lang, podName);
         allEntries.concat(entries.entries);
         if (!cachedMenus.menus[lang]) {
             cachedMenus.menus[lang] = new SiteTreeMutable();
@@ -46,7 +47,7 @@ async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
     return allEntries;
 }
 
-export async function refreshMenu(sites: Site[]) {
+export async function refreshMenu(sites: Site[], podName: string) {
     const startTime = new Date().getTime();
     info('Start refresh from API', { method: 'refreshMenu' });
     const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="" && s.wpInfra);
@@ -54,7 +55,7 @@ export async function refreshMenu(sites: Site[]) {
 
     info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
       { method: 'refreshMenu' });
-    await getMenusInParallel(filteredListOfSites, getMenuForSite, 10);
+    await getMenusInParallel(filteredListOfSites, podName, getMenuForSite, 10);
 
     info('End refresh from API', { method: 'refreshMenu' });
     const endTime = new Date().getTime();
@@ -68,9 +69,10 @@ export async function refreshFileMenu(pathRefreshFile: string) {
 
 export async function refreshFromAPI(pathRefreshFile: string) {
     resetRefreshErrorCount();
+    const podName = await getOpenshift4PodName();
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
-    const sites = await getSiteListFromWPVeritas(config);
-    await refreshMenu(sites);
+    const sites = await getSiteListFromInventory(config, podName);
+    await refreshMenu(sites, podName);
     cachedMenus.write(pathRefreshFile);
     getRetrievedSitesCount(cachedMenus);
     getPagesCount(cachedMenus);
