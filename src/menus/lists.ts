@@ -182,7 +182,7 @@ function getListFromFirstSite(firstSite: {
 export async function getSiteTree(siteURL: string, config: Config | undefined) {
     try {
         if (config) {
-            const sites = await getSiteListFromInventory(config, await getOpenshift4PodName());
+            const sites = await getSiteListFromInventory(config, await getOpenshift4PodName(config.NAMESPACE));
             siteURL = siteURL.endsWith('/') ? siteURL : siteURL + '/';
             const basePattern = `^${siteURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\\/]+\/?$`;
             const regex = new RegExp(basePattern);
