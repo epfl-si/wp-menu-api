@@ -69,7 +69,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
 
 export async function refreshFromAPI(pathRefreshFile: string) {
     resetRefreshErrorCount();
-    const podName = await getOpenshift4PodName();
+    const podName = await getOpenshift4PodName(config.NAMESPACE);
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
     const sites = await getSiteListFromInventory(config, podName);
     await refreshMenu(sites, podName);
