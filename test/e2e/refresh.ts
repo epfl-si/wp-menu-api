@@ -3,12 +3,15 @@ import {expect} from "chai";
 import {configRefresh, refreshFileMenu} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import fs from "fs";
+import {configSite} from "../../src/interfaces/site";
 
 describe("End To End Menu Refresh", function() {
     /*it('refresh has no errors', function (done) {
 			const config = loadConfig('menu-api-config.yaml');
 			if ( config ) {
 				configRefresh(config);
+				configSite(config);
+
 				refresh().then(() => {
 					const content2: string = fs.readFileSync('./menus_en.json', 'utf8');
 					const indices2 = getIndicesOf("/labs/hobel/wp-json/epfl/v1/menus/top?lang=en", content2);
