@@ -3,9 +3,14 @@ import * as https from "https";
 import {Config} from "./configFileReader";
 
 export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, openshift4PodName: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "");
+	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "").replace(/^https?:\/\/wp-httpd/gm, "");
 	const parsedUrl = new URL(url);
-	const hostname = wpVeritas ? parsedUrl.hostname : configFile.POD_NAME.concat(url.indexOf('wp-httpd') > -1 ? '' : openshiftEnv);
+	const hostname = wpVeritas ? parsedUrl.hostname :
+		(url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME :
+			(openshiftEnv == 'OS4' ? openshift4PodName :
+					configFile.POD_NAME.concat(openshiftEnv)
+			)
+		);
 
 	if (configFile.DEBUG) {
 		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
@@ -19,7 +24,7 @@ export async function callWebService(configFile: Config, wpVeritas: boolean, url
 		headers: {
 			'Content-Type': 'application/json',
 			'Accept': 'application/json',
-			'Host': url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME : parsedUrl.hostname,
+			'Host': parsedUrl.hostname,
 		},
 		rejectUnauthorized: false
 	};
