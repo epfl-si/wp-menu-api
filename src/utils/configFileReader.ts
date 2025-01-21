@@ -10,6 +10,8 @@ export interface Config {
   REFRESH_INTERVAL_WITH_FILE: number;
   REFRESH_FROM_FILE: boolean;
   PATH_REFRESH_FILE: string;
+  PATH_SITES_FILE: string;
+  NAMESPACE: string;
   LABS_LINK_URL_FR: string;
   LABS_LINK_URL_EN: string;
   ASSOC_BREADCRUMB_EN: string;
