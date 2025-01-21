@@ -2,12 +2,15 @@ import {Site} from "../interfaces/site";
 import {error, getErrorMessage, increaseRefreshErrorCount, info} from "./logger";
 import {Config} from "./configFileReader";
 import {callWebService} from "./webServiceCall";
-import { exec } from 'child_process';
+import {KubeConfig, CustomObjectsApi, CoreV1Api} from '@kubernetes/client-node';
+import fs from "fs";
+import {parse} from "yaml";
 
 export async function getSiteListFromInventory(configFile: Config, openshift4PodName: string): Promise<Site[]> {
-	const k8slist = await getSiteListFromKubernetes();
+	const k8slist = await getSiteListFromKubernetes(configFile.NAMESPACE);
 	const wpveritaslist = await getSiteListFromWPVeritas(configFile, openshift4PodName);
-	return wpveritaslist.concat(k8slist);
+	const fileList = await getSiteListFromFile(configFile.PATH_SITES_FILE);
+	return wpveritaslist.concat(k8slist).concat(fileList);
 }
 
 async function getSiteListFromWPVeritas(configFile: Config, openshift4PodName: string): Promise<Site[]> {
@@ -22,23 +25,8 @@ async function getSiteListFromWPVeritas(configFile: Config, openshift4PodName: s
 	}
 }
 
-async function getSiteListFromKubernetes(): Promise<Site[]> {
-	/*	const k8s = await import('@kubernetes/client-node');
-
-        const kc = new k8s.KubeConfig();
-        kc.loadFromDefault();
-
-        const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
-
-        k8sApi.listNamespacedPod({namespace: 'svc0041t-wordpress'}).then((res: any) => {
-            console.log(res.body);
-        }).catch(err => {
-            console.error(err);
-        });
-
-        return [];*/
-
-	const items = await getKubernetesResources('wps');
+export async function getSiteListFromKubernetes(namespace: string): Promise<Site[]> {
+	const items = await getKubernetesCustomResources('wordpresssites', namespace);
 	const resources = items.map((item: any) => {
 		const url = 'https://' + item.spec?.hostname + item.spec?.path;
 		return new Site(url, 'OS4', true);
@@ -47,25 +35,30 @@ async function getSiteListFromKubernetes(): Promise<Site[]> {
 	return resources;
 }
 
-export const getKubernetesResources = (resourceType: string): Promise<any> => {
-	return new Promise((resolve, reject) => {
-		exec(`kubectl get ${resourceType} -o json`, (e, stdout, stderr) => {
-			if (e) {
-				error(`Error: ${stderr}`, {});
-				return [];
-			} else {
-				const parsedResult = JSON.parse(stdout);
+async function getKubernetesCustomResources (resourceType: string, namespace: string): Promise<any> {
+		const kc = new KubeConfig();
+		kc.loadFromDefault();
+		const customObjectsApi = kc.makeApiClient(CustomObjectsApi);
+		try {
+			const response = await customObjectsApi.listNamespacedCustomObject({group: 'wordpress.epfl.ch', version: 'v1', namespace: namespace, plural: resourceType});
+			return response.items;
+		} catch (e) {
+			error('Error listing custom resources: ' + getErrorMessage(e));
+			return [];
+		}
+};
 
-				if (!parsedResult.items || !Array.isArray(parsedResult.items)) {
-					error('Unexpected response format: Missing or invalid "items" field', {});
-					return [];
-				}
-
-				const items = parsedResult.items;
-				resolve(items);
-			}
-		});
-	});
+async function getKubernetesPods (namespace: string): Promise<any[]> {
+	const kc = new KubeConfig();
+	kc.loadFromDefault();
+	const coreObjectsApi = kc.makeApiClient(CoreV1Api);
+	try {
+		const response = await coreObjectsApi.listNamespacedPod({ namespace: namespace });
+		return response.items;
+	} catch (e) {
+		error('Error listing Pods: ' + getErrorMessage(e));
+		return [];
+	}
 };
 
 function callBackFunctionFromWPVeritas(url: string, res: any){
@@ -75,9 +68,33 @@ function callBackFunctionFromWPVeritas(url: string, res: any){
 	return sites;
 }
 
-export async function getOpenshift4PodName (): Promise<string> {
-	const items = await getKubernetesResources('pods');
-	const wp_ngins = items.find((i: any) => i.metadata.name.indexOf('wp-nginx') > -1).metadata.name;
-	console.log(wp_ngins);
-	return wp_ngins;
+export async function getOpenshift4PodName (namespace: string): Promise<string> {
+	const items = await getKubernetesPods(namespace);
+	const pods = items.find((i: any) => i.metadata.name.indexOf('wp-nginx') > -1);
+	if (pods) {
+		info('Pod name: ' + pods.metadata.name);
+		return pods.metadata.name;
+	} else {
+		error('Pod wp-nginx not found');
+		return '';
+	}
+}
+
+async function getSiteListFromFile(filePath: string): Promise<Site[]> {
+	try {
+		if (filePath == '' || !fs.existsSync(filePath)) {
+			return [];
+		}
+		const fileContent = fs.readFileSync(filePath, 'utf8');
+		const data = parse(fileContent);
+		if (Array.isArray(data) && data.every(item => typeof item === 'string')) {
+			return data.map(item => new Site(item,  'dev', true));
+		} else {
+			error('Incorrect format in ' + filePath);
+			return [];
+		}
+	} catch (e) {
+		error('Error reading ' + filePath + ": " + getErrorMessage(e));
+		return [];
+	}
 }
