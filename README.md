@@ -34,7 +34,7 @@ SITE_ORIGINAL_URL=https://www.epfl.ch/research SITE_ANSIBLE_IDENTIFIER=www__rese
 SITE_ORIGINAL_URL=https://www.epfl.ch/innovation SITE_ANSIBLE_IDENTIFIER=www__innovation RESTORED_SITE_DIR_NAME=innovation ./local-restore-from-restic.sh
 SITE_ORIGINAL_URL=https://www.epfl.ch/schools SITE_ANSIBLE_IDENTIFIER=www__schools RESTORED_SITE_DIR_NAME=schools ./local-restore-from-restic.sh
 ```
-
+And then list them into `sites.yaml` file.
 
 ### Environment variables
 
@@ -48,14 +48,16 @@ To run tests locally:
 
 _N.B. you should already have the json file inside `data` folder_
 
-### NodeJS
+### Run menu-api on localhost
 
 * `npm i`
+* set the `LOCAL_ENV=false`
+* Change the value of `POD_NAME` with the wp-httpd pod IP address to run the menu-api locally
+  * To find the IP address you can run `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wp-httpd` 
 * Start the server locally:
-* - set the `LOCAL_ENV=true`
-  ```
-  npm start
-  ```
+    ```
+    npx tsx ./src/app.ts -p ./menu-api-config.yaml
+    ```
 
 * open your browser on
     * http://localhost:3001/menus/breadcrumb/?lang=en&url=http://wp-httpd/campus/services/en/it-services/security-it/
@@ -70,10 +72,24 @@ Inside wp-dev run:
 * Then you can use `docker logs -f menu-api`
 * And then to test inside the meni-api container:
 ```
-docker exec -it menu-api curl http://localhost:3001/refresh ; docker exec -it menu-api curl http://localhost:3001/details\?type\=breadcrumb\&lang\=en\&url\=http://wp-httpd/campus/services/website/
+docker exec -it menu-api curl http://localhost:3001/refresh ; 
+docker exec -it menu-api curl http://localhost:3001/menus/breadcrumb/?lang=fr&amp;url=https://wp-httpd/campus/services/ressources-informatiques/&amp;pageType=page&amp;postName=Informatique&amp;homePageUrl=https://wp-httpd/campus/services/fr/
 ```
 
-### Deployment
+### To debug menu-api
+* Make sur the wp-httpd image has been contructed with 
+```
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+```
+And the environment variable `MENU_API_HOST=host.docker.internal` is configured
+![img.png](img.png)
+Start the debug mode: ![img_1.png](img_1.png)
+Inside wp-dev run:
+* If containers are already running: `make stop`
+* Run `make up` to rebuild automatically the new image and run all containers
+
+### Deployment on Openshift 3
 In the wp-ops directory run:
 
 - To deploy on test: 
@@ -81,3 +97,5 @@ In the wp-ops directory run:
   - run `./ansible/wpsible -t menu_api`
 - To promote image on **production** environment run: `./ansible/wpsible -t menu_api --prod`
 
+### Deployement on Openshift 4 - test/prod
+Follow the doc at https://docs.google.com/document/d/11Kxg4IWH7tMZk_lxds5NsvrYTSU0Pr0PIfKgXcIv-6w/edit?pli=1&tab=t.0
