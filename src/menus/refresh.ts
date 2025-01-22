@@ -2,7 +2,7 @@ import {Site} from "../interfaces/site";
 import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {MenusCache} from "../utils/cache";
-import {getOpenshift4PodName, getSiteListFromInventory} from "../utils/source";
+import {getK8SPodName, getSiteListFromInventory} from "../utils/source";
 import {
     getCategoriesCount,
     getPagesCount,
@@ -69,7 +69,7 @@ export async function refreshFileMenu(pathRefreshFile: string) {
 
 export async function refreshFromAPI(pathRefreshFile: string) {
     resetRefreshErrorCount();
-    const podName = await getOpenshift4PodName(config.NAMESPACE);
+    const podName = await getK8SPodName(config.NAMESPACE);
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
     const sites = await getSiteListFromInventory(config, podName);
     await refreshMenu(sites, podName);
