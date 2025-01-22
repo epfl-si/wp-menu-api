@@ -6,18 +6,19 @@ import {KubeConfig, CustomObjectsApi, CoreV1Api} from '@kubernetes/client-node';
 import fs from "fs";
 import {parse} from "yaml";
 
-export async function getSiteListFromInventory(configFile: Config, openshift4PodName: string): Promise<Site[]> {
+export async function getSiteListFromInventory(configFile: Config, K8SPodName: string): Promise<Site[]> {
 	const k8slist = await getSiteListFromKubernetes(configFile.NAMESPACE);
-	const wpveritaslist = await getSiteListFromWPVeritas(configFile, openshift4PodName);
+	const wpveritaslist = await getSiteListFromWPVeritas(configFile, K8SPodName);
 	const fileList = await getSiteListFromFile(configFile.PATH_SITES_FILE);
-	return wpveritaslist.concat(k8slist).concat(fileList);
+	const sites = wpveritaslist.concat(k8slist).concat(fileList);
+	return sites.map(s => new Site(s.url.replace("wp-httpd.epfl.ch", "wp-httpd"),s.openshiftEnv, s.wpInfra));
 }
 
-async function getSiteListFromWPVeritas(configFile: Config, openshift4PodName: string): Promise<Site[]> {
+async function getSiteListFromWPVeritas(configFile: Config, K8SPodName: string): Promise<Site[]> {
 	let wpVeritasURL: string = configFile.WPVERITAS_URL; // TODO filter on unmigrated sites
 
 	try {
-		return await callWebService(configFile, true, wpVeritasURL, '', openshift4PodName, callBackFunctionFromWPVeritas);
+		return await callWebService(configFile, true, wpVeritasURL, '', K8SPodName, callBackFunctionFromWPVeritas);
 	} catch (e) {
 		increaseRefreshErrorCount();
 		error(getErrorMessage(e), { url: wpVeritasURL });
@@ -68,7 +69,7 @@ function callBackFunctionFromWPVeritas(url: string, res: any){
 	return sites;
 }
 
-export async function getOpenshift4PodName (namespace: string): Promise<string> {
+export async function getK8SPodName (namespace: string): Promise<string> {
 	const items = await getKubernetesPods(namespace);
 	const pods = items.find((i: any) => i.metadata.name.indexOf('wp-nginx') > -1);
 	if (pods) {
