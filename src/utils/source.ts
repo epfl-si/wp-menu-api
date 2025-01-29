@@ -15,7 +15,7 @@ export async function getSiteListFromInventory(configFile: Config, K8SPodName: s
 }
 
 async function getSiteListFromWPVeritas(configFile: Config, K8SPodName: string): Promise<Site[]> {
-	let wpVeritasURL: string = configFile.WPVERITAS_URL; // TODO filter on unmigrated sites
+	let wpVeritasURL: string = configFile.WPVERITAS_URL;
 
 	try {
 		return await callWebService(configFile, true, wpVeritasURL, '', K8SPodName, callBackFunctionFromWPVeritas);
