@@ -7,7 +7,6 @@ An express server that can serves WordPress menu.
 
 ### Prerequisite
 
-* access to the wp-veritas API
 * some dev sites running:
     * wp-httpd
     * wp-httpd/campus
@@ -77,7 +76,7 @@ docker exec -it menu-api curl http://localhost:3001/menus/breadcrumb/?lang=fr&am
 ```
 
 ### To debug menu-api
-* Make sur the wp-httpd image has been contructed with 
+* Make sur the wp-httpd image has been contructed with (wp-dev/docker-compose.yml)
 ```
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -88,6 +87,11 @@ Start the debug mode: ![img_1.png](img_1.png)
 Inside wp-dev run:
 * If containers are already running: `make stop`
 * Run `make up` to rebuild automatically the new image and run all containers
+* Run `docker stop menu-api` o run it locally
+* Change the value of `POD_NAME` with the wp-httpd pod IP address to run the menu-api locally
+  * To find the IP address you can run `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wp-httpd`
+* `cd wp-ops/docker/menu-api`
+* `npm start`
 
 ### Deployment on Openshift 3
 In the wp-ops directory run:

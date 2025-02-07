@@ -230,9 +230,7 @@ export class SiteTreeMutable {
         json.forEach((item: { urlInstanceRestUrl: string, entries: any }) => {
             this.menus.push({
                 urlInstanceRestUrl: item.urlInstanceRestUrl,
-                entries: item.entries.map((m: any) => MenuEntry.parse(new Site(m.ownerSite? m.ownerSite.url : '',
-                        m.ownerSite? m.ownerSite.openshiftEnv : '', m.ownerSite? m.ownerSite.wpInfra : true),
-                        m))
+                entries: item.entries.map((m: any) => MenuEntry.parse(new Site(m.ownerSite? m.ownerSite.url : ''), m))
             })
         })
     }

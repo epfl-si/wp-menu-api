@@ -17,13 +17,9 @@ export function configSite(configFile: Config) {
 
 export class Site {
     url: string;
-    openshiftEnv: string;
-    wpInfra: boolean;
 
-    constructor (url : string, openshiftEnv: string, wpInfra: boolean) {
+    constructor (url : string) {
         this.url = url;
-        this.openshiftEnv = openshiftEnv;
-        this.wpInfra = wpInfra;
     }
     getUrl() : string {
         return this.url;
@@ -36,7 +32,7 @@ export class Site {
 
     async getLanguages(podName: string): Promise<string[]> {
         try {
-            return await callWebService(config, false, `${this.url}wp-json/epfl/v1/languages`, this.openshiftEnv, podName, callBackFunctionForLanguages)
+            return await callWebService(config, `${this.url}wp-json/epfl/v1/languages`, podName, callBackFunctionForLanguages)
         } catch (e) {
             increaseRefreshErrorCount();
             error(getErrorMessage(e), { url: `${this.url}wp-json/epfl/v1/languages` });
@@ -52,7 +48,7 @@ export class Site {
         });
 
         const res: Promise<{siteMenuURL: string, entries : MenuEntry[]}> = Promise.race([
-            callWebService(config, false, siteMenuURL, this.openshiftEnv, podName, (url: string, res: any) => res as any),
+            callWebService(config, siteMenuURL, podName, (url: string, res: any) => res as any),
             timeoutPromise
         ]).then((menusApiResponse) => {
             if (menusApiResponse.status && menusApiResponse.status === 'OK') {

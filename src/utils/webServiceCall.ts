@@ -2,24 +2,19 @@ import {error, getErrorMessage, info} from "./logger";
 import * as https from "https";
 import {Config} from "./configFileReader";
 
-export async function callWebService(configFile: Config, wpVeritas: boolean, url: string, openshiftEnv: string, K8SPodName: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
+export async function callWebService(configFile: Config, url: string, K8SPodName: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
 	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "").replace(/^https?:\/\/wp-httpd/gm, "");
 	const parsedUrl = new URL(url);
-	const hostname = wpVeritas ? parsedUrl.hostname :
-		(url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME :
-			(openshiftEnv == 'OS4' ? K8SPodName :
-					configFile.POD_NAME.concat(openshiftEnv)
-			)
-		);
+	const wordpressHostname = url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME : K8SPodName;
 
 	if (configFile.DEBUG) {
-		console.log("Info callWebService", url, parsedUrl.hostname, openshiftEnv, hostname, path);
+		console.log("Info callWebService", url, parsedUrl.hostname, wordpressHostname, path);
 	}
 
 	const options = {
-		hostname: hostname,
-		path: wpVeritas ? '/api/v1/sites' : path,
-		port: wpVeritas || configFile.LOCAL_ENV ? null : 8443,
+		hostname: wordpressHostname,
+		path: path,
+		port: configFile.LOCAL_ENV ? null : 8443,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
