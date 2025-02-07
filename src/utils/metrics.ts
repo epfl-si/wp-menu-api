@@ -1,35 +1,11 @@
-import fs from "fs";
-import {
-	refresh_files_size,
-	total_categories,
-	total_pages,
-	total_posts,
-	total_retrieved_sites,
-	total_WPV_sites
-} from "./logger";
+import {total_categories, total_pages, total_posts, total_retrieved_sites,} from "./logger";
 import {getCachedMenus} from "../menus/refresh";
-import {Site} from "../interfaces/site";
 import {MenusCache} from "./cache";
 import {MenuEntry} from "../interfaces/MenuEntry";
 
 export function prometheusChecks(pathRefreshFile: string) {
 	getCachedMenus().checkFileCache(pathRefreshFile);
 	getCachedMenus().checkCache();
-}
-
-export function getWPVeritasSitesForEnvironment(filteredListOfSites: Site[]) {
-	const groupedByOpenShiftEnvironment = filteredListOfSites.reduce((acc, item) => {
-		if (!acc[item.openshiftEnv]) {
-			acc[item.openshiftEnv] = [];
-		}
-		acc[item.openshiftEnv].push(item);
-		return acc;
-	}, {} as Record<string, Site[]>);
-	for (const category in groupedByOpenShiftEnvironment) {
-		if (groupedByOpenShiftEnvironment.hasOwnProperty(category)) {
-			total_WPV_sites.labels({openshiftEnvironment: category}).set(groupedByOpenShiftEnvironment[category].length);
-		}
-	}
 }
 
 export function getRetrievedSitesCount(cachedMenus: MenusCache) {

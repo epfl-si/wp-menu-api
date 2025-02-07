@@ -152,40 +152,40 @@ describe("End To End Menu", function() {
     describe("ChildrenSite", function() {
         it('campus has some children', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+            const items = await getSiteTree("https://wp-httpd/campus/",
                 config);
             assert(items.children.length > 1);
         });
         it('campus has some children without /', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus",
+            const items = await getSiteTree("https://wp-httpd/campus",
                 config);
             assert(items.children.length > 1);
         });
         it('campus has association as child', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+            const items = await getSiteTree("https://wp-httpd/campus/",
                 config);
             const filteredList = items.children.filter(site => site.path == "/campus/associations/");
             assert(filteredList.length == 1);
         });
         it('campus doesn\'t have association/list as child', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/",
+            const items = await getSiteTree("https://wp-httpd/campus/",
                 config);
             const filteredList = items.children.filter(site => site.path == "/campus/associations/list/");
             assert(filteredList.length == 0);
         });
         it('campus doesn\'t have association/list as child', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
+            const items = await getSiteTree("https://wp-httpd/campus/associations",
                 config);
             const filteredList = items.children.filter(site => site.path == "/campus/associations/list/");
             assert(filteredList.length == 1);
         });
         it('campus is the parent of association', async function () {
             const config = loadConfig('menu-api-config.yaml');
-            const items = await getSiteTree("https://wp-httpd.epfl.ch/campus/associations",
+            const items = await getSiteTree("https://wp-httpd/campus/associations",
                 config);
             const filteredList = items.parent.filter(site => site.path == "/campus/");
             assert(filteredList.length == 1);
