@@ -3,7 +3,6 @@ import * as yaml from 'js-yaml';
 import {error, getErrorMessage} from "./logger";
 
 export interface Config {
-  WPVERITAS_URL: string;
   SERVICE_PORT: number;
   REFRESH_INTERVAL: number;
   NODE_TLS_REJECT_UNAUTHORIZED: number;

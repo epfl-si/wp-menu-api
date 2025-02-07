@@ -1,36 +1,22 @@
 import {Site} from "../interfaces/site";
-import {error, getErrorMessage, increaseRefreshErrorCount, info} from "./logger";
+import {error, getErrorMessage, info} from "./logger";
 import {Config} from "./configFileReader";
-import {callWebService} from "./webServiceCall";
-import {KubeConfig, CustomObjectsApi, CoreV1Api} from '@kubernetes/client-node';
+import {CoreV1Api, CustomObjectsApi, KubeConfig} from '@kubernetes/client-node';
 import fs from "fs";
 import {parse} from "yaml";
 
 export async function getSiteListFromInventory(configFile: Config, K8SPodName: string): Promise<Site[]> {
 	const k8slist = await getSiteListFromKubernetes(configFile.NAMESPACE);
-	const wpveritaslist = await getSiteListFromWPVeritas(configFile, K8SPodName);
 	const fileList = await getSiteListFromFile(configFile.PATH_SITES_FILE);
-	const sites = wpveritaslist.concat(k8slist).concat(fileList);
-	return sites.map(s => new Site(s.url.replace("wp-httpd.epfl.ch", "wp-httpd"),s.openshiftEnv, s.wpInfra));
-}
-
-async function getSiteListFromWPVeritas(configFile: Config, K8SPodName: string): Promise<Site[]> {
-	let wpVeritasURL: string = configFile.WPVERITAS_URL;
-
-	try {
-		return await callWebService(configFile, true, wpVeritasURL, '', K8SPodName, callBackFunctionFromWPVeritas);
-	} catch (e) {
-		increaseRefreshErrorCount();
-		error(getErrorMessage(e), { url: wpVeritasURL });
-		return [];
-	}
+	const sites = k8slist.concat(fileList);
+	return sites.map(s => new Site(s.url.replace("wp-httpd.epfl.ch", "wp-httpd")));
 }
 
 export async function getSiteListFromKubernetes(namespace: string): Promise<Site[]> {
 	const items = await getKubernetesCustomResources('wordpresssites', namespace);
 	const resources = items.map((item: any) => {
 		const url = 'https://' + item.spec?.hostname + item.spec?.path;
-		return new Site(url, 'OS4', true);
+		return new Site(url);
 	});
 
 	return resources;
@@ -62,13 +48,6 @@ async function getKubernetesPods (namespace: string): Promise<any[]> {
 	}
 };
 
-function callBackFunctionFromWPVeritas(url: string, res: any){
-	const inventory: any[] = res;
-	const sites = inventory.map(i =>  new Site(i.url, i.openshiftEnv, i.wpInfra));
-	info(`Total sites retrieved: ${sites.length}`, { url: url, method: 'callWebService' });
-	return sites;
-}
-
 export async function getK8SPodName (namespace: string): Promise<string> {
 	const items = await getKubernetesPods(namespace);
 	const pods = items.find((i: any) => i.metadata.name.indexOf('wp-nginx') > -1);
@@ -89,7 +68,7 @@ async function getSiteListFromFile(filePath: string): Promise<Site[]> {
 		const fileContent = fs.readFileSync(filePath, 'utf8');
 		const data = parse(fileContent);
 		if (Array.isArray(data) && data.every(item => typeof item === 'string')) {
-			return data.map(item => new Site(item,  'dev', true));
+			return data.map(item => new Site(item));
 		} else {
 			error('Incorrect format in ' + filePath);
 			return [];

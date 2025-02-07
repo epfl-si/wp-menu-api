@@ -23,11 +23,6 @@ export const refresh_memory_array_size = new Prometheus.Gauge({
     help: 'Menu array size',
     labelNames: ['arrayName']
 });
-export const total_WPV_sites = new Prometheus.Gauge({
-    name: 'menu_api_wpveritas_sites_total',
-    help: 'Number of wp veritas sites per openshift environment',
-    labelNames: ['openshiftEnvironment']
-});
 export const total_retrieved_sites = new Prometheus.Gauge({
     name: 'menu_api_retrieved_sites_total',
     help: 'Number of retrieved sites per language',
@@ -76,7 +71,6 @@ register.registerMetric(http_request_counter);
 register.registerMetric(error_counter);
 register.registerMetric(refresh_files_size);
 register.registerMetric(refresh_memory_array_size);
-register.registerMetric(total_WPV_sites);
 register.registerMetric(total_retrieved_sites);
 register.registerMetric(total_pages);
 register.registerMetric(total_posts);

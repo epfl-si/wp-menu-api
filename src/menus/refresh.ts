@@ -7,8 +7,7 @@ import {
     getCategoriesCount,
     getPagesCount,
     getPostsCount,
-    getRetrievedSitesCount,
-    getWPVeritasSitesForEnvironment
+    getRetrievedSitesCount
 } from "../utils/metrics";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {SiteTreeMutable} from "../interfaces/siteTree";
@@ -50,12 +49,10 @@ async function getMenuForSite(site: Site, podName: string): Promise<MenuEntry[]>
 export async function refreshMenu(sites: Site[], podName: string) {
     const startTime = new Date().getTime();
     info('Start refresh from API', { method: 'refreshMenu' });
-    const filteredListOfSites: Site[] = sites.filter(s => s.openshiftEnv!="" && s.wpInfra);
-    getWPVeritasSitesForEnvironment(filteredListOfSites);
 
-    info(`Start getting menus in parallel. ${filteredListOfSites.length} sites.`,
+    info(`Start getting menus in parallel. ${sites.length} sites.`,
       { method: 'refreshMenu' });
-    await getMenusInParallel(filteredListOfSites, podName, getMenuForSite, 10);
+    await getMenusInParallel(sites, podName, getMenuForSite, 10);
 
     info('End refresh from API', { method: 'refreshMenu' });
     const endTime = new Date().getTime();

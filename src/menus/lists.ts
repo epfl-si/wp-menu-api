@@ -109,7 +109,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                     //we add the site post home page to the breadcrumb:
                     // if the post home page is defined in wordpress we get his name ans url into the item,
                     // otherwise we create the item manually
-                    const homePagePosts: MenuEntry = MenuEntry.parse(new Site('', '', true), {
+                    const homePagePosts: MenuEntry = MenuEntry.parse(new Site(''), {
                         ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
                         title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')});
                     items.push(homePagePosts);
@@ -118,7 +118,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                         // the post page url is different from the main post page url:
                         // the main post page url includes the post name
                         // So we should include the post item only if the current url doesn't include the main post page url
-                        const postPage: MenuEntry = MenuEntry.parse(new Site('', '', true), {
+                        const postPage: MenuEntry = MenuEntry.parse(new Site(''), {
                             ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
                             title: currentPostName, url: url});
                         items.push(postPage);
