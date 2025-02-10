@@ -1,6 +1,6 @@
 {
   "name": "menu-api",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A menu API for WordPress",
   "main": "index.js",
   "scripts": {
