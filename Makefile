@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 NAMESPACE = wordpress-test
 WP_OPERATOR_IMAGE_NAME = quay-its.epfl.ch/svc0041/menu-api
-WP_OPERATOR_IMAGE_TAG ?= 2025-002
+WP_OPERATOR_IMAGE_TAG ?= 2025-$(ver)
 
 .PHONY: help
 ## Print this help
