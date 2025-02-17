@@ -6,11 +6,12 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig.json ./
-COPY src ./src
 RUN mkdir ./data
 RUN chmod 1777 ./data
 
 RUN npm install
+
+COPY src ./src
 
 RUN chmod 1777 .    # BAD!!! Better to dedicate a directory for the JSON file.
 
