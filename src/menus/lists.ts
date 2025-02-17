@@ -169,10 +169,6 @@ function getListFromFirstSite(firstSite: {
                         });
                     }
                 }
-                //If the current URL is not a level 0 and if it's an orphan page, we return just the found site
-                if (items.length == 0) {
-                    items.push(firstSite[restUrl])
-                }
                 break;
             case "breadcrumb":
                 const labLink = getLabsLink(lang);
