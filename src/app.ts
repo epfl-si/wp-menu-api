@@ -193,11 +193,10 @@ async function start () {
         error('Please provide a configuration file path using -p', {});
     } else if (statusCode == 500) {
         error('Some error occurred, see logs for details', {});
-    } else {
-        app.listen(servicePort, async () => {
-            setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
-        });
     }
+    app.listen(servicePort, async () => {
+        setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
+    });
 }
 
 start().catch(console.error);
