@@ -1,11 +1,11 @@
-POD_NAME: "XXXX"
+WP_SERVICE_NAME: "172.24.0.6"
+WP_SERVICE_PORT: 8080
 SERVICE_PORT: "3001"
 NODE_TLS_REJECT_UNAUTHORIZED: "0"
 PATH_REFRESH_FILE: "./data"
 PATH_SITES_FILE: "./sites.yaml"
 NAMESPACE: "svc0041t-wordpress"
 DEBUG: true
-LOCAL_ENV: false
 LABS_LINK_URL_FR: "https://wp-httpd/labs/fr/laboratoires/"
 LABS_LINK_URL_EN: "https://wp-httpd/labs/en/laboratories/"
 ASSOC_BREADCRUMB_EN: |

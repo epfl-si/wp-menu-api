@@ -2,7 +2,7 @@ import {Site} from "../interfaces/site";
 import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
 import {MenusCache} from "../utils/cache";
-import {getK8SPodName, getSiteListFromInventory} from "../utils/source";
+import {getSiteListFromInventory} from "../utils/source";
 import {
     getCategoriesCount,
     getPagesCount,
@@ -21,22 +21,21 @@ export function configRefresh(configFile: Config) {
 
 async function getMenusInParallel(
     sites: Site[],
-    podName: string,
-    fn: (site: Site, podName: string) => Promise<MenuEntry[]>,
+    fn: (site: Site) => Promise<MenuEntry[]>,
     threads = 10
 ) {
     while (sites.length) {
-        let subListOfSitesMenus: Promise<MenuEntry[]>[] = sites.splice(0, threads).map(x => fn(x, podName));
+        let subListOfSitesMenus: Promise<MenuEntry[]>[] = sites.splice(0, threads).map(x => fn(x));
         await Promise.all(subListOfSitesMenus);
     }
 }
 
-async function getMenuForSite(site: Site, podName: string): Promise<MenuEntry[]> {
+async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
     const allEntries: MenuEntry[] = []
-    let languages = await site.getLanguages(podName);
+    let languages = await site.getLanguages();
     languages = Array.isArray(languages) ? languages : ["en"];
     for (const lang of languages) {
-        const entries = await site.getMenuEntries(lang, podName);
+        const entries = await site.getMenuEntries(lang);
         allEntries.concat(entries.entries);
         if (!cachedMenus.menus[lang]) {
             cachedMenus.menus[lang] = new SiteTreeMutable();
@@ -46,13 +45,13 @@ async function getMenuForSite(site: Site, podName: string): Promise<MenuEntry[]>
     return allEntries;
 }
 
-export async function refreshMenu(sites: Site[], podName: string) {
+export async function refreshMenu(sites: Site[]) {
     const startTime = new Date().getTime();
     info('Start refresh from API', { method: 'refreshMenu' });
 
     info(`Start getting menus in parallel. ${sites.length} sites.`,
       { method: 'refreshMenu' });
-    await getMenusInParallel(sites, podName, getMenuForSite, 10);
+    await getMenusInParallel(sites, getMenuForSite, 10);
 
     info('End refresh from API', { method: 'refreshMenu' });
     const endTime = new Date().getTime();
@@ -66,10 +65,9 @@ export async function refreshFileMenu(pathRefreshFile: string) {
 
 export async function refreshFromAPI(pathRefreshFile: string) {
     resetRefreshErrorCount();
-    const podName = await getK8SPodName(config.NAMESPACE);
     info(`Start refresh from API`,{ method: 'refreshFileMenu' });
-    const sites = await getSiteListFromInventory(config, podName);
-    await refreshMenu(sites, podName);
+    const sites = await getSiteListFromInventory(config);
+    await refreshMenu(sites);
     cachedMenus.write(pathRefreshFile);
     getRetrievedSitesCount(cachedMenus);
     getPagesCount(cachedMenus);
