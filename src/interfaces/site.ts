@@ -30,25 +30,25 @@ export class Site {
         return 'https://' + parsedURL.hostname;
     }
 
-    async getLanguages(podName: string): Promise<string[]> {
+    async getLanguages(): Promise<string[]> {
         try {
-            return await callWebService(config, `${this.url}wp-json/epfl/v1/languages`, podName, callBackFunctionForLanguages)
+            return await callWebService(config, `${this.url}/wp-json/epfl/v1/languages`, callBackFunctionForLanguages)
         } catch (e) {
             increaseRefreshErrorCount();
-            error(getErrorMessage(e), { url: `${this.url}wp-json/epfl/v1/languages` });
+            error(getErrorMessage(e), { url: `${this.url}/wp-json/epfl/v1/languages` });
             return [];
         }
     }
 
-    async getMenuEntries(lang: string, podName: string): Promise<{ siteMenuURL: string, entries: MenuEntry[] }> {
+    async getMenuEntries(lang: string): Promise<{ siteMenuURL: string, entries: MenuEntry[] }> {
         const startTime = new Date().getTime();
-        const siteMenuURL: string = `${this.url}wp-json/epfl/v1/menus/top?lang=${lang}`;
+        const siteMenuURL: string = `${this.url}/wp-json/epfl/v1/menus/top?lang=${lang}`;
         const timeoutPromise = new Promise<never>((resolve, reject) => {
             setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
         });
 
         const res: Promise<{siteMenuURL: string, entries : MenuEntry[]}> = Promise.race([
-            callWebService(config, siteMenuURL, podName, (url: string, res: any) => res as any),
+            callWebService(config, siteMenuURL, (url: string, res: any) => res as any),
             timeoutPromise
         ]).then((menusApiResponse) => {
             if (menusApiResponse.status && menusApiResponse.status === 'OK') {

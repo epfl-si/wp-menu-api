@@ -1,11 +1,11 @@
 import {error, getErrorMessage, info} from "./logger";
-import * as https from "https";
+import * as http from "http";
 import {Config} from "./configFileReader";
 
-export async function callWebService(configFile: Config, url: string, K8SPodName: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
+export async function callWebService(configFile: Config, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
 	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "").replace(/^https?:\/\/wp-httpd/gm, "");
 	const parsedUrl = new URL(url);
-	const wordpressHostname = url.indexOf('wp-httpd') > -1 ? configFile.POD_NAME : K8SPodName;
+	const wordpressHostname = configFile.WP_SERVICE_NAME;
 
 	if (configFile.DEBUG) {
 		console.log("Info callWebService", url, parsedUrl.hostname, wordpressHostname, path);
@@ -14,7 +14,7 @@ export async function callWebService(configFile: Config, url: string, K8SPodName
 	const options = {
 		hostname: wordpressHostname,
 		path: path,
-		port: configFile.LOCAL_ENV ? null : 8443,
+		port: configFile.WP_SERVICE_PORT,
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ export async function callWebService(configFile: Config, url: string, K8SPodName
 
 	info('Start web service call', { url: url, method: 'callWebService' });
 	return new Promise((resolve, reject) => {
-		const req = https.request(options, (res) => {
+		const req = http.request(options, (res) => {
 			let data = "";
 
 			res.setEncoding("utf8");
