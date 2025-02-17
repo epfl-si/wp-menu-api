@@ -77,66 +77,71 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
     let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
     let items: MenuEntry[] = [];
-    const m = getCachedMenus();
-    let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
+    try {
+        const m = getCachedMenus();
+        let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
 
-    if (siteArray) {
-        const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
+        if (siteArray) {
+            const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
-        if (firstSite.result) {
-            const restUrl = Object.keys(firstSite.result)[0];
-            info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
+            if (firstSite.result) {
+                const restUrl = Object.keys(firstSite.result)[0];
+                info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
-            items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
-            orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
-        } else {
-            if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
-                error('orphan_page', {url: url, lang: lang});
-                orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
-                err ++;
-            }
-            if (pageType == 'post' && type == 'breadcrumb') {
-                //if the site is not found and we are looking for a post page not attached to the menu,
-                //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
-                const levelzero = siteArray.findLevelZeroByUrl(homePageUrl);
-
-                if (levelzero) {
-                    const restUrl = Object.keys(levelzero)[0];
-                    info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
-
-                    items = getListFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
-
-                    //we add the site post home page to the breadcrumb:
-                    // if the post home page is defined in wordpress we get his name ans url into the item,
-                    // otherwise we create the item manually
-                    const homePagePosts: MenuEntry = MenuEntry.parse(new Site(''), {
-                        ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
-                        title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')});
-                    items.push(homePagePosts);
-
-                    if (url.indexOf(mainPostPageUrl) == -1 && url.indexOf('?post_type=post') == -1){
-                        // the post page url is different from the main post page url:
-                        // the main post page url includes the post name
-                        // So we should include the post item only if the current url doesn't include the main post page url
-                        const postPage: MenuEntry = MenuEntry.parse(new Site(''), {
-                            ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
-                            title: currentPostName, url: url});
-                        items.push(postPage);
-                    }
-                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(0);
-                } else {
-                    info('orphan_post', {url: homePageUrl, lang: lang});
-                    orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(1);
+                items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
+                orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
+            } else {
+                if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
+                    error('orphan_page', {url: url, lang: lang});
+                    orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
                     err ++;
                 }
-            }
-        }
-    } else {
-        error('menu_array_not_found', {lang: lang});
-        err ++;
-    }
+                if (pageType == 'post' && type == 'breadcrumb') {
+                    //if the site is not found and we are looking for a post page not attached to the menu,
+                    //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
+                    const levelzero = siteArray.findLevelZeroByUrl(homePageUrl);
 
-    return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object})), errors: err};
+                    if (levelzero) {
+                        const restUrl = Object.keys(levelzero)[0];
+                        info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
+
+                        items = getListFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
+
+                        //we add the site post home page to the breadcrumb:
+                        // if the post home page is defined in wordpress we get his name ans url into the item,
+                        // otherwise we create the item manually
+                        const homePagePosts: MenuEntry = MenuEntry.parse(new Site(''), {
+                            ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
+                            title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')});
+                        items.push(homePagePosts);
+
+                        if (url.indexOf(mainPostPageUrl) == -1 && url.indexOf('?post_type=post') == -1){
+                            // the post page url is different from the main post page url:
+                            // the main post page url includes the post name
+                            // So we should include the post item only if the current url doesn't include the main post page url
+                            const postPage: MenuEntry = MenuEntry.parse(new Site(''), {
+                                ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
+                                title: currentPostName, url: url});
+                            items.push(postPage);
+                        }
+                        orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(0);
+                    } else {
+                        info('orphan_post', {url: homePageUrl, lang: lang});
+                        orphan_pages_counter.labels( {url: homePageUrl, lang: lang }).set(1);
+                        err ++;
+                    }
+                }
+            }
+        } else {
+            error('menu_array_not_found', {lang: lang});
+            err ++;
+        }
+
+        return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object})), errors: err};
+    } catch (e) {
+        error(getErrorMessage(e))
+        return {list: [], errors: 1};
+    }
 }
 
 
@@ -163,6 +168,10 @@ function getListFromFirstSite(firstSite: {
                             }
                         });
                     }
+                }
+                //If the current URL is not a level 0 and if it's an orphan page, we return just the found site
+                if (items.length == 0) {
+                    items.push(firstSite[restUrl])
                 }
                 break;
             case "breadcrumb":
