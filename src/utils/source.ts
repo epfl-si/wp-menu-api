@@ -5,7 +5,7 @@ import {CoreV1Api, CustomObjectsApi, KubeConfig} from '@kubernetes/client-node';
 import fs from "fs";
 import {parse} from "yaml";
 
-export async function getSiteListFromInventory(configFile: Config, K8SPodName: string): Promise<Site[]> {
+export async function getSiteListFromInventory(configFile: Config): Promise<Site[]> {
 	const k8slist = await getSiteListFromKubernetes(configFile.NAMESPACE);
 	const fileList = await getSiteListFromFile(configFile.PATH_SITES_FILE);
 	const sites = k8slist.concat(fileList);
@@ -34,31 +34,6 @@ async function getKubernetesCustomResources (resourceType: string, namespace: st
 			return [];
 		}
 };
-
-async function getKubernetesPods (namespace: string): Promise<any[]> {
-	const kc = new KubeConfig();
-	kc.loadFromDefault();
-	const coreObjectsApi = kc.makeApiClient(CoreV1Api);
-	try {
-		const response = await coreObjectsApi.listNamespacedPod({ namespace: namespace });
-		return response.items;
-	} catch (e) {
-		error('Error listing Pods: ' + getErrorMessage(e));
-		return [];
-	}
-};
-
-export async function getK8SPodName (namespace: string): Promise<string> {
-	const items = await getKubernetesPods(namespace);
-	const pods = items.find((i: any) => i.metadata.name.indexOf('wp-nginx') > -1);
-	if (pods) {
-		info('Pod name: ' + pods.metadata.name);
-		return pods.metadata.name;
-	} else {
-		error('Pod wp-nginx not found');
-		return '';
-	}
-}
 
 async function getSiteListFromFile(filePath: string): Promise<Site[]> {
 	try {

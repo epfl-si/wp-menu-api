@@ -6,7 +6,7 @@ import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
 import {Config} from "../utils/configFileReader";
 import {urlToHttpOptions} from 'node:url';
-import {getK8SPodName, getSiteListFromInventory} from "../utils/source";
+import {getSiteListFromInventory} from "../utils/source";
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -182,7 +182,7 @@ function getListFromFirstSite(firstSite: {
 export async function getSiteTree(siteURL: string, config: Config | undefined) {
     try {
         if (config) {
-            const sites = await getSiteListFromInventory(config, await getK8SPodName(config.NAMESPACE));
+            const sites = await getSiteListFromInventory(config);
             siteURL = siteURL.endsWith('/') ? siteURL : siteURL + '/';
             const basePattern = `^${siteURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\\/]+\/?$`;
             const regex = new RegExp(basePattern);

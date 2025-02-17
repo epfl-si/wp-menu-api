@@ -3,6 +3,8 @@ import * as yaml from 'js-yaml';
 import {error, getErrorMessage} from "./logger";
 
 export interface Config {
+  WP_SERVICE_NAME: string;
+  WP_SERVICE_PORT: number;
   SERVICE_PORT: number;
   REFRESH_INTERVAL: number;
   NODE_TLS_REJECT_UNAUTHORIZED: number;
@@ -18,9 +20,7 @@ export interface Config {
   MENU_BAR_LINKS_EN: string;
   MENU_BAR_LINKS_FR: string;
   MENU_BAR_LINKS_DE: string;
-  POD_NAME: string;
   DEBUG: boolean;
-  LOCAL_ENV: boolean;
 }
 
 export function loadConfig(configFilePath: any): Config | undefined {
