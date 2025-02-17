@@ -187,15 +187,20 @@ app.get('/refresh', async (req, res) => {
     })
 });
 
-app.listen(servicePort, async () => {
+async function start () {
     const statusCode = await refreshCache();
     if (statusCode == 400) {
         error('Please provide a configuration file path using -p', {});
     } else if (statusCode == 500) {
         error('Some error occurred, see logs for details', {});
+    } else {
+        app.listen(servicePort, async () => {
+            setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
+        });
     }
-    setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
-});
+}
+
+start().catch(console.error);
 
 async function refreshCache() {
     if (config) {
