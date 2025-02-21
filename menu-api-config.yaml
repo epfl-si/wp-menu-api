@@ -6,6 +6,7 @@ PATH_REFRESH_FILE: "./data"
 PATH_SITES_FILE: "./sites.yaml"
 NAMESPACE: "svc0041t-wordpress"
 DEBUG: true
+REQUEST_TIMEOUT: 30000
 LABS_LINK_URL_FR: "https://wp-httpd/labs/fr/laboratoires/"
 LABS_LINK_URL_EN: "https://wp-httpd/labs/en/laboratories/"
 ASSOC_BREADCRUMB_EN: |

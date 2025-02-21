@@ -21,6 +21,7 @@ export interface Config {
   MENU_BAR_LINKS_FR: string;
   MENU_BAR_LINKS_DE: string;
   DEBUG: boolean;
+  REQUEST_TIMEOUT: number;
 }
 
 export function loadConfig(configFilePath: any): Config | undefined {
