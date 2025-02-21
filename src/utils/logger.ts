@@ -69,7 +69,7 @@ export const orphan_pages_counter = new Prometheus.Gauge({
 });
 
 register.setDefaultLabels({
-    app: 'menu-api-siblings'
+    app: 'menu-api'
 })
 Prometheus.collectDefaultMetrics({register});
 register.registerMetric(http_request_counter);
