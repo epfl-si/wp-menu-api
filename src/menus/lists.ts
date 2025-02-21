@@ -169,6 +169,12 @@ function getListFromFirstSite(firstSite: {
                         });
                     }
                 }
+                // if the requested page is a site home page but not a level 0 (like labs or assoc) we want to return at least the requested site for the sidebar in the theme.
+                // Otherwise, the default theme is shown with the `@Primary` menus (if any)
+                // Reminder: all the `@Primary` menus not correctly attached to the menu, are deleted from the result n the items list
+                if (items.length == 0) {
+                    items.push(firstSite[restUrl]);
+                }
                 break;
             case "breadcrumb":
                 const labLink = getLabsLink(lang);
