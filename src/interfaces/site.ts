@@ -44,7 +44,7 @@ export class Site {
         const startTime = new Date().getTime();
         const siteMenuURL: string = `${this.url}/wp-json/epfl/v1/menus/top?lang=${lang}`;
         const timeoutPromise = new Promise<never>((resolve, reject) => {
-            setTimeout(reject.bind(null, new Error("Timeout 10s")), 10000);
+            setTimeout(reject.bind(null, new Error("Timeout 30s")), config.REQUEST_TIMEOUT);
         });
 
         const res: Promise<{siteMenuURL: string, entries : MenuEntry[]}> = Promise.race([
