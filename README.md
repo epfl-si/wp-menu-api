@@ -87,7 +87,7 @@ Inside wp-dev run:
 * If containers are already running: `make stop`
 * Run `make up` to rebuild automatically the new image and run all containers
 * Run `docker stop menu-api` o run it locally
-* Change the value of `SERVICE_NAME` with the wp-httpd pod IP address to run the menu-api locally
+* Change the value of `WP_SERVICE_NAME` with the wp-httpd pod IP address to run the menu-api locally
   * To find the IP address you can run `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wp-httpd`
 * `cd wp-ops/docker/menu-api`
 * `npm start`
