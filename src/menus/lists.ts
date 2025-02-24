@@ -96,9 +96,10 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                     orphan_pages_counter.labels( {url: url, lang: lang }).set(1);
                     err ++;
                 }
+                // Post pages are usually not attached to the menu.
                 if (pageType == 'post' && type == 'breadcrumb') {
-                    //if the site is not found and we are looking for a post page not attached to the menu,
-                    //we will found the breadcrumb for his site home page and manually add the home post page and the current post page
+                    // In this case where the post page is not attached to the menu, the breadcrumb is manually defined:
+                    // the post home page and the current post page are added to the post site home page breadcrumb
                     const levelzero = siteArray.findLevelZeroByUrl(homePageUrl);
 
                     if (levelzero) {
@@ -107,18 +108,19 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
                         items = getListFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
 
-                        //we add the site post home page to the breadcrumb:
-                        // if the post home page is defined in wordpress we get his name ans url into the item,
-                        // otherwise we create the item manually
+                        // The post home page is added to the site home page breadcrumb
+                        // The post home page name and url are retrieved from WordPress, if defined,
+                        // otherwise they are manually created.
+                        // A new item is created and added to the breadcrumb.
                         const homePagePosts: MenuEntry = MenuEntry.parse(new Site(''), {
                             ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
                             title: mainPostPageName ?? 'Posts', url: mainPostPageUrl ?? (homePageUrl + '?post_type=post')});
                         items.push(homePagePosts);
 
                         if (url.indexOf(mainPostPageUrl) == -1 && url.indexOf('?post_type=post') == -1){
-                            // the post page url is different from the main post page url:
+                            // The post page url is different from the main post page url:
                             // the main post page url includes the post name
-                            // So we should include the post item only if the current url doesn't include the main post page url
+                            // The post item is included only if the current url doesn't include the main post page url
                             const postPage: MenuEntry = MenuEntry.parse(new Site(''), {
                                 ID: 0, menu_item_parent: 0, menu_order: 0, object: "post", type_label: "Post",
                                 title: currentPostName, url: url});
@@ -169,9 +171,10 @@ function getListFromFirstSite(firstSite: {
                         });
                     }
                 }
-                // if the requested page is a site home page but not a level 0 (like labs or assoc) we want to return at least the requested site for the sidebar in the theme.
-                // Otherwise, the default theme is shown with the `@Primary` menus (if any)
-                // Reminder: all the `@Primary` menus not correctly attached to the menu, are deleted from the result n the items list
+                // If the requested page is a site home page but not a level 0 (like labs or assoc),
+                // the requested site for the sidebar in the theme has to be returned to avoid the default theme
+                // (`@Primary` menus, if any)
+                // Reminder: all the `@Primary` menus not correctly attached to the menu are deleted from the result in the items list
                 if (items.length == 0) {
                     items.push(firstSite[restUrl]);
                 }
