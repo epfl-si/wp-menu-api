@@ -1,4 +1,7 @@
-WP_SERVICE_NAME: "172.24.0.6"
+# Put here the IP address of the wp-httpd container by doing
+# `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wp-httpd`
+# more information in the README.md
+WP_SERVICE_NAME: "X.X.X.X"
 WP_SERVICE_PORT: 8080
 SERVICE_PORT: "3001"
 NODE_TLS_REJECT_UNAUTHORIZED: "0"

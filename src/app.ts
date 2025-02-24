@@ -196,7 +196,7 @@ async function start () {
     }
     // We want to start up even if the initial scrape is only successful in part.
     // If there is a problem with a single menu (container not running or menu configuration problem) we want
-    // all the others menus working normally and notify about errors in logs/metrics
+    // all the other menus working normally and notify about errors in logs/metrics
     app.listen(servicePort, async () => {
         setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
     });
