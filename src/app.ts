@@ -64,6 +64,7 @@ app.use('/menus', (req, res, next) => {
 })
 
 app.get('/menus/breadcrumb', (req, res) => {
+    info('Start breadcrumb', {url: req.query.url as string});
     const result = getMenuItems(
       req.query.url as string,
       req.query.lang as string,
@@ -84,7 +85,9 @@ app.get('/menus/breadcrumb', (req, res) => {
     })
 });
 
+// Obsolescent: used only in OpenShift 3
 app.get('/menus/siblings', (req, res) => {
+    info('Start siblings', {url: req.query.url as string});
     const result = getMenuItems(
       req.query.url as string,
       req.query.lang as string,
@@ -121,6 +124,7 @@ app.get('/siteTree', async (req, res) => {
 });
 
 app.get('/menus/getStitchedMenus', async (req, res) => {
+    info('Start getStitchedMenus', {url: req.query.url as string});
     const siblings = getMenuItems(
         req.query.url as string,
         req.query.lang as string,

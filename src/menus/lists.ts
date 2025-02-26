@@ -85,11 +85,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
             if (firstSite.result) {
-                const restUrl = Object.keys(firstSite.result)[0];
-                info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
-
-                items = getListFromFirstSite(firstSite.result, restUrl, type, items, siteArray, lang );
-                orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
+                items = getListFromFirstFoundedSite(firstSite.result, url, lang, type, siteArray);
             } else {
                 if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
                     error('orphan_page', {url: url, lang: lang});
@@ -139,13 +135,35 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             err ++;
         }
 
-        return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object})), errors: err};
+        return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object,
+            siblings: siteArray ?
+                getSiblingsForBreadcrumb(siteArray, i.getFullUrl(), lang, 'siblings')
+                : []})), errors: err};
     } catch (e) {
         error(getErrorMessage(e))
         return {list: [], errors: 1};
     }
 }
 
+function getListFromFirstFoundedSite(firstSiteResult: { [urlInstance: string]: MenuEntry },
+                                     url: string, lang: string, type: string, siteArray: SiteTreeInstance){
+    let items: MenuEntry[] = [];
+    const restUrl = Object.keys(firstSiteResult)[0];
+    info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
+
+    items = getListFromFirstSite(firstSiteResult, restUrl, type, items, siteArray, lang );
+    orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
+    return items;
+}
+
+function getSiblingsForBreadcrumb(siteArray: SiteTreeInstance, url: string, lang: string, type: string) {
+    const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
+    let items: MenuEntry[] = [];
+    if (firstSite.result) {
+        items = getListFromFirstFoundedSite(firstSite.result, url, lang, type, siteArray);
+    }
+    return items;
+}
 
 function getListFromFirstSite(firstSite: {
     [p: string]: MenuEntry
