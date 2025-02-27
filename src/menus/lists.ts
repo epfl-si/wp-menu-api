@@ -85,7 +85,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
             if (firstSite.result) {
-                items = getListFromFirstFoundedSite(firstSite.result, url, lang, type, siteArray);
+                items = getListFromFirstFoundSite(firstSite.result, url, lang, type, siteArray);
             } else {
                 if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
                     error('orphan_page', {url: url, lang: lang});
@@ -102,7 +102,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                         const restUrl = Object.keys(levelzero)[0];
                         info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
-                        items = getListFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
+                        items = getMenuEntryFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
 
                         // The post home page is added to the site home page breadcrumb
                         // The post home page name and url are retrieved from WordPress, if defined,
@@ -145,13 +145,13 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
     }
 }
 
-function getListFromFirstFoundedSite(firstSiteResult: { [urlInstance: string]: MenuEntry },
+function getListFromFirstFoundSite(firstSiteResult: { [urlInstance: string]: MenuEntry },
                                      url: string, lang: string, type: string, siteArray: SiteTreeInstance){
     let items: MenuEntry[] = [];
     const restUrl = Object.keys(firstSiteResult)[0];
     info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
 
-    items = getListFromFirstSite(firstSiteResult, restUrl, type, items, siteArray, lang );
+    items = getMenuEntryFromFirstSite(firstSiteResult, restUrl, type, items, siteArray, lang );
     orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
     return items;
 }
@@ -160,12 +160,12 @@ function getSiblingsForBreadcrumb(siteArray: SiteTreeInstance, url: string, lang
     const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
     let items: MenuEntry[] = [];
     if (firstSite.result) {
-        items = getListFromFirstFoundedSite(firstSite.result, url, lang, type, siteArray);
+        items = getListFromFirstFoundSite(firstSite.result, url, lang, type, siteArray);
     }
     return items;
 }
 
-function getListFromFirstSite(firstSite: {
+function getMenuEntryFromFirstSite(firstSite: {
     [p: string]: MenuEntry
 }, restUrl: string, type: string, items: MenuEntry[], siteArray: SiteTreeInstance, lang: string) : MenuEntry[] {
     if (firstSite[restUrl]) {
