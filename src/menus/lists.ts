@@ -72,10 +72,10 @@ function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): MenuEntry | un
     return undefined
 }
 
-export function getMenuItems (url: string, lang: string, type: string, pageType: string, mainPostPageName: string,
+export function getMenuItems (url: string, lang: string, method: "siblings"|"breadcrumb"|"children", pageType: string, mainPostPageName: string,
                               mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: {title: string, url: string, object: string}[], errors: number} {
     let err = 0;
-    info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(type)});
+    info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(method)});
     let items: MenuEntry[] = [];
     try {
         const m = getCachedMenus();
@@ -85,7 +85,10 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
             const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
             if (firstSite.result) {
-                items = getListFromFirstFoundSite(firstSite.result, url, lang, type, siteArray);
+                const restUrl = Object.keys(firstSite.result)[0];
+                info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(method)});
+                items = getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang)[method]();
+                orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
             } else {
                 if (firstSite.objectType != 'custom' && firstSite.objectType != 'post') {
                     error('orphan_page', {url: url, lang: lang});
@@ -93,16 +96,16 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
                     err ++;
                 }
                 // Post pages are usually not attached to the menu.
-                if (pageType == 'post' && type == 'breadcrumb') {
+                if (pageType == 'post' && method == 'breadcrumb') {
                     // In this case where the post page is not attached to the menu, the breadcrumb is manually defined:
                     // the post home page and the current post page are added to the post site home page breadcrumb
                     const levelzero = siteArray.findLevelZeroByUrl(homePageUrl);
 
                     if (levelzero) {
                         const restUrl = Object.keys(levelzero)[0];
-                        info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
+                        info('Site home page for post found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(method)});
 
-                        items = getMenuEntryFromFirstSite(levelzero, restUrl, type, items, siteArray, lang );
+                        items = getMenuEntryFromFirstSite(levelzero, restUrl, siteArray, lang)[method]();
 
                         // The post home page is added to the site home page breadcrumb
                         // The post home page name and url are retrieved from WordPress, if defined,
@@ -137,7 +140,7 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
 
         return {list: items.map(i => ({title: i.title, url: i.getFullUrl(), object: i.object,
             siblings: siteArray ?
-                getSiblingsForBreadcrumb(siteArray, i.getFullUrl(), lang, 'siblings')
+                getSiblingsForBreadcrumb(siteArray, i.getFullUrl(), lang)
                 : []})), errors: err};
     } catch (e) {
         error(getErrorMessage(e))
@@ -145,33 +148,24 @@ export function getMenuItems (url: string, lang: string, type: string, pageType:
     }
 }
 
-function getListFromFirstFoundSite(firstSiteResult: { [urlInstance: string]: MenuEntry },
-                                     url: string, lang: string, type: string, siteArray: SiteTreeInstance){
-    let items: MenuEntry[] = [];
-    const restUrl = Object.keys(firstSiteResult)[0];
-    info('Page found', {url: restUrl, lang: lang, method: 'getMenuItems: '.concat(type)});
-
-    items = getMenuEntryFromFirstSite(firstSiteResult, restUrl, type, items, siteArray, lang );
-    orphan_pages_counter.labels( {url: url, lang: lang }).set(0);
-    return items;
-}
-
-function getSiblingsForBreadcrumb(siteArray: SiteTreeInstance, url: string, lang: string, type: string) {
+function getSiblingsForBreadcrumb(siteArray: SiteTreeInstance, url: string, lang: string) {
     const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
-    let items: MenuEntry[] = [];
     if (firstSite.result) {
-        items = getListFromFirstFoundSite(firstSite.result, url, lang, type, siteArray);
+        const restUrl = Object.keys(firstSite.result)[0];
+        return getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang).siblings();
+    } else {
+        return [];
     }
-    return items;
 }
 
 function getMenuEntryFromFirstSite(firstSite: {
     [p: string]: MenuEntry
-}, restUrl: string, type: string, items: MenuEntry[], siteArray: SiteTreeInstance, lang: string) : MenuEntry[] {
+}, restUrl: string, siteArray: SiteTreeInstance, lang: string) :
+    {breadcrumb: () => MenuEntry[], siblings: () => MenuEntry[], children: () => MenuEntry[]} {
     if (firstSite[restUrl]) {
-        switch ( type ) {
-            case "siblings":
-                items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
+        return {
+            siblings() {
+                const items = siteArray.getSiblings(restUrl,firstSite[restUrl].ID);
 
                 //We create manually siblings list for level zero of menus (about, education, research, innovation, schools, campus, labs)
                 if (items.length == 0 && firstSite[restUrl].menu_item_parent.toString() == "0" && firstSite[restUrl].menu_order === 1 && firstSite[restUrl].getFullUrl()) {
@@ -196,18 +190,24 @@ function getMenuEntryFromFirstSite(firstSite: {
                 if (items.length == 0) {
                     items.push(firstSite[restUrl]);
                 }
-                break;
-            case "breadcrumb":
+                return items;
+            },
+            breadcrumb() {
                 const labLink = getLabsLink(lang);
                 const assocBreadcrumbs = getAssocBreadcrumb(lang);
-                items = [...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray, labLink, assocBreadcrumbs), firstSite[restUrl]];
-                break;
-            case "children":
-                items = siteArray.getChildren(restUrl,firstSite[restUrl].ID);
-                break;
-        }
+                return [...searchAllParentsEntriesByID(firstSite[restUrl], restUrl, siteArray, labLink, assocBreadcrumbs), firstSite[restUrl]];
+            },
+            children() {
+                return siteArray.getChildren(restUrl,firstSite[restUrl].ID);
+            }
+        };
+    } else {
+        return {
+            siblings: () => [],
+            breadcrumb: () => [],
+            children: () => [],
+        };
     }
-    return items;
 }
 
 
