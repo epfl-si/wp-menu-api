@@ -191,6 +191,13 @@ app.get('/refresh', async (req, res) => {
     })
 });
 
+app.get('/version', async (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        result: version
+    })
+});
+
 async function start () {
     const statusCode = await refreshCache();
     if (statusCode == 400) {
