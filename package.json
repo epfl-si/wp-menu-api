@@ -14,6 +14,7 @@
     "axios": "^1.5.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-prometheus-middleware": "^1.2.0",
     "js-yaml": "^4.1.0",
     "prom-client": "^13.2.0",
     "yaml": "^2.7.0"
@@ -22,6 +23,7 @@
     "@types/assert": "^1.5.7",
     "@types/chai": "^4.3.9",
     "@types/express": "^4.17.19",
+    "@types/express-prometheus-middleware": "^1.2.3",
     "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.2",
     "@types/node": "^20.8.6",
