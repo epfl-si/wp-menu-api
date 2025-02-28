@@ -12,6 +12,7 @@ import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {prometheusChecks} from "./utils/metrics";
 import {configSite} from "./interfaces/site";
+import prometheusMiddleware from "express-prometheus-middleware";
 
 const app = express()
 const args = process.argv.slice(2);
@@ -33,10 +34,10 @@ if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     servicePort = config?.SERVICE_PORT || 3001;
 }
 
-app.get('/metrics', function(req, res){
-    res.setHeader('Content-Type',getRegister().contentType)
-    getRegister().metrics().then((data: string) => res.status(200).send(data))
-});
+app.use(prometheusMiddleware({
+  metricsPath: '/metrics',
+  collectDefaultMetrics: true
+}));
 
 function sendError(mess: string, route: string, req: any, res: any) {
     http_request_counter.labels({route: route, message: mess, statusCode: 400, lang: req.query.lang as string}).inc();
