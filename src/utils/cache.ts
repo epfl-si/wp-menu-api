@@ -11,21 +11,21 @@ export class MenusCache {
 
 	read(path: string){
 		info('Start reading from file', { url: path, method: 'MenusCache.read'});
-		try {
-			fs.readdir(path, (err, files) => {
-				// Loop through the files
-				files.forEach(file => {
-					const lang = file.substring(file.indexOf('_') + 1, file.indexOf('.'));
+		fs.readdir(path, (err, files) => {
+			if (err) {
+				error(getErrorMessage(err), {});
+				return;
+			}
+			// Loop through the files
+			files.forEach(file => {
+				const lang = file.substring(file.indexOf('_') + 1, file.indexOf('.'));
 
-					if (!this.cachedMenus[lang]) {
-						this.cachedMenus[lang] = new SiteTreeMutable();
-					}
-					this.cachedMenus[lang].load(path + "/" + file);
-				});
+				if (!this.cachedMenus[lang]) {
+					this.cachedMenus[lang] = new SiteTreeMutable();
+				}
+				this.cachedMenus[lang].load(path + "/" + file);
 			});
-		} catch (e) {
-			error(getErrorMessage(e), {});
-		}
+		});
 	}
 
 	write(path: string){
