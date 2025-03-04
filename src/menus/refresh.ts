@@ -35,14 +35,19 @@ async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
     let languages = await site.getLanguages();
     languages = Array.isArray(languages) ? languages : ["en"];
     for (const lang of languages) {
-        const entries = await site.getMenuEntries(lang);
-        allEntries.concat(entries.entries);
-        if (!cachedMenus.menus[lang]) {
-            cachedMenus.menus[lang] = new SiteTreeMutable();
-        }
-        cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
+        allEntries.concat(await refreshEntries(site, lang));
     }
     return allEntries;
+}
+
+async function refreshEntries(site: Site, lang: string) {
+    const entries = await site.getMenuEntries(lang);
+    if (!cachedMenus.menus[lang]) {
+        cachedMenus.menus[lang] = new SiteTreeMutable();
+    }
+    if (lang == 'en')
+        cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
+    return entries.entries;
 }
 
 export async function refreshMenu(sites: Site[]) {
@@ -75,6 +80,11 @@ export async function refreshFromAPI(pathRefreshFile: string) {
     getCategoriesCount(cachedMenus);
     info(`End refresh from API`, { method: 'refreshFileMenu' });
     return (getRefreshErrorCount() == 0 ? 200 : 500);
+}
+
+export async function refreshSingleMenu(url: string) {
+    await getMenuForSite(new Site(url))
+    return 200;
 }
 
 export function initializeCachedMenus(pathRefreshFile: string) {
