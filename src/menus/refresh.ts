@@ -45,8 +45,7 @@ async function refreshEntries(site: Site, lang: string) {
     if (!cachedMenus.menus[lang]) {
         cachedMenus.menus[lang] = new SiteTreeMutable();
     }
-    if (lang == 'en')
-        cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
+    cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
     return entries.entries;
 }
 
