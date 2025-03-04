@@ -4,7 +4,7 @@ import {
     getExternalMenus,
     getHomepageCustomLinks,
     refreshFileMenu,
-    refreshFromAPI
+    refreshFromAPI, refreshSingleMenu
 } from "./menus/refresh";
 import {getMenuItems, getSiteTree} from "./menus/lists";
 import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
@@ -186,6 +186,16 @@ app.get('/utils/externalMenus', (req, res) => {
 app.get('/refresh', async (req, res) => {
     const statusCode = await refreshFromAPI(pathRefreshFile);
     http_request_counter.labels({route: "refresh", statusCode: statusCode}).inc();
+    res.status(statusCode).json({
+        status: statusCode,
+        result: statusCode == 200 ? "Refresh done" : "Some error occurred, see logs for details."
+    })
+});
+
+app.get('/refreshSingleMenu', async (req, res) => {
+    info('Start refreshSingleMenu', {url: req.query.url as string});
+    const statusCode = await refreshSingleMenu(req.query.url as string);
+    http_request_counter.labels({route: "refreshSingleMenu", statusCode: statusCode, lang: req.query.lang as string}).inc();
     res.status(statusCode).json({
         status: statusCode,
         result: statusCode == 200 ? "Refresh done" : "Some error occurred, see logs for details."
