@@ -3,6 +3,7 @@ import {error, external_detached_menus_counter, getErrorMessage, info, warn} fro
 import fs from "fs";
 import {MenuEntry} from "./MenuEntry";
 import {Site} from "./site";
+import {getCachedMenus} from "../menus/refresh";
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: MenuEntry } | undefined
@@ -72,10 +73,16 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
             const childrenList = childrenInTheSameSite.map(child => {
                 if (child.object === 'epfl-external-menu'){
-                    const foundExternalMenu = this.findExternalMenuByRestUrl(child.getFullUrl());
-                    if (foundExternalMenu) {
-                        return foundExternalMenu;
-                    }
+                    const m = getCachedMenus();
+                    let foundExternalMenu: MenuEntry | undefined = child;
+                    Object.keys(m.menus).forEach(lang => {
+                        let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
+                        const foundExternalMenuByUrl = siteArray.findExternalMenuByRestUrl(child.getFullUrl());
+                        if (foundExternalMenuByUrl) {
+                            foundExternalMenu = foundExternalMenuByUrl;
+                        }
+                    });
+                    return foundExternalMenu;
                 }
                 return child;//for normal menus or external not found menus
             });
