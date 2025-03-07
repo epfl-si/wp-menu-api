@@ -1,21 +1,26 @@
 import 'mocha';
 import {assert, expect} from "chai";
 import {getMenuItems, getSiteTree} from "../../src/menus/lists";
-import {configRefresh, initializeCachedMenus} from "../../src/menus/refresh";
+import {configRefresh, refreshFromAPI} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import {configLinks} from "../../src/utils/links";
+import {configLogs} from "../../src/utils/logger";
+import {configSite} from "../../src/interfaces/site";
 
 describe("End To End Menu", function() {
-    beforeEach(function(done){
+    before(function(done){
+        this.timeout(5000);
+
         const config = loadConfig('menu-api-config.yaml');
         if (config) {
-            const pathRefreshFile = config?.PATH_REFRESH_FILE || ".";
-
             configRefresh(config);
             configLinks(config);
+            configLogs(config);
+            configSite(config);
 
-            initializeCachedMenus(pathRefreshFile);
-            done();
+            refreshFromAPI().then(() => {
+                done(); // Called only when refreshFromAPI completes
+            }).catch(done); // Handles errors properly
         } else {
             throw new Error("Config not present");
         }

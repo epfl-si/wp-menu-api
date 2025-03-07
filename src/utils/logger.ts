@@ -13,11 +13,6 @@ export const http_request_counter = new Prometheus.Counter({
     help: 'Count of HTTP requests made to menu-api',
     labelNames: ['route', 'statusCode', 'message', 'lang'],
 });
-export const refresh_files_size = new Prometheus.Gauge({
-    name: 'menu_api_cache_files_bytes',
-    help: 'Cache files bytes',
-    labelNames: ['fileName']
-});
 export const refresh_memory_array_size = new Prometheus.Gauge({
     name: 'menu_api_menu_array_size',
     help: 'Menu array size',
@@ -69,7 +64,6 @@ register.setDefaultLabels({
 Prometheus.collectDefaultMetrics({register});
 register.registerMetric(http_request_counter);
 register.registerMetric(error_counter);
-register.registerMetric(refresh_files_size);
 register.registerMetric(refresh_memory_array_size);
 register.registerMetric(total_retrieved_sites);
 register.registerMetric(total_pages);

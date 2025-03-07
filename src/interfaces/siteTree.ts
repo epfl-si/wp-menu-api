@@ -238,32 +238,4 @@ export class SiteTreeMutable {
             this.menus.push( { urlInstanceRestUrl: siteUrlSubstring, entries: result } );
         }
     }
-
-    load(path: string) {
-        const json = JSON.parse(fs.readFileSync(path, 'utf8')) as any;
-        json.forEach((item: { urlInstanceRestUrl: string, entries: any }) => {
-            this.menus.push({
-                urlInstanceRestUrl: item.urlInstanceRestUrl,
-                entries: item.entries.map((m: any) => MenuEntry.parse(new Site(m.ownerSite? m.ownerSite.url : ''), m))
-            })
-        })
-    }
-
-    save(path: string) {
-        writeRefreshFile(path,JSON.stringify(this.menus));
-    }
-}
-
-function writeRefreshFile(path: string, json: string)  {
-    try {
-        fs.writeFile(path, json, (err) => {
-            if (err) {
-                error("Cache file not written: " + getErrorMessage(err), { url: path });
-            } else {
-                info('Successfully wrote file', { url: path, method: 'writeRefreshFile' });
-            }
-        });
-    } catch (e) {
-        error("Cache file not written: " + getErrorMessage(e), { url: path });
-    }
 }

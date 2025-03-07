@@ -62,32 +62,22 @@ export async function refreshMenu(sites: Site[]) {
     menu_api_refresh_duration_seconds.set((endTime - startTime)/1000)
 }
 
-export async function refreshFileMenu(pathRefreshFile: string) {
-    cachedMenus.read(pathRefreshFile);
-    return await refreshFromAPI(pathRefreshFile);
-}
-
-export async function refreshFromAPI(pathRefreshFile: string) {
+export async function refreshFromAPI() {
     resetRefreshErrorCount();
-    info(`Start refresh from API`,{ method: 'refreshFileMenu' });
+    info(`Start refresh from API`,{ method: 'refreshFromAPI' });
     const sites = await getSiteListFromInventory(config);
     await refreshMenu(sites);
-    cachedMenus.write(pathRefreshFile);
     getRetrievedSitesCount(cachedMenus);
     getPagesCount(cachedMenus);
     getPostsCount(cachedMenus);
     getCategoriesCount(cachedMenus);
-    info(`End refresh from API`, { method: 'refreshFileMenu' });
+    info(`End refresh from API`, { method: 'refreshFromAPI' });
     return (getRefreshErrorCount() == 0 ? 200 : 500);
 }
 
 export async function refreshSingleMenu(url: string) {
     await getMenuForSite(new Site(url))
     return 200;
-}
-
-export function initializeCachedMenus(pathRefreshFile: string) {
-    cachedMenus.read(pathRefreshFile);
 }
 
 export function getCachedMenus(): MenusCache {
