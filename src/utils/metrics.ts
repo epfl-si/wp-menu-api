@@ -1,12 +1,6 @@
 import {total_categories, total_pages, total_posts, total_retrieved_sites,} from "./logger";
-import {getCachedMenus} from "../menus/refresh";
 import {MenusCache} from "./cache";
 import {MenuEntry} from "../interfaces/MenuEntry";
-
-export function prometheusChecks(pathRefreshFile: string) {
-	getCachedMenus().checkFileCache(pathRefreshFile);
-	getCachedMenus().checkCache();
-}
 
 export function getRetrievedSitesCount(cachedMenus: MenusCache) {
 	for (const lang in cachedMenus.menus) {
