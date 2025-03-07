@@ -5,15 +5,17 @@ import {MenuEntry} from "./MenuEntry";
 import {Site} from "./site";
 import {getCachedMenus} from "../menus/refresh";
 
+type MenuEntryByUrl = {[urlInstanceRestUrl : string]: MenuEntry};
+
 export interface SiteTreeInstance  {
-    getParent : (urlInstanceRestUrl: string,  idChild: number) => { [urlInstance : string]: MenuEntry } | undefined
+    getParent : (urlInstanceRestUrl: string,  idChild: number) => MenuEntryByUrl | undefined
     getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntry[]
     findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => MenuEntry | undefined
     findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => MenuEntry | undefined
     getSiblings : (urlInstanceRestUrl: string, idItem: number) => MenuEntry[]
-    findItemByUrl: (pageURL: string) => { [urlInstance: string]: MenuEntry } | undefined
-    findItemAndObjectTypeByUrl: (pageURL: string) => { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string}
-    findLevelZeroByUrl: (pageURL: string) => { [urlInstance: string]: MenuEntry } | undefined
+    findItemByUrl: (pageURL: string) => MenuEntryByUrl | undefined
+    findItemAndObjectTypeByUrl: (pageURL: string) => { result: MenuEntryByUrl | undefined, objectType: string}
+    findLevelZeroByUrl: (pageURL: string) => MenuEntryByUrl | undefined
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
@@ -23,9 +25,9 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: MenuEntry } } = {};
     const children: { [urlInstanceRestUrl : string]: { [idParent : number]: MenuEntry[] } } = {};
     const externalMenus: { [urlInstanceRestUrl : string]: MenuEntry[] } = {};
-    const notCustomItemsByUrl : { [fullUrl : string]: {[urlInstanceRestUrl : string]: MenuEntry} } = {};
-    const customItemsByUrl : { [fullUrl : string]: {[urlInstanceRestUrl : string]: MenuEntry} } = {};
-    const levelZeroByUrl : { [urlSiteWithoutHomePage : string]: {[urlInstanceRestUrl : string]: MenuEntry} } = {};
+    const notCustomItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
+    const customItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
+    const levelZeroByUrl : { [urlSiteWithoutHomePage : string]: MenuEntryByUrl } = {};
 
     menus.forEach(menu => {
         itemsByID[menu.urlInstanceRestUrl] = {};
@@ -87,8 +89,8 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     });
 
     return {
-        getParent(urlInstanceRestUrl: string, idChild:number): { [urlInstance : string]: MenuEntry } {
-            const result: { [urlInstance: string]: MenuEntry } = {};
+        getParent(urlInstanceRestUrl: string, idChild:number): MenuEntryByUrl {
+            const result: MenuEntryByUrl = {};
             const parent = parents[urlInstanceRestUrl][idChild];//it could be undefined;
             if (parent === undefined) {
                 for (const [url, menuEntries] of Object.entries(externalMenus)) {
@@ -155,18 +157,18 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         findItemByRestUrlAndId(urlInstanceRestUrl: string, idItem: number) {
             return itemsByID[urlInstanceRestUrl][idItem];
         },
-        findItemByUrl(pageURL: string): {[urlInstanceRestUrl : string]: MenuEntry} | undefined {
+        findItemByUrl(pageURL: string): MenuEntryByUrl | undefined {
             return notCustomItemsByUrl[pageURL];
         },
         findItemAndObjectTypeByUrl(pageURL: string) {
-            let result: { [urlInstance: string]: MenuEntry } | undefined = undefined;
+            let result: MenuEntryByUrl | undefined;
             let objectType: string = '';
-            const notCustomItem: {[urlInstanceRestUrl : string]: MenuEntry} | undefined = notCustomItemsByUrl[pageURL];
+            const notCustomItem: MenuEntryByUrl | undefined = notCustomItemsByUrl[pageURL];
             if (notCustomItem) {
                 result = notCustomItem;
                 objectType = notCustomItem[Object.keys(notCustomItem)[0]].object;
             } else {
-                const customItem: {[urlInstanceRestUrl : string]: MenuEntry} | undefined = customItemsByUrl[pageURL];
+                const customItem: MenuEntryByUrl | undefined = customItemsByUrl[pageURL];
                 if (customItem) {
                     objectType = 'custom';
                 }
