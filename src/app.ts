@@ -3,14 +3,13 @@ import {
     configRefresh,
     getExternalMenus,
     getHomepageCustomLinks,
-    refreshFileMenu,
-    refreshFromAPI, refreshSingleMenu
+    refreshFromAPI,
+    refreshSingleMenu
 } from "./menus/refresh";
 import {getMenuItems, getSiteTree} from "./menus/lists";
-import {configLogs, error, getRegister, http_request_counter, info} from "./utils/logger";
+import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
-import {prometheusChecks} from "./utils/metrics";
 import {configSite} from "./interfaces/site";
 import prometheusMiddleware from "express-prometheus-middleware";
 
@@ -19,8 +18,6 @@ const args = process.argv.slice(2);
 const configFileIndex = args.findIndex(arg => arg === '-p');
 let servicePort: number = 3001;
 let config: Config | undefined;
-let pathRefreshFile: string = '.';
-const prometheusInterval: number = 10000;
 
 const pjson = require('../package.json');
 const version = pjson.version;
@@ -30,7 +27,6 @@ if (configFileIndex !== -1 && configFileIndex + 1 < args.length) {
     info(`Using config file path: ${configFilePath}`);
 
     config = loadConfig(configFilePath);
-    pathRefreshFile = config?.PATH_REFRESH_FILE || '.';
     servicePort = config?.SERVICE_PORT || 3001;
 }
 
@@ -184,7 +180,7 @@ app.get('/utils/externalMenus', (req, res) => {
 });
 
 app.get('/refresh', async (req, res) => {
-    const statusCode = await refreshFromAPI(pathRefreshFile);
+    const statusCode = await refreshFromAPI();
     http_request_counter.labels({route: "refresh", statusCode: statusCode}).inc();
     res.status(statusCode).json({
         status: statusCode,
@@ -219,9 +215,7 @@ async function start () {
     // We want to start up even if the initial scrape is only successful in part.
     // If there is a problem with a single menu (container not running or menu configuration problem) we want
     // all the other menus working normally and notify about errors in logs/metrics
-    app.listen(servicePort, async () => {
-        setInterval(() => prometheusChecks(pathRefreshFile), prometheusInterval);
-    });
+    app.listen(servicePort);
 }
 
 start().catch(console.error);
@@ -235,7 +229,7 @@ async function refreshCache() {
         configLogs(config);
         configSite(config);
 
-        return await refreshFileMenu(pathRefreshFile);
+        return await refreshFromAPI();
     } else {
         return 400
     }

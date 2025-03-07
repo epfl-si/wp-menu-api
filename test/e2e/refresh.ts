@@ -38,5 +38,5 @@ function getIndicesOf(searchStr: string, str: string) {
 }
 
 async function refresh() {
-	await refreshFileMenu('.');
+	await refreshFromAPI();
 }
