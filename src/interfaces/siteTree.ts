@@ -1,9 +1,7 @@
 import {getBaseUrl} from "../utils/links";
-import {error, external_detached_menus_counter, getErrorMessage, info, warn} from "../utils/logger";
-import fs from "fs";
+import {external_detached_menus_counter, info, warn} from "../utils/logger";
 import {MenuEntry} from "./MenuEntry";
-import {Site} from "./site";
-import {getCachedMenus} from "../menus/refresh";
+import {getSiteTreeReadOnlyByLanguage} from "../menus/refresh";
 
 type MenuEntryByUrl = {[urlInstanceRestUrl : string]: MenuEntry};
 
@@ -16,6 +14,12 @@ export interface SiteTreeInstance  {
     findItemByUrl: (pageURL: string) => MenuEntryByUrl | undefined
     findItemAndObjectTypeByUrl: (pageURL: string) => { result: MenuEntryByUrl | undefined, objectType: string}
     findLevelZeroByUrl: (pageURL: string) => MenuEntryByUrl | undefined
+    length: () => number
+    getCustomMenus: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    getExternalMenus: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    getPages: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    getPosts: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    getCategories: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
@@ -28,6 +32,9 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     const notCustomItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
     const customItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
     const levelZeroByUrl : { [urlSiteWithoutHomePage : string]: MenuEntryByUrl } = {};
+    const menusEntriesByObjectType: {[objectType: string] : { urlInstanceRestUrl: string, entries: MenuEntry }[]} = {}
+
+    info(`START ANALYSE`, { method: 'SiteTreeReadOnly' });
 
     menus.forEach(menu => {
         itemsByID[menu.urlInstanceRestUrl] = {};
@@ -45,24 +52,21 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         });
 
         entriesMenu.forEach(item => {
+            /*** map each item on each menu with his parent id ***/
             parents[menu.urlInstanceRestUrl][item.ID] = itemsByID[menu.urlInstanceRestUrl][item.menu_item_parent]
-        });
 
-        entriesMenu.forEach(item => {
+            /*** push into the parent array all his children, retrieved by the `menu_item_parent` ***/
             if (!children[menu.urlInstanceRestUrl][item.menu_item_parent]) {
                 children[menu.urlInstanceRestUrl][item.menu_item_parent] = []
             }
-
             children[menu.urlInstanceRestUrl][item.menu_item_parent].push(item);
-        });
 
-        entriesMenu.forEach(item => {
+            /*** get all externalMenus ***/
             if(item.object == 'epfl-external-menu') {
                 externalMenus[menu.urlInstanceRestUrl].push(item);
             }
-        });
 
-        entriesMenu.forEach(item => {
+            /*** get all notCustomItems and customItems by url ***/
             const fullUrl = item.getFullUrl();
             if(fullUrl && item.object !== 'custom') {
                 if (!notCustomItemsByUrl[fullUrl]) {
@@ -75,9 +79,8 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 }
                 customItemsByUrl[fullUrl][menu.urlInstanceRestUrl] = item;
             }
-        });
 
-        entriesMenu.forEach(item => {
+            /*** get all levelZero by url ***/
             if(item.menu_item_parent.toString() === "0" && item.menu_order === 1 && item.getFullUrl()) {
                 const urlSiteWithoutHomePage = getBaseUrl(item.getFullUrl());
                 if (!levelZeroByUrl[urlSiteWithoutHomePage]) {
@@ -85,8 +88,16 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 }
                 levelZeroByUrl[urlSiteWithoutHomePage][menu.urlInstanceRestUrl] = item;
             }
+
+            /*** group all menusEntries by object type ***/
+            if (!menusEntriesByObjectType[item.object]) {
+                menusEntriesByObjectType[item.object] = [];
+            }
+            menusEntriesByObjectType[item.object].push({urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: item});
         });
     });
+
+    info(`END ANALYSE`, { method: 'SiteTreeReadOnly' });
 
     return {
         getParent(urlInstanceRestUrl: string, idChild:number): MenuEntryByUrl {
@@ -108,10 +119,10 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
             const childrenList = childrenInTheSameSite.map(child => {
                 if (child.object === 'epfl-external-menu'){
-                    const m = getCachedMenus();
+                    const m = getSiteTreeReadOnlyByLanguage();
                     let foundExternalMenu: MenuEntry | undefined = child;
                     Object.keys(m.menus).forEach(lang => {
-                        let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
+                        let siteArray: SiteTreeInstance = m.menus[lang];
                         const foundExternalMenuByUrl = siteArray.findExternalMenuByRestUrl(child.getFullUrl());
                         if (foundExternalMenuByUrl) {
                             foundExternalMenu = foundExternalMenuByUrl;
@@ -177,57 +188,33 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         },
         findLevelZeroByUrl(pageURL: string) {
             return levelZeroByUrl[pageURL];
-        }
+        },
+        length() {
+            return menus.length;
+        },
+        getCustomMenus () {
+            return menusEntriesByObjectType['custom'] ?? [];
+        },
+        getExternalMenus () {
+            return menusEntriesByObjectType['epfl-external-menu'] ?? [];
+        },
+        getPages () {
+            return menusEntriesByObjectType['page'] ?? [];
+        },
+        getPosts () {
+            return menusEntriesByObjectType['post'] ?? [];
+        },
+        getCategories () {
+            return menusEntriesByObjectType['category'] ?? [];
+        },
     }
 }
 
 export class SiteTreeMutable {
     private menus: { urlInstanceRestUrl: string, entries: MenuEntry[] }[] = [];
 
-    getMenus() {
+    getReadOnlySiteTree() {
         return SiteTreeReadOnly(this.menus);
-    }
-
-    get length() {
-        return this.menus.length;
-    }
-
-    getCustomMenus () {
-        const customMenus : { urlInstanceRestUrl: string, entries: MenuEntry }[] = [];
-        for (let menu of this.menus) {
-            if(menu.entries[0].object === 'custom') {
-                customMenus.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: menu.entries[0] } );
-            }
-        }
-        return customMenus;
-    }
-
-    _getObject (objectTye: string) {
-        const object : { urlInstanceRestUrl: string, entries: MenuEntry }[] = [];
-        for (let menu of this.menus) {
-            for (let entry of menu.entries) {
-                if(entry.object === objectTye) {
-                    object.push( { urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: entry } );
-                }
-            }
-        }
-        return object;
-    }
-
-    getExternalMenus () {
-        return this._getObject('epfl-external-menu');
-    }
-
-    getPages () {
-        return this._getObject('page');
-    }
-
-    getPosts () {
-        return this._getObject('post');
-    }
-
-    getCategories () {
-        return this._getObject('category');
     }
 
     updateMenu(siteUrlSubstring: string, result: MenuEntry[]){

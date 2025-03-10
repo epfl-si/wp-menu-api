@@ -206,7 +206,7 @@ app.get('/version', async (req, res) => {
 });
 
 async function start () {
-    const statusCode = await refreshCache();
+    const statusCode = await refresh();
     if (statusCode == 400) {
         error('Please provide a configuration file path using -p', {});
     } else if (statusCode == 500) {
@@ -220,7 +220,7 @@ async function start () {
 
 start().catch(console.error);
 
-async function refreshCache() {
+async function refresh() {
     if (config) {
         info(`Menu API server version ${version} is running on port ${servicePort}`);
 

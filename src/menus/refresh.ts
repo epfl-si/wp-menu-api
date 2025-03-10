@@ -1,18 +1,14 @@
 import {Site} from "../interfaces/site";
 import {getRefreshErrorCount, info, menu_api_refresh_duration_seconds, resetRefreshErrorCount} from "../utils/logger";
 import {Config} from "../utils/configFileReader";
-import {MenusCache} from "../utils/cache";
 import {getSiteListFromInventory} from "../utils/source";
-import {
-    getCategoriesCount,
-    getPagesCount,
-    getPostsCount,
-    getRetrievedSitesCount
-} from "../utils/metrics";
+import {getCategoriesCount, getPagesCount, getPostsCount, getRetrievedSitesCount} from "../utils/metrics";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {SiteTreeMutable} from "../interfaces/siteTree";
+import {SiteTreeMutableByLanguage, SiteTreeReadOnlyByLanguage} from "../utils/siteTreeByLanguage";
 
-const cachedMenus: MenusCache = new MenusCache();
+const siteTreeMutableByLanguage: SiteTreeMutableByLanguage = new SiteTreeMutableByLanguage();
+const siteTreeReadOnlyByLanguage: SiteTreeReadOnlyByLanguage = new SiteTreeReadOnlyByLanguage();
 let config: Config;
 
 export function configRefresh(configFile: Config) {
@@ -42,10 +38,10 @@ async function getMenuForSite(site: Site): Promise<MenuEntry[]> {
 
 async function refreshEntries(site: Site, lang: string) {
     const entries = await site.getMenuEntries(lang);
-    if (!cachedMenus.menus[lang]) {
-        cachedMenus.menus[lang] = new SiteTreeMutable();
+    if (!siteTreeMutableByLanguage.menus[lang]) {
+        siteTreeMutableByLanguage.menus[lang] = new SiteTreeMutable();
     }
-    cachedMenus.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
+    siteTreeMutableByLanguage.menus[lang].updateMenu(entries.siteMenuURL, entries.entries);
     return entries.entries;
 }
 
@@ -67,27 +63,37 @@ export async function refreshFromAPI() {
     info(`Start refresh from API`,{ method: 'refreshFromAPI' });
     const sites = await getSiteListFromInventory(config);
     await refreshMenu(sites);
-    getRetrievedSitesCount(cachedMenus);
-    getPagesCount(cachedMenus);
-    getPostsCount(cachedMenus);
-    getCategoriesCount(cachedMenus);
+    refreshReadOnlyMenus();
+    getRetrievedSitesCount(siteTreeReadOnlyByLanguage);
+    getPagesCount(siteTreeReadOnlyByLanguage);
+    getPostsCount(siteTreeReadOnlyByLanguage);
+    getCategoriesCount(siteTreeReadOnlyByLanguage);
     info(`End refresh from API`, { method: 'refreshFromAPI' });
     return (getRefreshErrorCount() == 0 ? 200 : 500);
 }
 
 export async function refreshSingleMenu(url: string) {
-    await getMenuForSite(new Site(url))
+    await getMenuForSite(new Site(url));
+    refreshReadOnlyMenus();
     return 200;
 }
 
-export function getCachedMenus(): MenusCache {
-    return cachedMenus;
+function refreshReadOnlyMenus() {
+    Object.keys(siteTreeMutableByLanguage.menus).forEach(lang => {
+        info(`Start refresh readonly menus: ` + lang, { method: 'refreshReadOnlyMenus' });
+        siteTreeReadOnlyByLanguage.menus[lang] = siteTreeMutableByLanguage.menus[lang].getReadOnlySiteTree();
+        info(`End refresh readonly menus: ` + lang, { method: 'refreshReadOnlyMenus' });
+    });
+}
+
+export function getSiteTreeReadOnlyByLanguage(): SiteTreeReadOnlyByLanguage {
+    return siteTreeReadOnlyByLanguage;
 }
 
 export function getHomepageCustomLinks(lang: string) {
-    return cachedMenus.menus[lang].getCustomMenus();
+    return siteTreeReadOnlyByLanguage.menus[lang].getCustomMenus();
 }
 
 export function getExternalMenus(lang: string) {
-    return cachedMenus.menus[lang].getExternalMenus();
+    return siteTreeReadOnlyByLanguage.menus[lang].getExternalMenus();
 }
