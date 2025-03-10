@@ -1,12 +1,12 @@
 import {SiteTreeInstance} from "../interfaces/siteTree";
 import {error, getErrorMessage, info, orphan_pages_counter} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
-import {getCachedMenus} from "./refresh";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
 import {Config} from "../utils/configFileReader";
 import {urlToHttpOptions} from 'node:url';
 import {getSiteListFromInventory} from "../utils/source";
+import {getSiteTreeReadOnlyByLanguage} from "./refresh";
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -78,8 +78,8 @@ export function getMenuItems (url: string, lang: string, method: "siblings"|"bre
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(method)});
     let items: MenuEntry[] = [];
     try {
-        const m = getCachedMenus();
-        let siteArray: SiteTreeInstance | undefined = m.menus[lang].getMenus();
+        const m = getSiteTreeReadOnlyByLanguage();
+        let siteArray: SiteTreeInstance | undefined = m.menus[lang];
 
         if (siteArray) {
             const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);

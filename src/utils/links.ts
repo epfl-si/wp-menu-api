@@ -1,5 +1,4 @@
 import {Config} from "./configFileReader";
-import {MenusCache} from "./cache";
 
 let config: Config;
 
