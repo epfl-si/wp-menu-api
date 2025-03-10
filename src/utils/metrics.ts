@@ -1,19 +1,19 @@
 import {total_categories, total_pages, total_posts, total_retrieved_sites,} from "./logger";
-import {MenusCache} from "./cache";
 import {MenuEntry} from "../interfaces/MenuEntry";
+import {SiteTreeReadOnlyByLanguage} from "./siteTreeByLanguage";
 
-export function getRetrievedSitesCount(cachedMenus: MenusCache) {
-	for (const lang in cachedMenus.menus) {
-		if (cachedMenus.menus.hasOwnProperty(lang)) {
-			total_retrieved_sites.labels({lang: lang}).set(cachedMenus.menus[lang].length);
+export function getRetrievedSitesCount(menus: SiteTreeReadOnlyByLanguage) {
+	for (const lang in menus.menus) {
+		if (menus.menus.hasOwnProperty(lang)) {
+			total_retrieved_sites.labels({lang: lang}).set(menus.menus[lang].length());
 		}
 	}
 }
 
-export function getPagesCount(cachedMenus: MenusCache) {
-	for (const lang in cachedMenus.menus) {
-		if (cachedMenus.menus.hasOwnProperty(lang)) {
-			const groupedBySite = getGroupedArray(cachedMenus.menus[lang].getPages())
+export function getPagesCount(menus: SiteTreeReadOnlyByLanguage) {
+	for (const lang in menus.menus) {
+		if (menus.menus.hasOwnProperty(lang)) {
+			const groupedBySite = getGroupedArray(menus.menus[lang].getPages())
 			for (const site in groupedBySite) {
 				if (groupedBySite.hasOwnProperty(site)) {
 					total_pages.labels({lang: lang, site: site}).set(groupedBySite[site].length);
@@ -23,10 +23,10 @@ export function getPagesCount(cachedMenus: MenusCache) {
 	}
 }
 
-export function getPostsCount(cachedMenus: MenusCache) {
-	for (const lang in cachedMenus.menus) {
-		if (cachedMenus.menus.hasOwnProperty(lang)) {
-			const groupedBySite = getGroupedArray(cachedMenus.menus[lang].getPosts())
+export function getPostsCount(menus: SiteTreeReadOnlyByLanguage) {
+	for (const lang in menus.menus) {
+		if (menus.menus.hasOwnProperty(lang)) {
+			const groupedBySite = getGroupedArray(menus.menus[lang].getPosts())
 			for (const site in groupedBySite) {
 				if (groupedBySite.hasOwnProperty(site)) {
 					total_posts.labels({lang: lang, site: site}).set(groupedBySite[site].length);
@@ -36,10 +36,10 @@ export function getPostsCount(cachedMenus: MenusCache) {
 	}
 }
 
-export function getCategoriesCount(cachedMenus: MenusCache) {
-	for (const lang in cachedMenus.menus) {
-		if (cachedMenus.menus.hasOwnProperty(lang)) {
-			const groupedBySite = getGroupedArray(cachedMenus.menus[lang].getCategories())
+export function getCategoriesCount(menus: SiteTreeReadOnlyByLanguage) {
+	for (const lang in menus.menus) {
+		if (menus.menus.hasOwnProperty(lang)) {
+			const groupedBySite = getGroupedArray(menus.menus[lang].getCategories())
 			for (const site in groupedBySite) {
 				if (groupedBySite.hasOwnProperty(site)) {
 					total_categories.labels({lang: lang, site: site}).set(groupedBySite[site].length);

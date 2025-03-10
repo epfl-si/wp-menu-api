@@ -1,6 +1,6 @@
 import 'mocha';
 import {expect} from "chai";
-import {configRefresh, refreshFileMenu} from "../../src/menus/refresh";
+import {configRefresh, refreshFromAPI} from "../../src/menus/refresh";
 import {loadConfig} from "../../src/utils/configFileReader";
 import fs from "fs";
 import {configSite} from "../../src/interfaces/site";
