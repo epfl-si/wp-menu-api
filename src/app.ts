@@ -125,7 +125,7 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
     const siblings = getMenuItems(
         req.query.url as string,
         req.query.lang as string,
-        "siblings",
+        req.query.template as string == 'children' ? "currentPage" : "siblings",
         req.query.pageType as string,
         req.query.mainPostPageName as string,
         req.query.mainPostPageUrl as string,
@@ -135,7 +135,7 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
     if (siblings.errors > 0) {
         status = 500;
     }
-    const children = getMenuItems(
+    const children = req.query.template as string == 'siblings' ? [] : getMenuItems(
         req.query.url as string,
         req.query.lang as string,
         "children",
@@ -143,12 +143,12 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
         req.query.mainPostPageName as string,
         req.query.mainPostPageUrl as string,
         req.query.homePageUrl as string,
-        req.query.postName as string);
+        req.query.postName as string).list;
     http_request_counter.labels({route: "getStitchedMenus", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({
         status: status == 200 ? "OK" : "KO",
         siblings: siblings.list,
-        children: children.list
+        children: children
     })
 });
 
