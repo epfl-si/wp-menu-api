@@ -27,7 +27,7 @@ async function getKubernetesCustomResources (resourceType: string, namespace: st
 		kc.loadFromDefault();
 		const customObjectsApi = kc.makeApiClient(CustomObjectsApi);
 		try {
-			const response = await customObjectsApi.listNamespacedCustomObject({group: 'wordpress.epfl.ch', version: 'v1', namespace: namespace, plural: resourceType});
+			const response = await customObjectsApi.listNamespacedCustomObject({group: 'wordpress.epfl.ch', version: 'v2', namespace: namespace, plural: resourceType});
 			return response.items;
 		} catch (e) {
 			error('Error listing custom resources: ' + getErrorMessage(e));
