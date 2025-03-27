@@ -72,7 +72,7 @@ function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): MenuEntry | un
     return undefined
 }
 
-export function getMenuItems (url: string, lang: string, method: "siblings"|"breadcrumb"|"children", pageType: string, mainPostPageName: string,
+export function getMenuItems (url: string, lang: string, method: "siblings"|"breadcrumb"|"children"|"currentPage", pageType: string, mainPostPageName: string,
                               mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: {title: string, url: string, object: string}[], errors: number} {
     let err = 0;
     info('Start getting page breadcrumb/siblings', {url: url, lang: lang, method: 'getMenuItems: '.concat(method)});
@@ -161,7 +161,7 @@ function getSiblingsForBreadcrumb(siteArray: SiteTreeInstance, url: string, lang
 function getMenuEntryFromFirstSite(firstSite: {
     [p: string]: MenuEntry
 }, restUrl: string, siteArray: SiteTreeInstance, lang: string) :
-    {breadcrumb: () => MenuEntry[], siblings: () => MenuEntry[], children: () => MenuEntry[]} {
+    {breadcrumb: () => MenuEntry[], siblings: () => MenuEntry[], children: () => MenuEntry[], currentPage: () => MenuEntry[]} {
     if (firstSite[restUrl]) {
         return {
             siblings() {
@@ -199,6 +199,9 @@ function getMenuEntryFromFirstSite(firstSite: {
             },
             children() {
                 return siteArray.getChildren(restUrl,firstSite[restUrl].ID);
+            },
+            currentPage() {
+                return [firstSite[restUrl]];
             }
         };
     } else {
@@ -206,6 +209,7 @@ function getMenuEntryFromFirstSite(firstSite: {
             siblings: () => [],
             breadcrumb: () => [],
             children: () => [],
+            currentPage: () => []
         };
     }
 }
