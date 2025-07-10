@@ -3,7 +3,7 @@ import * as http from "http";
 import {Config} from "./configFileReader";
 
 export async function callWebService(configFile: Config, url: string, callBackFunction: (url: string, res: any) => any): Promise<any> {
-	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "").replace(/^https?:\/\/wp-httpd/gm, "");
+	const path = url.replace(/^https?:\/\/(.*)\.epfl\.ch/gm, "").replace(/^https?:\/\/wordpress.localhost/gm, "");
 	const parsedUrl = new URL(url);
 	const wordpressHostname = configFile.WP_SERVICE_NAME;
 
