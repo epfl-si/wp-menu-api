@@ -1,11 +1,8 @@
-# Put here the IP address of the wp-httpd container by doing
-# `docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wp-httpd`
-# more information in the README.md
-WP_SERVICE_NAME: "X.X.X.X"
-WP_SERVICE_PORT: 8080
+WP_SERVICE_NAME: "localhost"
+WP_SERVICE_PORT: 8000
 SERVICE_PORT: "3001"
 NODE_TLS_REJECT_UNAUTHORIZED: "0"
-PATH_SITES_FILE: "./sites.yaml"
+PATH_SITES_FILE: ""
 NAMESPACE: "svc0041t-wordpress"
 DEBUG: true
 REQUEST_TIMEOUT: 30000
