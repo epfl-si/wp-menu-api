@@ -6,7 +6,7 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {getMenuItems, getSiteTree} from "./menus/lists";
+import {getMenuItems, getSiteTree, getSitemap} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -149,6 +149,16 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
         status: status == 200 ? "OK" : "KO",
         siblings: siblings.list,
         children: children
+    })
+});
+
+app.get('/menus/sitemap', async (req, res) => {
+    const result = await getSitemap(req.query.url as string, req.query.lang as string);
+    let status = 200;
+    http_request_counter.labels({route: "sitemap", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status,
+        sitemap: result
     })
 });
 

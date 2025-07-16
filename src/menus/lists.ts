@@ -233,3 +233,40 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
         return {children: [], parent: [], error: getErrorMessage(e)};
     }
 }
+
+export async function getSitemap(url: string, lang: string) {
+    try {
+        const m = getSiteTreeReadOnlyByLanguage();
+        let siteArray: SiteTreeInstance | undefined = m.menus[lang];
+        let sitemap: any[] = [];
+        if (siteArray) {
+            if (url === "https://wpn-test.epfl.ch/") {
+                const listMenuBarLinks: string[] = getMenuBarLinks(lang);
+                // TODO : add a level to display root url (www) and after the children
+                sitemap = listMenuBarLinks.map(menuBarLink => {
+                    const levelZero = siteArray.findLevelZeroByUrl(menuBarLink);
+                    if (levelZero) {
+                        const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
+                        return findChildrenFromUrl(menuBarFullUrl, lang, siteArray);
+                    }
+                })
+            } else {
+                sitemap = [findChildrenFromUrl(url, lang, siteArray)];
+            }
+        }
+        return sitemap;
+    } catch (e) {
+        return [];
+    }
+}
+
+function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance) {
+    const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
+
+    if (firstSite.result) {
+        const restUrl = Object.keys(firstSite.result)[0];
+        const children = getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang)["children"]();
+        const allChildren: any[] = children.map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray))
+        return {url : url, children: allChildren.filter(child => child != undefined)};
+    }
+}
