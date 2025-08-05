@@ -27,14 +27,14 @@ describe("End To End Menu", function() {
     });
     describe("Breadcrumb", function() {
         it('website has at least one parent', async function() {
-            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/website/",
+            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/en/website/",
                 "en", "breadcrumb", "page", "Systems updates feed",
                 "https://wpn-test.epfl.ch/campus/services/website/blog-page/",
                 "https://wpn-test.epfl.ch/campus/services/website/en/", "EPFL Websites").list;
             assert(items.length>1);
         });
         it('website has Services & Resources as parent', async function() {
-            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/website/",
+            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/en/website/",
                 "en", "breadcrumb", "page", "Systems updates feed",
                 "https://wpn-test.epfl.ch/campus/services/website/blog-page/",
                 "https://wpn-test.epfl.ch/campus/services/website/en/", "EPFL Websites").list;
@@ -48,7 +48,7 @@ describe("End To End Menu", function() {
             expect(items.find(f => f.title=='Services &amp; Resources')).not.be.undefined;
         });
         it('website has Campus as parent', async function() {
-            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/website/",
+            const items = getMenuItems("https://wpn-test.epfl.ch/campus/services/website/en/website/",
                 "en", "breadcrumb", "page", "Systems updates feed",
                 "https://wpn-test.epfl.ch/campus/services/website/blog-page/",
                 "https://wpn-test.epfl.ch/campus/services/website/en/", "EPFL Websites").list;
@@ -152,8 +152,6 @@ describe("End To End Menu", function() {
             assert(items.length > 1);
         });
     });
-
-
     describe("ChildrenSite", function() {
         it('campus has some children', async function () {
             const config = loadConfig('menu-api-config.yaml');
