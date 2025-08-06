@@ -153,7 +153,7 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
 });
 
 app.get('/menus/sitemap', async (req, res) => {
-    const result = await getSitemap(req.query.url as string, req.query.lang as string);
+    const result = await getSitemap(req.query.url as string, req.query.lang as string, config);
     let status = 200;
     http_request_counter.labels({route: "sitemap", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({

@@ -214,7 +214,6 @@ function getMenuEntryFromFirstSite(firstSite: {
     }
 }
 
-
 export async function getSiteTree(siteURL: string, config: Config | undefined) {
     try {
         if (config) {
@@ -234,24 +233,25 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
     }
 }
 
-export async function getSitemap(url: string, lang: string) {
+export async function getSitemap(url: string, lang: string, config: Config | undefined) {
     try {
         const m = getSiteTreeReadOnlyByLanguage();
         let siteArray: SiteTreeInstance | undefined = m.menus[lang];
         let sitemap: any[] = [];
         if (siteArray) {
-            if (url === "https://wpn-test.epfl.ch/") {
-                const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-                // TODO : add a level to display root url (www) and after the children
-                sitemap = listMenuBarLinks.map(menuBarLink => {
-                    const levelZero = siteArray.findLevelZeroByUrl(menuBarLink);
-                    if (levelZero) {
-                        const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
-                        return findChildrenFromUrl(menuBarFullUrl, lang, siteArray);
-                    }
-                })
-            } else {
-                sitemap = [findChildrenFromUrl(url, lang, siteArray)];
+            if (config) {
+                if (url === config.ROOT_LINK_URL) {
+                    const listMenuBarLinks: string[] = getMenuBarLinks(lang);
+                    sitemap = listMenuBarLinks.map(menuBarLink => {
+                        const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
+                        if (levelZero) {
+                            const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
+                            return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
+                        }
+                    })
+                } else {
+                    sitemap = [findChildrenFromUrl(url, lang, siteArray)];
+                }
             }
         }
         return sitemap;
