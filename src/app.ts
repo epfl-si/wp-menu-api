@@ -6,7 +6,7 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {getMenuItems, getSiteTree, getSitemap} from "./menus/lists";
+import {getSitemap, getMenuItems, getSiteTree, getSitesHierarchy} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -152,13 +152,25 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
     })
 });
 
-app.get('/menus/sitemap', async (req, res) => {
-    const result = await getSitemap(req.query.url as string, req.query.lang as string, config);
-    let status = 200;
+app.get('/menus/sitesHierarchy', async (req, res) => {
+    const result = await getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
+    let status = result.error == "" ? 200 : 500;
+    http_request_counter.labels({route: "sitesHierarchy", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status,
+        error: result.error,
+        result: result.result
+    })
+});
+
+app.get('/sitemap', async (req, res) => {
+    const result = await getSitemap(config);
+    let status = result.error == "" ? 200 : 500;
     http_request_counter.labels({route: "sitemap", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({
         status: status,
-        sitemap: result
+        error: result.error,
+        result: result.result
     })
 });
 
