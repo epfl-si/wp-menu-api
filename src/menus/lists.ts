@@ -233,7 +233,7 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
     }
 }
 
-export async function getSitemap(url: string, lang: string, config: Config | undefined) {
+export async function getSitesHierarchy(url: string, lang: string, config: Config | undefined): Promise<any> {
     try {
         const m = getSiteTreeReadOnlyByLanguage();
         let siteArray: SiteTreeInstance | undefined = m.menus[lang];
@@ -252,11 +252,16 @@ export async function getSitemap(url: string, lang: string, config: Config | und
                 } else {
                     sitemap = [findChildrenFromUrl(url, lang, siteArray)];
                 }
+            }  else {
+                sitemap.push("No configuration found")
             }
+        } else {
+            sitemap.push(`No menu for this language: ${lang}`)
         }
-        return sitemap;
+        sitemap = sitemap.filter(s => s != undefined);
+        return {result: sitemap, error: (sitemap.length == 0 ? `No sites found for this url: ${url}` : "")};
     } catch (e) {
-        return [];
+        return {result: [], error: getErrorMessage(e)};
     }
 }
 
@@ -269,4 +274,33 @@ function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInsta
         const allChildren: any[] = children.map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray))
         return {url : url, children: allChildren.filter(child => child != undefined)};
     }
+}
+
+export async function getSitemap(config: Config | undefined): Promise<any> {
+    try {
+        if (config) {
+            const m = getSiteTreeReadOnlyByLanguage();
+            const languages = Object.keys(m.menus)
+            const sitemap: string[] = []
+            for (const lang of languages) {
+                const sitesHierarchy = await getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
+                const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
+                sitemap.push(...sitemapFlat);
+            }
+            return {result: sitemap, error: (sitemap.length == 0 ? "No sitemap found" : "")};
+        } else {
+            return {result: [], error: "No configuration found"};
+        }
+    } catch (e) {
+        return {result: [], error: getErrorMessage(e)};
+    }
+}
+
+function flatSitemap(sitemap: any[]) {
+    const array: any[] = [];
+    sitemap.map(s => {
+        array.push(s.url);
+        array.push(...flatSitemap(s.children));
+    })
+    return array;
 }
