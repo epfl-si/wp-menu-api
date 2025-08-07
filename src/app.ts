@@ -165,13 +165,8 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
 
 app.get('/sitemap', async (req, res) => {
     const result = await getSitemap(config);
-    let status = result.error == "" ? 200 : 500;
-    http_request_counter.labels({route: "sitemap", statusCode: status, lang: req.query.lang as string}).inc();
-    res.status(status).json({
-        status: status,
-        error: result.error,
-        result: result.result
-    })
+    res.set('application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>${result}`)
 });
 
 app.use('/utils', (req, res, next) => {
