@@ -12,6 +12,7 @@ import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {configSite} from "./interfaces/site";
 import prometheusMiddleware from "express-prometheus-middleware";
+import { readFile } from './utils/file';
 
 const app = express()
 const args = process.argv.slice(2);
@@ -163,10 +164,22 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
     })
 });
 
-app.get('/sitemap', async (req, res) => {
+app.get('/generateSitemap', async (req, res) => {
     const result = await getSitemap(config);
+    let status = result.error == "" ? 200 : 500;
+    res.status(status).json({
+        status: status,
+        error: result.error,
+    })
+});
+
+app.get('/getSitemap', async (req, res) => {
+    let result = null;
+    if (config) {
+        result = readFile(config.SITEMAP_LOCATION);
+    }
     res.set('application/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>${result}`)
+    res.send(result);
 });
 
 app.use('/utils', (req, res, next) => {
