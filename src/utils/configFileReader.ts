@@ -15,6 +15,7 @@ export interface Config {
   LABS_LINK_URL_FR: string;
   LABS_LINK_URL_EN: string;
   ROOT_LINK_URL: string;
+  SITEMAP_LOCATION: string;
   ASSOC_BREADCRUMB_EN: string;
   ASSOC_BREADCRUMB_FR: string;
   MENU_BAR_LINKS_EN: string;
