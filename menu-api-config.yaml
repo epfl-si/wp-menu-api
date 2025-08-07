@@ -9,6 +9,7 @@ REQUEST_TIMEOUT: 30000
 LABS_LINK_URL_FR: "https://wp-httpd/labs/fr/laboratoires/"
 LABS_LINK_URL_EN: "https://wp-httpd/labs/en/laboratories/"
 ROOT_LINK_URL: "https://wpn-test.epfl.ch/"
+SITEMAP_LOCATION: "./data/sitemap.xml"
 ASSOC_BREADCRUMB_EN: |
   https://wp-httpd/campus/en/campusenglish/
   https://wp-httpd/campus/associations/en/student-associations/
