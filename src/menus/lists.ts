@@ -288,28 +288,24 @@ export async function getSitemap(config: Config | undefined): Promise<any> {
                 sitemap.push(...sitemapFlat);
             }
             const sitemapStr = `
-<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemap.join("\n")}
-</urlset>
-` 
-            return {result: sitemapStr, error: (sitemap.length == 0 ? "No sitemap found" : "")};
+</urlset>`
+            return sitemap.length > 0 ? sitemapStr : "<error>No sitemap found</error>";
         } else {
-            return {result: "", error: "No configuration found"};
+            return "<error>No configuration found</error>";
         }
     } catch (e) {
-        return {result: "", error: getErrorMessage(e)};
+        return `<error>${getErrorMessage(e)}</error>`;
     }
 }
 
 function flatSitemap(sitemap: any[]) {
     const array: any[] = [];
     sitemap.map(s => {
-        array.push(`
-<url>
+        array.push(`<url>
   <loc>${s.url}</loc>
-</url>
-`);
+</url>`);
         array.push(...flatSitemap(s.children));
     })
     return array;
