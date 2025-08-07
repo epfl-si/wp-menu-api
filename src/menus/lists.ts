@@ -1,5 +1,5 @@
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {error, getErrorMessage, info, orphan_pages_counter} from "../utils/logger";
+import {error, getErrorMessage, info, orphan_pages_counter, sitemap_generation} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
@@ -293,7 +293,13 @@ export async function getSitemap(config: Config | undefined): Promise<any> {
   ${sitemap.join("\n")}
 </urlset>`
             const fileCreated = writeFile(config.SITEMAP_LOCATION, sitemapStr);
-            return { error: (sitemap.length > 0 && fileCreated) ? "" : "No sitemap generated"};
+            const success = sitemap.length > 0 && fileCreated;
+            if (success) {
+                sitemap_generation.labels().set(1);
+            } else {
+                sitemap_generation.labels().set(0);
+            }
+            return { error: success ? "" : "No sitemap generated"};
         } else {
             return { error: "No configuration found"};
         }
