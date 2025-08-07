@@ -17,6 +17,7 @@
     "express-prometheus-middleware": "^1.2.0",
     "js-yaml": "^4.1.0",
     "prom-client": "^13.2.0",
+    "xml": "^1.0.1",
     "yaml": "^2.7.0"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.2",
     "@types/node": "^20.8.6",
+    "@types/xml": "^1.0.11",
     "assert": "^2.1.0",
     "chai": "^4.3.10",
     "cross-env": "^7.0.3",
