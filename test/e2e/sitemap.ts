@@ -1,17 +1,19 @@
 import 'mocha';
 import {assert} from "chai";
-import {getSitemap} from "../../src/menus/lists";
+import {getSitesHierarchy} from "../../src/menus/lists";
 import {configRefresh, refreshFromAPI} from "../../src/menus/refresh";
-import {loadConfig} from "../../src/utils/configFileReader";
+import {Config, loadConfig} from "../../src/utils/configFileReader";
 import {configLinks} from "../../src/utils/links";
 import {configLogs} from "../../src/utils/logger";
 import {configSite} from "../../src/interfaces/site";
 
-describe("End To End Sitemap", function() {
+let config: Config | undefined;
+
+describe("End To End SiteHierarchy", function() {
     before(function(done){
         this.timeout(50000);
 
-        const config = loadConfig('menu-api-config.yaml');
+        config = loadConfig('menu-api-config.yaml');
         if (config) {
             configRefresh(config);
             configLinks(config);
@@ -25,10 +27,10 @@ describe("End To End Sitemap", function() {
             throw new Error("Config not present");
         }
     });
-    describe("Sitemap", function() {
-        it('sitemap is not empty', async function() {
-            const sitemap = await getSitemap("https://wpn-test.epfl.ch/campus/services/website/en/website/", "en");
-            assert(sitemap);
+    describe("Site hierarchy", function() {
+        it('site hierarchy is not empty', async function() {
+            const siteHierarchy = await getSitesHierarchy("https://wpn-test.epfl.ch/campus/services/website/en/website/", "en", config);
+            assert(siteHierarchy.result.length > 0);
         });
     });
 });
