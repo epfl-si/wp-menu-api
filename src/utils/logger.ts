@@ -58,7 +58,7 @@ export const orphan_pages_counter = new Prometheus.Gauge({
     labelNames: ['url', 'lang']
 });
 export const sitemap_generation = new Prometheus.Gauge({
-    name: 'sitemap_generation',
+    name: 'menu_api_sitemap_generation',
     help: 'Generation of sitemap',
     labelNames: []
 });
