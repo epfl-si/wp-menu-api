@@ -6,13 +6,12 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {getSitemap, getMenuItems, getSiteTree, getSitesHierarchy} from "./menus/lists";
+import {generateSitemap, getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
 import {configSite} from "./interfaces/site";
 import prometheusMiddleware from "express-prometheus-middleware";
-import { readFile } from './utils/file';
 
 const app = express()
 const args = process.argv.slice(2);
@@ -165,7 +164,7 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
 });
 
 app.get('/generateSitemap', async (req, res) => {
-    const result = await getSitemap(config);
+    const result = await generateSitemap(config);
     let status = result.error == "" ? 200 : 500;
     res.status(status).json({
         status: status,
@@ -174,12 +173,8 @@ app.get('/generateSitemap', async (req, res) => {
 });
 
 app.get('/getSitemap', async (req, res) => {
-    let result = null;
-    if (config) {
-        result = readFile(config.SITEMAP_LOCATION);
-    }
     res.set('application/xml');
-    res.send(result);
+    res.send(getSiteMap());
 });
 
 app.use('/utils', (req, res, next) => {

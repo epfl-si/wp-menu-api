@@ -7,7 +7,8 @@ import {Config} from "../utils/configFileReader";
 import {urlToHttpOptions} from 'node:url';
 import {getSiteListFromInventory} from "../utils/source";
 import {getSiteTreeReadOnlyByLanguage} from "./refresh";
-import { writeFile } from "src/utils/file";
+
+let sitemapStr = '';
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -277,7 +278,7 @@ function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInsta
     }
 }
 
-export async function getSitemap(config: Config | undefined): Promise<any> {
+export async function generateSitemap(config: Config | undefined): Promise<any> {
     try {
         if (config) {
             const m = getSiteTreeReadOnlyByLanguage();
@@ -288,12 +289,11 @@ export async function getSitemap(config: Config | undefined): Promise<any> {
                 const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
                 sitemap.push(...sitemapFlat);
             }
-            const sitemapStr = `<?xml version="1.0" encoding="UTF-8"?>
+            sitemapStr = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${sitemap.join("\n")}
 </urlset>`
-            const fileCreated = writeFile(config.SITEMAP_LOCATION, sitemapStr);
-            const success = sitemap.length > 0 && fileCreated;
+            const success = sitemap.length > 0;
             if (success) {
                 sitemap_generation.labels().set(1);
             } else {
@@ -317,4 +317,8 @@ function flatSitemap(sitemap: any[]) {
         array.push(...flatSitemap(s.children));
     })
     return array;
+}
+
+export function getSiteMap() {
+    return sitemapStr;
 }
