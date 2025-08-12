@@ -57,6 +57,11 @@ export const orphan_pages_counter = new Prometheus.Gauge({
     help: 'menu_api_orphan_pages_count Number of page that are not linked to any menus',
     labelNames: ['url', 'lang']
 });
+export const sitemap_generation = new Prometheus.Gauge({
+    name: 'menu_api_sitemap_generation',
+    help: 'Generation of sitemap',
+    labelNames: []
+});
 
 register.setDefaultLabels({
     app: 'menu-api'
@@ -73,6 +78,7 @@ register.registerMetric(external_detached_menus_counter);
 register.registerMetric(menu_api_refresh_duration_seconds);
 register.registerMetric(menu_api_wp_api_call_duration_seconds);
 register.registerMetric(orphan_pages_counter);
+register.registerMetric(sitemap_generation);
 
 export function getRegister() {
     return register;

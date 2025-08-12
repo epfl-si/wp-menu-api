@@ -1,5 +1,5 @@
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {error, getErrorMessage, info, orphan_pages_counter} from "../utils/logger";
+import {error, getErrorMessage, info, orphan_pages_counter, sitemap_generation} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
@@ -7,6 +7,8 @@ import {Config} from "../utils/configFileReader";
 import {urlToHttpOptions} from 'node:url';
 import {getSiteListFromInventory} from "../utils/source";
 import {getSiteTreeReadOnlyByLanguage} from "./refresh";
+
+let sitemapStr = '';
 
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
@@ -214,7 +216,6 @@ function getMenuEntryFromFirstSite(firstSite: {
     }
 }
 
-
 export async function getSiteTree(siteURL: string, config: Config | undefined) {
     try {
         if (config) {
@@ -232,4 +233,94 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
     } catch (e) {
         return {children: [], parent: [], error: getErrorMessage(e)};
     }
+}
+
+export async function getSitesHierarchy(url: string, lang: string, config: Config | undefined): Promise<any> {
+    try {
+        const m = getSiteTreeReadOnlyByLanguage();
+        let siteArray: SiteTreeInstance | undefined = m.menus[lang];
+        let sitemap: any[] = [];
+        if (siteArray) {
+            if (config) {
+                if (url === config.ROOT_LINK_URL) {
+                    const listMenuBarLinks: string[] = getMenuBarLinks(lang);
+                    sitemap = listMenuBarLinks.map(menuBarLink => {
+                        const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
+                        if (levelZero) {
+                            const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
+                            return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
+                        }
+                    })
+                } else {
+                    sitemap = [findChildrenFromUrl(url, lang, siteArray)];
+                }
+            }  else {
+                sitemap.push("No configuration found")
+            }
+        } else {
+            sitemap.push(`No menu for this language: ${lang}`)
+        }
+        sitemap = sitemap.filter(s => s != undefined);
+        return {result: sitemap, error: (sitemap.length == 0 ? `No sites found for this url: ${url}` : "")};
+    } catch (e) {
+        return {result: [], error: getErrorMessage(e)};
+    }
+}
+
+function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance) {
+    const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
+
+    if (firstSite.result) {
+        const restUrl = Object.keys(firstSite.result)[0];
+        const children = getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang)["children"]();
+        const allChildren: any[] = children.map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray))
+        return {url : url, children: allChildren.filter(child => child != undefined)};
+    }
+}
+
+export async function generateSitemap(config: Config | undefined): Promise<any> {
+    try {
+        if (config) {
+            const m = getSiteTreeReadOnlyByLanguage();
+            const languages = Object.keys(m.menus)
+            const sitemap: string[] = []
+            for (const lang of languages) {
+                const sitesHierarchy = await getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
+                const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
+                sitemap.push(...sitemapFlat);
+            }
+            sitemapStr = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${sitemap.join("\n")}
+</urlset>`
+            const success = sitemap.length > 0;
+            if (success) {
+                sitemap_generation.labels().set(1);
+            } else {
+                sitemap_generation.labels().set(0);
+            }
+            return { error: success ? "" : "No sitemap generated"};
+        } else {
+            sitemap_generation.labels().set(0);
+            return { error: "No configuration found"};
+        }
+    } catch (e) {
+        sitemap_generation.labels().set(0);
+        return { error: getErrorMessage(e)};
+    }
+}
+
+function flatSitemap(sitemap: any[]) {
+    const array: any[] = [];
+    sitemap.map(s => {
+        array.push(`<url>
+  <loc>${s.url}</loc>
+</url>`);
+        array.push(...flatSitemap(s.children));
+    })
+    return array;
+}
+
+export function getSiteMap() {
+    return sitemapStr;
 }

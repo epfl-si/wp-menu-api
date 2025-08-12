@@ -6,7 +6,7 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {getMenuItems, getSiteTree} from "./menus/lists";
+import {generateSitemap, getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -150,6 +150,31 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
         siblings: siblings.list,
         children: children
     })
+});
+
+app.get('/menus/sitesHierarchy', async (req, res) => {
+    const result = await getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
+    let status = result.error == "" ? 200 : 500;
+    http_request_counter.labels({route: "sitesHierarchy", statusCode: status, lang: req.query.lang as string}).inc();
+    res.status(status).json({
+        status: status,
+        error: result.error,
+        result: result.result
+    })
+});
+
+app.get('/generateSitemap', async (req, res) => {
+    const result = await generateSitemap(config);
+    let status = result.error == "" ? 200 : 500;
+    res.status(status).json({
+        status: status,
+        error: result.error,
+    })
+});
+
+app.get('/getSitemap', async (req, res) => {
+    res.set('application/xml');
+    res.send(getSiteMap());
 });
 
 app.use('/utils', (req, res, next) => {

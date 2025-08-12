@@ -8,6 +8,7 @@ DEBUG: true
 REQUEST_TIMEOUT: 30000
 LABS_LINK_URL_FR: "https://wp-httpd/labs/fr/laboratoires/"
 LABS_LINK_URL_EN: "https://wp-httpd/labs/en/laboratories/"
+ROOT_LINK_URL: "https://wpn-test.epfl.ch/"
 ASSOC_BREADCRUMB_EN: |
   https://wp-httpd/campus/en/campusenglish/
   https://wp-httpd/campus/associations/en/student-associations/
@@ -17,26 +18,26 @@ ASSOC_BREADCRUMB_FR: |
   https://wp-httpd/campus/associations/fr/associations-detudiants/
   https://wp-httpd/campus/associations/list/fr/toutes-les-associations/
 MENU_BAR_LINKS_EN: |
-  https://wp-httpd/about/en/
-  https://wp-httpd/education/en/
-  https://wp-httpd/research/en/
-  https://wp-httpd/innovation/en/
-  https://wp-httpd/schools/en/
-  https://wp-httpd/campus/en/
-  https://wp-httpd/labs/en/
+  https://wpn-test.epfl.ch/about/en/
+  https://wpn-test.epfl.ch/education/en/
+  https://wpn-test.epfl.ch/research/en/
+  https://wpn-test.epfl.ch/innovation/en/
+  https://wpn-test.epfl.ch/schools/en/
+  https://wpn-test.epfl.ch/campus/en/
+  https://wpn-test.epfl.ch/labs/en/
 MENU_BAR_LINKS_FR: |
-  https://wp-httpd/about/fr/
-  https://wp-httpd/education/fr/
-  https://wp-httpd/research/fr/
-  https://wp-httpd/innovation/fr/
-  https://wp-httpd/schools/fr/
-  https://wp-httpd/campus/fr/
-  https://wp-httpd/labs/fr/
+  https://wpn-test.epfl.ch/about/fr/
+  https://wpn-test.epfl.ch/education/fr/
+  https://wpn-test.epfl.ch/research/fr/
+  https://wpn-test.epfl.ch/innovation/fr/
+  https://wpn-test.epfl.ch/schools/fr/
+  https://wpn-test.epfl.ch/campus/fr/
+  https://wpn-test.epfl.ch/labs/fr/
 MENU_BAR_LINKS_DE: |
-  https://wp-httpd/about/de/
-  https://wp-httpd/education/de/
-  https://wp-httpd/research/de/
-  https://wp-httpd/innovation/de/
-  https://wp-httpd/schools/de/
-  https://wp-httpd/campus/de/
-  https://wp-httpd/labs/en/
+  https://wpn-test.epfl.ch/about/de/
+  https://wpn-test.epfl.ch/education/de/
+  https://wpn-test.epfl.ch/research/de/
+  https://wpn-test.epfl.ch/innovation/de/
+  https://wpn-test.epfl.ch/schools/de/
+  https://wpn-test.epfl.ch/campus/de/
+  https://wpn-test.epfl.ch/labs/en/

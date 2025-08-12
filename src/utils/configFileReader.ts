@@ -14,6 +14,7 @@ export interface Config {
   NAMESPACE: string;
   LABS_LINK_URL_FR: string;
   LABS_LINK_URL_EN: string;
+  ROOT_LINK_URL: string;
   ASSOC_BREADCRUMB_EN: string;
   ASSOC_BREADCRUMB_FR: string;
   MENU_BAR_LINKS_EN: string;
