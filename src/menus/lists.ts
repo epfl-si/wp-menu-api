@@ -301,9 +301,11 @@ export async function generateSitemap(config: Config | undefined): Promise<any> 
             }
             return { error: success ? "" : "No sitemap generated"};
         } else {
+            sitemap_generation.labels().set(0);
             return { error: "No configuration found"};
         }
     } catch (e) {
+        sitemap_generation.labels().set(0);
         return { error: getErrorMessage(e)};
     }
 }
