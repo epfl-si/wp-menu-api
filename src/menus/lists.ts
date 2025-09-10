@@ -236,7 +236,7 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
     }
 }
 
-export async function getSitesHierarchy(url: string, lang: string, config: Config | undefined): Promise<any> {
+export function getSitesHierarchy(url: string, lang: string, config: Config | undefined) {
     try {
         const m = getSiteTreeReadOnlyByLanguage();
         let siteArray: SiteTreeInstance | undefined = m.menus[lang];
@@ -279,14 +279,14 @@ function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInsta
     }
 }
 
-export async function generateSitemap(config: Config | undefined): Promise<any> {
+export function generateSitemap(config: Config | undefined) {
     try {
         if (config) {
             const m = getSiteTreeReadOnlyByLanguage();
             const languages = Object.keys(m.menus)
             const sitemap: string[] = []
             for (const lang of languages) {
-                const sitesHierarchy = await getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
+                const sitesHierarchy = getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
                 const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
                 sitemap.push(...sitemapFlat);
             }
