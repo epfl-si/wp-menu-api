@@ -7,6 +7,7 @@ import {Config} from "../utils/configFileReader";
 import {urlToHttpOptions} from 'node:url';
 import {getSiteListFromInventory} from "../utils/source";
 import {getSiteTreeReadOnlyByLanguage} from "./refresh";
+import { flatSitemap } from "src/utils/flatSitemap";
 
 let sitemapStr = '';
 
@@ -308,17 +309,6 @@ export async function generateSitemap(config: Config | undefined): Promise<any> 
         sitemap_generation.labels().set(0);
         return { error: getErrorMessage(e)};
     }
-}
-
-function flatSitemap(sitemap: any[]) {
-    const array: any[] = [];
-    sitemap.map(s => {
-        array.push(`<url>
-  <loc>${s.url}</loc>
-</url>`);
-        array.push(...flatSitemap(s.children));
-    })
-    return array;
 }
 
 export function getSiteMap() {
