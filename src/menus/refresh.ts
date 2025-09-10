@@ -6,6 +6,7 @@ import {getCategoriesCount, getPagesCount, getPostsCount, getRetrievedSitesCount
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {SiteTreeMutable} from "../interfaces/siteTree";
 import {SiteTreeMutableByLanguage, SiteTreeReadOnlyByLanguage} from "../utils/siteTreeByLanguage";
+import {generateSitemap} from "./lists";
 
 const siteTreeMutableByLanguage: SiteTreeMutableByLanguage = new SiteTreeMutableByLanguage();
 const siteTreeReadOnlyByLanguage: SiteTreeReadOnlyByLanguage = new SiteTreeReadOnlyByLanguage();
@@ -84,6 +85,7 @@ function refreshReadOnlyMenus() {
         siteTreeReadOnlyByLanguage.menus[lang] = siteTreeMutableByLanguage.menus[lang].getReadOnlySiteTree();
         info(`End refresh readonly menus: ` + lang, { method: 'refreshReadOnlyMenus' });
     });
+    generateSitemap(config);
 }
 
 export function getSiteTreeReadOnlyByLanguage(): SiteTreeReadOnlyByLanguage {

@@ -163,15 +163,6 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
     })
 });
 
-app.get('/generateSitemap', async (req, res) => {
-    const result = await generateSitemap(config);
-    let status = result.error == "" ? 200 : 500;
-    res.status(status).json({
-        status: status,
-        error: result.error,
-    })
-});
-
 app.get('/getSitemap', async (req, res) => {
     res.set('application/xml');
     res.send(getSiteMap());
