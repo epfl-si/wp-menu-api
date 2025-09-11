@@ -1,6 +1,7 @@
 import {total_categories, total_pages, total_posts, total_retrieved_sites,} from "./logger";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {SiteTreeReadOnlyByLanguage} from "./siteTreeByLanguage";
+import {MenuEntryAndUrl} from '../interfaces/siteTree';
 
 export function getRetrievedSitesCount(menus: SiteTreeReadOnlyByLanguage) {
 	for (const lang in menus.menus) {
@@ -49,13 +50,13 @@ export function getCategoriesCount(menus: SiteTreeReadOnlyByLanguage) {
 	}
 }
 
-function getGroupedArray(pages: {urlInstanceRestUrl: string, entries: MenuEntry}[]) {
-	return pages.reduce((grouped: { [site: string]: MenuEntry[] }, page: { urlInstanceRestUrl: string, entries: MenuEntry }) => {
+function getGroupedArray(pages: MenuEntryAndUrl[]) {
+	return pages.reduce((grouped: { [site: string]: MenuEntry[] }, page: MenuEntryAndUrl) => {
 		const site = cleanUrl(page.urlInstanceRestUrl);
 		if (!grouped[site]) {
 			grouped[site] = [];
 		}
-		grouped[site].push(page.entries);
+		grouped[site].push(page.entry);
 		return grouped;
 	}, {});
 }

@@ -3,23 +3,23 @@ import {external_detached_menus_counter, info, warn} from "../utils/logger";
 import {MenuEntry} from "./MenuEntry";
 import {getSiteTreeReadOnlyByLanguage} from "../menus/refresh";
 
-type MenuEntryByUrl = {[urlInstanceRestUrl : string]: MenuEntry};
+export type MenuEntryAndUrl = {urlInstanceRestUrl : string, entry: MenuEntry};
 
 export interface SiteTreeInstance  {
-    getParent : (urlInstanceRestUrl: string,  idChild: number) => MenuEntryByUrl | undefined
+    getParent : (urlInstanceRestUrl: string,  idChild: number) => MenuEntryAndUrl | undefined
     getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntry[]
     findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => MenuEntry | undefined
     findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => MenuEntry | undefined
     getSiblings : (urlInstanceRestUrl: string, idItem: number) => MenuEntry[]
-    findItemByUrl: (pageURL: string) => MenuEntryByUrl | undefined
-    findItemAndObjectTypeByUrl: (pageURL: string) => { result: MenuEntryByUrl | undefined, objectType: string}
-    findLevelZeroByUrl: (pageURL: string) => MenuEntryByUrl | undefined
+    findItemByUrl: (pageURL: string) => MenuEntryAndUrl | undefined
+    findItemAndObjectTypeByUrl: (pageURL: string) => { result: MenuEntryAndUrl | undefined, objectType: string}
+    findLevelZeroByUrl: (pageURL: string) => MenuEntryAndUrl | undefined
     length: () => number
-    getCustomMenus: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
-    getExternalMenus: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
-    getPages: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
-    getPosts: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
-    getCategories: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    getCustomMenus: () => MenuEntryAndUrl[]
+    getExternalMenus: () => MenuEntryAndUrl[]
+    getPages: () => MenuEntryAndUrl[]
+    getPosts: () => MenuEntryAndUrl[]
+    getCategories: () => MenuEntryAndUrl[]
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
@@ -29,10 +29,10 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: MenuEntry } } = {};
     const children: { [urlInstanceRestUrl : string]: { [idParent : number]: MenuEntry[] } } = {};
     const externalMenus: { [urlInstanceRestUrl : string]: MenuEntry[] } = {};
-    const notCustomItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
-    const customItemsByUrl : { [fullUrl : string]: MenuEntryByUrl } = {};
-    const levelZeroByUrl : { [urlSiteWithoutHomePage : string]: MenuEntryByUrl } = {};
-    const menusEntriesByObjectType: {[objectType: string] : { urlInstanceRestUrl: string, entries: MenuEntry }[]} = {}
+    const notCustomItemsByUrl : { [fullUrl : string]: MenuEntryAndUrl } = {};
+    const customItemsByUrl : { [fullUrl : string]: MenuEntryAndUrl } = {};
+    const levelZeroByUrl : { [urlSiteWithoutHomePage : string]: MenuEntryAndUrl } = {};
+    const menuEntriesByObjectType: {[objectType: string] : MenuEntryAndUrl[]} = {}
 
     info(`START ANALYSE`, { method: 'SiteTreeReadOnly' });
 
@@ -69,51 +69,52 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             /*** get all notCustomItems and customItems by url ***/
             const fullUrl = item.getFullUrl();
             if(fullUrl && item.object !== 'custom') {
-                if (!notCustomItemsByUrl[fullUrl]) {
-                    notCustomItemsByUrl[fullUrl] = {};
+                notCustomItemsByUrl[fullUrl] = {
+                    urlInstanceRestUrl: menu.urlInstanceRestUrl,
+                    entry: item
                 }
-                notCustomItemsByUrl[fullUrl][menu.urlInstanceRestUrl] = item;
             } else if(fullUrl && item.object == 'custom') {
-                if (!customItemsByUrl[fullUrl]) {
-                    customItemsByUrl[fullUrl] = {};
+                customItemsByUrl[fullUrl] = {
+                    urlInstanceRestUrl: menu.urlInstanceRestUrl,
+                    entry: item
                 }
-                customItemsByUrl[fullUrl][menu.urlInstanceRestUrl] = item;
             }
 
             /*** get all levelZero by url ***/
             if(item.menu_item_parent.toString() === "0" && item.menu_order === 1 && item.getFullUrl()) {
                 const urlSiteWithoutHomePage = getBaseUrl(item.getFullUrl());
-                if (!levelZeroByUrl[urlSiteWithoutHomePage]) {
-                    levelZeroByUrl[urlSiteWithoutHomePage] = {};
-                }
-                levelZeroByUrl[urlSiteWithoutHomePage][menu.urlInstanceRestUrl] = item;
+                levelZeroByUrl[urlSiteWithoutHomePage] = {
+                  urlInstanceRestUrl: menu.urlInstanceRestUrl,
+                  entry: item
+                };
             }
 
             /*** group all menusEntries by object type ***/
-            if (!menusEntriesByObjectType[item.object]) {
-                menusEntriesByObjectType[item.object] = [];
+            if (!menuEntriesByObjectType[item.object]) {
+                menuEntriesByObjectType[item.object] = [];
             }
-            menusEntriesByObjectType[item.object].push({urlInstanceRestUrl: menu.urlInstanceRestUrl, entries: item});
+            menuEntriesByObjectType[item.object].push({urlInstanceRestUrl: menu.urlInstanceRestUrl, entry: item});
         });
     });
 
     info(`END ANALYSE`, { method: 'SiteTreeReadOnly' });
 
     return {
-        getParent(urlInstanceRestUrl: string, idChild:number): MenuEntryByUrl {
-            const result: MenuEntryByUrl = {};
-            const parent = parents[urlInstanceRestUrl][idChild];//it could be undefined;
-            if (parent === undefined) {
-                for (const [url, menuEntries] of Object.entries(externalMenus)) {
-                    const entry = menuEntries.find(menuEntry => menuEntry.getFullUrl() === urlInstanceRestUrl);
-                    if (entry) {
-                        result[url] = itemsByID[url][entry.menu_item_parent];
-                        return result;
-                    }
+        getParent(urlInstanceRestUrl: string, idChild:number): MenuEntryAndUrl | undefined {
+            const parent = parents[urlInstanceRestUrl][idChild];
+            if (parent) {
+                return { urlInstanceRestUrl, entry: parent };
+            }
+
+            for (const [url, menuEntries] of Object.entries(externalMenus)) {
+                const entry = menuEntries.find(menuEntry => menuEntry.getFullUrl() === urlInstanceRestUrl);
+                if (entry) {
+                    return {
+                        urlInstanceRestUrl: url,
+                        entry: itemsByID[url][entry.menu_item_parent]
+                    };
                 }
             }
-            result[urlInstanceRestUrl] = parent;
-            return result;
         },
         getChildren(urlInstanceRestUrl: string, idParent:number) {
             const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
@@ -142,13 +143,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
             const parent = this.getParent(urlInstanceRestUrl,idItem);
             if (parent) {
-                const newUrl = Object.keys(parent)[0];
-                if (parent[newUrl]) {
-                    const children = this.getChildren(newUrl,parent[newUrl].ID);
-                    return children;
-                }else {
-                    return [];
-                }
+                return this.getChildren(parent.urlInstanceRestUrl, parent.entry.ID);
             } else {
                 return []
             }
@@ -168,18 +163,18 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         findItemByRestUrlAndId(urlInstanceRestUrl: string, idItem: number) {
             return itemsByID[urlInstanceRestUrl][idItem];
         },
-        findItemByUrl(pageURL: string): MenuEntryByUrl | undefined {
+        findItemByUrl(pageURL: string): MenuEntryAndUrl | undefined {
             return notCustomItemsByUrl[pageURL];
         },
         findItemAndObjectTypeByUrl(pageURL: string) {
-            let result: MenuEntryByUrl | undefined;
+            let result: MenuEntryAndUrl | undefined;
             let objectType: string = '';
-            const notCustomItem: MenuEntryByUrl | undefined = notCustomItemsByUrl[pageURL];
+            const notCustomItem = notCustomItemsByUrl[pageURL];
             if (notCustomItem) {
                 result = notCustomItem;
-                objectType = notCustomItem[Object.keys(notCustomItem)[0]].object;
+                objectType = notCustomItem.entry.object;
             } else {
-                const customItem: MenuEntryByUrl | undefined = customItemsByUrl[pageURL];
+                const customItem = customItemsByUrl[pageURL];
                 if (customItem) {
                     objectType = 'custom';
                 }
@@ -193,19 +188,19 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             return menus.length;
         },
         getCustomMenus () {
-            return menusEntriesByObjectType['custom'] ?? [];
+            return menuEntriesByObjectType['custom'] ?? [];
         },
         getExternalMenus () {
-            return menusEntriesByObjectType['epfl-external-menu'] ?? [];
+            return menuEntriesByObjectType['epfl-external-menu'] ?? [];
         },
         getPages () {
-            return menusEntriesByObjectType['page'] ?? [];
+            return menuEntriesByObjectType['page'] ?? [];
         },
         getPosts () {
-            return menusEntriesByObjectType['post'] ?? [];
+            return menuEntriesByObjectType['post'] ?? [];
         },
         getCategories () {
-            return menusEntriesByObjectType['category'] ?? [];
+            return menuEntriesByObjectType['category'] ?? [];
         },
     }
 }
