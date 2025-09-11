@@ -165,7 +165,7 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
 
 app.get('/getSitemap', async (req, res) => {
     generateSitemap(config);
-    res.set('application/xml');
+    res.setHeader('content-type', 'application/xml');
     res.send(getSiteMap());
 });
 
