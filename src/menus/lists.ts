@@ -235,35 +235,27 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
 }
 
 export function getSitesHierarchy(url: string, lang: string, config: Config | undefined) {
-    try {
-        const m = getSiteTreeReadOnlyByLanguage();
-        let siteArray: SiteTreeInstance | undefined = m.menus[lang];
-        let sitemap: any[] = [];
-        if (siteArray) {
-            if (config) {
-                if (url === config.ROOT_LINK_URL) {
-                    const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-                    sitemap = listMenuBarLinks.map(menuBarLink => {
-                        const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
-                        if (levelZero) {
-                            const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
-                            return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
-                        }
-                    })
-                } else {
-                    sitemap = [findChildrenFromUrl(url, lang, siteArray)];
-                }
-            }  else {
-                sitemap.push("No configuration found")
-            }
-        } else {
-            sitemap.push(`No menu for this language: ${lang}`)
-        }
-        sitemap = sitemap.filter(s => s != undefined);
-        return {result: sitemap, error: (sitemap.length == 0 ? `No sites found for this url: ${url}` : "")};
-    } catch (e) {
-        return {result: [], error: getErrorMessage(e)};
+    if (!config) {
+        throw new Error("No configuration found");
     }
+    const m = getSiteTreeReadOnlyByLanguage();
+    let siteArray: SiteTreeInstance | undefined = m.menus[lang];
+    let sitemap: any[] = [];
+    if (siteArray) {
+        if (url === config.ROOT_LINK_URL) {
+            const listMenuBarLinks: string[] = getMenuBarLinks(lang);
+            sitemap = listMenuBarLinks.map(menuBarLink => {
+                const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
+                if (levelZero) {
+                    const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
+                    return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
+                }
+            })
+        } else {
+            sitemap = [findChildrenFromUrl(url, lang, siteArray)];
+        }
+    }
+    return sitemap.filter(s => s != undefined);
 }
 
 function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance) {
@@ -286,7 +278,7 @@ export function getSiteMap(config: Config | undefined) {
     const sitemap: string[] = []
     for (const lang of languages) {
         const sitesHierarchy = getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
-        const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
+        const sitemapFlat: any[] = flatSitemap(sitesHierarchy);
         sitemap.push(...sitemapFlat);
     }
     if (!sitemap) {

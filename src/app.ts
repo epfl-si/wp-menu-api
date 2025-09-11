@@ -153,13 +153,16 @@ app.get('/menus/getStitchedMenus', (req, res) => {
 });
 
 app.get('/menus/sitesHierarchy', (req, res) => {
-    const result = getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
-    const status = result.error == "" ? 200 : 500;
+    const sitemap = getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
+    const status = sitemap.length > 0 ? 200 : 500;
     http_request_counter.labels({route: "sitesHierarchy", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({
         status: status,
-        error: result.error,
-        result: result.result
+        ...(sitemap.length > 0 ? {
+            result: sitemap
+        } : {
+            error: 'Sitemap not found for this url',
+        })
     })
 });
 
