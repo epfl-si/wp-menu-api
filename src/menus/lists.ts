@@ -1,5 +1,5 @@
 import {SiteTreeInstance} from "../interfaces/siteTree";
-import {error, getErrorMessage, info, orphan_pages_counter, sitemap_generation} from "../utils/logger";
+import {error, getErrorMessage, info, orphan_pages_counter} from "../utils/logger";
 import {getAssocBreadcrumb, getBaseUrl, getLabsLink, getMenuBarLinks} from "../utils/links";
 import {MenuEntry} from "../interfaces/MenuEntry";
 import {Site} from "../interfaces/site";
@@ -294,19 +294,11 @@ export function generateSitemap(config: Config | undefined) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${sitemap.join("\n")}
 </urlset>`
-            const success = sitemap.length > 0;
-            if (success) {
-                sitemap_generation.labels().set(1);
-            } else {
-                sitemap_generation.labels().set(0);
-            }
-            return { error: success ? "" : "No sitemap generated"};
+            return { error: sitemap.length > 0 ? "" : "No sitemap generated"};
         } else {
-            sitemap_generation.labels().set(0);
             return { error: "No configuration found"};
         }
     } catch (e) {
-        sitemap_generation.labels().set(0);
         return { error: getErrorMessage(e)};
     }
 }
