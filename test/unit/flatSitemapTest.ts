@@ -1,3 +1,4 @@
+import 'mocha';
 import {flatSitemap} from "../../src/utils/flatSitemap";
 import {assert} from "chai";
 
