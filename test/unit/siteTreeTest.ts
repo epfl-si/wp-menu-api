@@ -39,12 +39,9 @@ describe("Site Tree", function() {
             const parent : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1",rest_url: "/wp-json/bla?bla", ...bogusWpMenu}),
                 child : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 2, menu_item_parent: 1, title: "Some_Page child 1",rest_url: "/wp-json/bla?bla", ...bogusWpMenu});
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "http://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
-            const tree = siteTree.getParent("http://toto.com/wp-json/bla?bla",2);
-            if (tree) {
-                assert.equal(tree["http://toto.com/wp-json/bla?bla"].ID, 1);
-            } else {
-                assert.fail();
-            }
+            const found = siteTree.getParent("http://toto.com/wp-json/bla?bla", 2);
+            assert.equal(found!.urlInstanceRestUrl, "http://toto.com/wp-json/bla?bla");
+            assert.equal(found!.entry.ID, 1);
         })
         it("has a child", function() {
             const parent : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1", rest_url: "/wp-json/bla?bla",...bogusWpMenu}),
@@ -57,30 +54,18 @@ describe("Site Tree", function() {
                 child : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 2, menu_item_parent: 3, title: "Some_Page child 1",rest_url: "/wp-json/bla?bla",  ...bogusWpMenu});
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
-            if (tree1) {
-                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
-            } else {
-                assert.fail();
-            }
+            assert.isUndefined(tree1);
             assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1), []);
         })
         it("doesn't crash when entries menu list is undefined", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: undefined }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
-            if (tree1) {
-                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
-            } else {
-                assert.fail();
-            }
+            assert.isUndefined(tree1);
         })
         it("doesn't crash when entries menu list is empty", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
-            if (tree1) {
-                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
-            } else {
-                assert.fail();
-            }
+            assert.isUndefined(tree1);
         })
     })
     describe("in multiple sites", function() {
@@ -91,19 +76,14 @@ describe("Site Tree", function() {
                 child2 : MenuEntry = MenuEntry.parse(new Site('http://tototata.com/'), {ID: 3, menu_item_parent: 1 ,title: "Some_Page child 3",rest_url: "/wp-json/bla?bla", ...bogusWpMenu});
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] },{ urlInstanceRestUrl: "https://tototata.com/wp-json/bla?bla", entries: [parent2, child2] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla", 2);
+            assert.equal(tree1!.urlInstanceRestUrl,
+                "https://toto.com/wp-json/bla?bla");
+            assert.equal(tree1!.entry.title, "Some_Page parent 1");
+
             const tree2 = siteTree.getParent("https://tototata.com/wp-json/bla?bla", 3);
-            if (tree1) {
-                assert.equal(tree1["https://toto.com/wp-json/bla?bla"].title,
-                    "Some_Page parent 1");
-            } else {
-                assert.fail();
-            }
-            if (tree2) {
-                assert.equal(tree2["https://tototata.com/wp-json/bla?bla"].title,
-                    "Some_Page parent 1 bis");
-            } else {
-                assert.fail();
-            }
+            assert.equal(tree2!.urlInstanceRestUrl,
+                "https://tototata.com/wp-json/bla?bla");
+            assert.equal(tree2!.entry.title, "Some_Page parent 1 bis");
         })
         it("gets external site reference", function() {
             const parent : MenuEntry = MenuEntry.parse(new Site('http://tototata.com/'), {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1",rest_url: "/wp-json/bla?bla", ...bogusWpMenu}),
@@ -144,18 +124,9 @@ describe("Site Tree", function() {
             const websiteMenu = JSON.parse(jsonWebSite);
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) },
                 { urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) }]);
-            let firstSite: { [urlInstance: string]: MenuEntry } | undefined = siteTree.findItemByUrl("https://wp-httpd/campus/services/website/close-a-website/");
-            if (firstSite) {
-                const restUrl = Object.keys(firstSite)[0];
-                if (firstSite[restUrl]) {
-                    assert.equal(firstSite[restUrl].ID,
-                        24813);
-                } else {
-                    assert.fail();
-                }
-            } else {
-                assert.fail();
-            }
+            let firstSite = siteTree.findItemByUrl("https://wp-httpd/campus/services/website/close-a-website/");
+            assert(firstSite);
+            assert.equal(firstSite.entry.ID, 24813);
         })
     })
 });
