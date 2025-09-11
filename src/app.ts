@@ -120,7 +120,7 @@ app.get('/siteTree', async (req, res) => {
     })
 });
 
-app.get('/menus/getStitchedMenus', async (req, res) => {
+app.get('/menus/getStitchedMenus', (req, res) => {
     info('Start getStitchedMenus', {url: req.query.url as string});
     const siblings = getMenuItems(
         req.query.url as string,
@@ -152,8 +152,8 @@ app.get('/menus/getStitchedMenus', async (req, res) => {
     })
 });
 
-app.get('/menus/sitesHierarchy', async (req, res) => {
-    const result = await getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
+app.get('/menus/sitesHierarchy', (req, res) => {
+    const result = getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
     let status = result.error == "" ? 200 : 500;
     http_request_counter.labels({route: "sitesHierarchy", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({
@@ -163,7 +163,7 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
     })
 });
 
-app.get('/getSitemap', async (req, res) => {
+app.get('/getSitemap', (req, res) => {
     generateSitemap(config);
     res.setHeader('content-type', 'application/xml');
     res.send(getSiteMap());
@@ -215,7 +215,7 @@ app.get('/refreshSingleMenu', async (req, res) => {
     })
 });
 
-app.get('/version', async (req, res) => {
+app.get('/version', (req, res) => {
     res.status(200).json({
         status: "OK",
         result: version
