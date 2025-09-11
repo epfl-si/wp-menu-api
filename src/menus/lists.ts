@@ -61,18 +61,6 @@ function getItemMenuByUrl(siteArray: SiteTreeInstance, url: string) {
     return undefined;
 }
 
-function getLabOrAssoc(url: string, siteArray: SiteTreeInstance): MenuEntry | undefined {
-    const labsOrAssoc: { [urlInstance : string]: MenuEntry } | undefined = siteArray.findItemByUrl(url);
-    if (labsOrAssoc) {
-        const labUrl = Object.keys(labsOrAssoc)[0];
-        if (labsOrAssoc[labUrl]) {
-            return labsOrAssoc[labUrl];
-        }
-    }
-    info('Get lab or assoc: undefined', {url: url, method: 'getLabOrAssoc'});
-    return undefined
-}
-
 export function getMenuItems (url: string, lang: string, method: "siblings"|"breadcrumb"|"children"|"currentPage", pageType: string, mainPostPageName: string,
                               mainPostPageUrl: string, homePageUrl: string, currentPostName: string) : {list: {title: string, url: string, object: string}[], errors: number} {
     let err = 0;
