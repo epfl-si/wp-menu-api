@@ -43,4 +43,27 @@ describe("flatSitemap", function () {
 				'<url>\n  <loc>fff</loc>\n</url>'
 			])
 	})
+	it("manages loops", function () {
+		const tata = { url: "tata", children: [] as any[] };
+		const tonton = { url: "tonton", children: [] as any[] };
+		const tantan = { url: "tantan", children: [] as any[] };
+		const fff = { url: "fff", children: [] as any[] };
+		const toto = { url: "toto", children: [tonton, tantan] };
+
+		tonton.children.push(tata);
+		tantan.children.push(fff);
+		tata.children.push(toto);
+
+		let flatmapped = flatSitemap([toto]);
+
+		console.log(flatmapped)
+		assert.deepEqual(flatmapped,
+			[
+				'<url>\n  <loc>toto</loc>\n</url>',
+				'<url>\n  <loc>tonton</loc>\n</url>',
+				'<url>\n  <loc>tata</loc>\n</url>',
+				'<url>\n  <loc>tantan</loc>\n</url>',
+				'<url>\n  <loc>fff</loc>\n</url>'
+			])
+	})
 })
