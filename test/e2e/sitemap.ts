@@ -27,10 +27,8 @@ describe("End To End SiteHierarchy", function() {
             throw new Error("Config not present");
         }
     });
-    describe("Site hierarchy", function() {
-        it('site hierarchy is not empty', async function() {
-            const siteHierarchy = await getSitesHierarchy("https://wpn-test.epfl.ch/campus/services/en/homepage/", "en", config);
-            assert(siteHierarchy.result.length > 0);
-        });
+    it('is not empty', async function() {
+        const siteHierarchy = getSitesHierarchy("https://wpn-test.epfl.ch/campus/services/en/homepage/", "en", config);
+        assert(siteHierarchy.result.length > 0);
     });
 });
