@@ -258,13 +258,16 @@ export function getSitesHierarchy(url: string, lang: string, config: Config | un
     return sitemap.filter(s => s != undefined);
 }
 
-function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance) {
+function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance, visited = new Set()) {
+    visited.add(url);
     const firstSite: { result: { [urlInstance: string]: MenuEntry } | undefined, objectType: string } = siteArray.findItemAndObjectTypeByUrl(url);
 
     if (firstSite.result) {
         const restUrl = Object.keys(firstSite.result)[0];
-        const children = getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang)["children"]();
-        const allChildren: any[] = children.map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray))
+        const children = getMenuEntryFromFirstSite(firstSite.result, restUrl, siteArray, lang)["children"]()
+          .filter(c => !visited.has(c.getFullUrl()));
+        const allChildren: any[] = children
+          .map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray, visited))
         return {url : url, children: allChildren.filter(child => child != undefined)};
     }
 }
