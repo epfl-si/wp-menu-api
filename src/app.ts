@@ -6,7 +6,7 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {generateSitemap, getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap} from "./menus/lists";
+import {getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap, generateSitemap} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -164,6 +164,7 @@ app.get('/menus/sitesHierarchy', async (req, res) => {
 });
 
 app.get('/getSitemap', async (req, res) => {
+    generateSitemap(config);
     res.set('application/xml');
     res.send(getSiteMap());
 });
