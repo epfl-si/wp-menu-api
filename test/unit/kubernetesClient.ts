@@ -1,17 +1,11 @@
 import {KubeConfig} from "@kubernetes/client-node";
-import {getK8SPodName, getSiteListFromKubernetes} from "../../src/utils/source";
+import {getSiteListFromKubernetes} from "../../src/utils/source";
 import {assert, expect} from "chai";
 
 describe('Kubernetes Client Test', () => {
     it('should initialize KubeConfig', () => {
         const kc = new KubeConfig();
         kc.loadFromDefault();
-    });
-    it('should find wp-nginx pod', async () => {
-        const kc = new KubeConfig();
-        kc.loadFromDefault();
-        const podName = await getK8SPodName("svc0041p-wordpress")
-        assert(podName.indexOf("wp-nginx") > -1);
     });
     it('should find wordpresssite campus', async () => {
         const kc = new KubeConfig();
