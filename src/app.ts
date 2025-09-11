@@ -6,7 +6,7 @@ import {
     refreshFromAPI,
     refreshSingleMenu
 } from "./menus/refresh";
-import {getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap, generateSitemap} from "./menus/lists";
+import {getMenuItems, getSiteTree, getSitesHierarchy, getSiteMap} from "./menus/lists";
 import {configLogs, error, http_request_counter, info} from "./utils/logger";
 import {Config, loadConfig} from "./utils/configFileReader";
 import {configLinks} from "./utils/links";
@@ -154,7 +154,7 @@ app.get('/menus/getStitchedMenus', (req, res) => {
 
 app.get('/menus/sitesHierarchy', (req, res) => {
     const result = getSitesHierarchy(req.query.url as string, req.query.lang as string, config);
-    let status = result.error == "" ? 200 : 500;
+    const status = result.error == "" ? 200 : 500;
     http_request_counter.labels({route: "sitesHierarchy", statusCode: status, lang: req.query.lang as string}).inc();
     res.status(status).json({
         status: status,
@@ -164,9 +164,8 @@ app.get('/menus/sitesHierarchy', (req, res) => {
 });
 
 app.get('/getSitemap', (req, res) => {
-    generateSitemap(config);
     res.setHeader('content-type', 'application/xml');
-    res.send(getSiteMap());
+    res.send(getSiteMap(config));
 });
 
 app.use('/utils', (req, res, next) => {
