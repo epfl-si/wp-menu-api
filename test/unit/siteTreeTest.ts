@@ -41,7 +41,7 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "http://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
             const tree = siteTree.getParent("http://toto.com/wp-json/bla?bla",2);
             if (tree) {
-                assert(tree["http://toto.com/wp-json/bla?bla"].ID === 1);
+                assert.equal(tree["http://toto.com/wp-json/bla?bla"].ID, 1);
             } else {
                 assert.fail();
             }
@@ -58,7 +58,7 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
             if (tree1) {
-                assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
+                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
             } else {
                 assert.fail();
             }
@@ -68,7 +68,7 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: undefined }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
             if (tree1) {
-                assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
+                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
             } else {
                 assert.fail();
             }
@@ -77,7 +77,7 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
             if (tree1) {
-                assert(tree1["http://toto.com/wp-json/bla?bla"] === undefined);
+                assert.isUndefined(tree1["http://toto.com/wp-json/bla?bla"]);
             } else {
                 assert.fail();
             }
@@ -93,12 +93,14 @@ describe("Site Tree", function() {
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla", 2);
             const tree2 = siteTree.getParent("https://tototata.com/wp-json/bla?bla", 3);
             if (tree1) {
-                assert(tree1["https://toto.com/wp-json/bla?bla"].title === "Some_Page parent 1");
+                assert.equal(tree1["https://toto.com/wp-json/bla?bla"].title,
+                    "Some_Page parent 1");
             } else {
                 assert.fail();
             }
             if (tree2) {
-                assert(tree2["https://tototata.com/wp-json/bla?bla"].title === "Some_Page parent 1 bis");
+                assert.equal(tree2["https://tototata.com/wp-json/bla?bla"].title,
+                    "Some_Page parent 1 bis");
             } else {
                 assert.fail();
             }
@@ -111,7 +113,8 @@ describe("Site Tree", function() {
                 child3 : MenuEntry = MenuEntry.parse(new Site('https://toto.com/'), {ID: 4, menu_item_parent: 1, title: "Some_Page external menu 4", rest_url: "/wp-json/bla?bla", ...bogusExternalWpMenu});
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] },
                 { urlInstanceRestUrl: "https://tototata.com/wp-json/bla?bla", entries: [parent2, child2, child3] }]);
-            assert(siteTree.findExternalMenuByRestUrl(child3.getFullUrl())?.title=="Some_Page parent 1");
+            assert.equal(siteTree.findExternalMenuByRestUrl(child3.getFullUrl())?.title,
+                "Some_Page parent 1");
         })
         it("gets the correct instance child", function() {
             const jsonServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
@@ -121,7 +124,8 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) },
                 { urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) }]);
             const children = siteTree.getChildren("https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119);
-            assert(children.filter(item => item.ID ===15624 ).length == 1);
+            assert.equal(children.filter(item => item.ID ===15624 ).length,
+                1);
         })
         it("has no external menu as children", function() {
             const jsonServices =  fs.readFileSync('./test/unit/data/services.json', 'utf-8');
@@ -144,7 +148,8 @@ describe("Site Tree", function() {
             if (firstSite) {
                 const restUrl = Object.keys(firstSite)[0];
                 if (firstSite[restUrl]) {
-                    assert(firstSite[restUrl].ID ===24813);
+                    assert.equal(firstSite[restUrl].ID,
+                        24813);
                 } else {
                     assert.fail();
                 }
