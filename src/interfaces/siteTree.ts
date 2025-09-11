@@ -145,7 +145,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 const newUrl = Object.keys(parent)[0];
                 if (parent[newUrl]) {
                     const children = this.getChildren(newUrl,parent[newUrl].ID);
-                    return children;//.filter(menu => menu.ID!=idItem);
+                    return children;
                 }else {
                     return [];
                 }
