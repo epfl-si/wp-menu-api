@@ -9,8 +9,6 @@ import {getSiteListFromInventory} from "../utils/source";
 import {getSiteTreeReadOnlyByLanguage} from "./refresh";
 import { flatSitemap } from "src/utils/flatSitemap";
 
-let sitemapStr = '';
-
 function searchAllParentsEntriesByID(entry: MenuEntry, urlInstanceRestUrl: string, siteArray: SiteTreeInstance, labLink: string, assocBreadcrumbs: string[]): MenuEntry[] {
     const parent: { [urlInstance : string]: MenuEntry } | undefined = siteArray.getParent(urlInstanceRestUrl,entry.ID);
 
@@ -279,30 +277,23 @@ function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInsta
     }
 }
 
-export function generateSitemap(config: Config | undefined) {
-    try {
-        if (config) {
-            const m = getSiteTreeReadOnlyByLanguage();
-            const languages = Object.keys(m.menus)
-            const sitemap: string[] = []
-            for (const lang of languages) {
-                const sitesHierarchy = getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
-                const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
-                sitemap.push(...sitemapFlat);
-            }
-            sitemapStr = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${sitemap.join("\n")}
-</urlset>`
-            return { error: sitemap.length > 0 ? "" : "No sitemap generated"};
-        } else {
-            return { error: "No configuration found"};
-        }
-    } catch (e) {
-        return { error: getErrorMessage(e)};
+export function getSiteMap(config: Config | undefined) {
+    if (!config) {
+        throw new Error("No configuration found")
     }
-}
-
-export function getSiteMap() {
-    return sitemapStr;
+    const m = getSiteTreeReadOnlyByLanguage();
+    const languages = Object.keys(m.menus)
+    const sitemap: string[] = []
+    for (const lang of languages) {
+        const sitesHierarchy = getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
+        const sitemapFlat: any[] = flatSitemap(sitesHierarchy.result);
+        sitemap.push(...sitemapFlat);
+    }
+    if (!sitemap) {
+        throw new Error("No sitemap generated")
+    }
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemap.join("\n")}
+</urlset>`;
 }
