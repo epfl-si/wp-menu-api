@@ -20,6 +20,7 @@ export interface SiteTreeInstance  {
     getPages: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
     getPosts: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
     getCategories: () => { urlInstanceRestUrl: string, entries: MenuEntry }[]
+    walkTree: (callback: (e: MenuEntry) => void, loop_cb?: (e: MenuEntry) => void) => void
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
@@ -207,6 +208,52 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         getCategories () {
             return menusEntriesByObjectType['category'] ?? [];
         },
+        walkTree (callback, loop_cb = undefined) {
+            const self = this
+            const seen = new WeakSet();
+            function getChildren (urlInstanceRestUrl: string, idParent: number) : { urlInstanceRestUrl: string, child: MenuEntry }[] {
+                const ret = (children[urlInstanceRestUrl][idParent] || []).map(child =>
+                  ({ urlInstanceRestUrl, child })
+                )
+                for (const child of ret) {
+                    if ( child.object === 'epfl-external-menu' ) {
+                        const m = getSiteTreeReadOnlyByLanguage();
+                        const stitchPoint = child.getFullUrl()
+                        let foundExternalMenu: MenuEntry | undefined = child;
+                        for (const lang of Object.keys(m.menus)) {
+                            const siteArray: SiteTreeInstance = m.menus[lang];
+                            if (siteArray) {
+                                const foundExternalMenuByUrl = siteArray.findExternalMenuByRestUrl(stitchPoint);
+                                if (foundExternalMenuByUrl) {
+                                    ret.push({urlInstanceRestUrl: stitchPoint, child: foundExternalMenuByUrl })
+                                }
+                            }
+                        }
+                    }
+                    return ret;
+                });
+            }
+            function walkRecursively (urlInstanceRestUrl: string, id: number) {
+                const node = itemsByID[urlInstanceRestUrl][id];
+                if (! seen.has(node)) {
+                    seen.add(node);
+                } else {
+                    if (loop_cb) loop_cb(node)
+                    return
+                }
+                callback(node);
+                for (const c of getChildren(urlInstanceRestUrl, id)) {
+                    walkRecursively(c.urlInstanceRestURL, c.child.ID)
+                }
+            }
+            for (const urlInstanceRestUrl in itemsByID) {
+                for (const id in itemsByID[urlInstanceRestUrl]) {
+                    if (! parents[urlInstanceRestUrl][id]) {
+                        walkRecursively(urlInstanceRestUrl, parseInt(id))
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -240,22 +240,18 @@ export function getSitesHierarchy(url: string, lang: string, config: Config | un
     }
     const m = getSiteTreeReadOnlyByLanguage();
     let siteArray: SiteTreeInstance | undefined = m.menus[lang];
-    let sitemap: any[] = [];
-    if (siteArray) {
-        if (url === config.ROOT_LINK_URL) {
-            const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-            sitemap = listMenuBarLinks.map(menuBarLink => {
-                const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
-                if (levelZero) {
-                    const menuBarFullUrl = levelZero[Object.keys(levelZero)[0]].getFullUrl()
-                    return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
-                }
-            })
-        } else {
-            sitemap = [findChildrenFromUrl(url, lang, siteArray)];
-        }
+    if (! siteArray) {
+        return []
     }
-    return sitemap.filter(s => s != undefined);
+
+    let sitemap: any[] = [];
+    siteArray.walkTree((menuItem) => {
+        const itemUrl = menuItem.getFullUrl();
+        if (itemUrl.startsWith(url)) {
+            sitemap.push(itemUrl);
+        }
+    })
+    return sitemap;
 }
 
 function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance, visited = new Set()) {
