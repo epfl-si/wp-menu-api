@@ -6,11 +6,11 @@ import {getSiteTreeReadOnlyByLanguage} from "../menus/refresh";
 export type MenuEntryAndUrl = {urlInstanceRestUrl : string, entry: MenuEntry};
 
 export interface SiteTreeInstance  {
-    getParent : (urlInstanceRestUrl: string,  idChild: number) => MenuEntryAndUrl | undefined
-    getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntryAndUrl[]
+    getParent : (urlInstanceRestUrl: string,  idChild: string) => MenuEntryAndUrl | undefined
+    getChildren : (urlInstanceRestUrl: string, idParent: string) => MenuEntryAndUrl[]
     findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => MenuEntry | undefined
-    findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => MenuEntry | undefined
-    getSiblings : (urlInstanceRestUrl: string, idItem: number) => MenuEntry[]
+    findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: string) => MenuEntry | undefined
+    getSiblings : (urlInstanceRestUrl: string, idItem: string) => MenuEntry[]
     findItemByUrl: (pageURL: string) => MenuEntryAndUrl | undefined
     findItemAndObjectTypeByUrl: (pageURL: string) => { result: MenuEntryAndUrl | undefined, objectType: string}
     findLevelZeroByUrl: (pageURL: string) => MenuEntryAndUrl | undefined
@@ -20,14 +20,16 @@ export interface SiteTreeInstance  {
     getPages: () => MenuEntryAndUrl[]
     getPosts: () => MenuEntryAndUrl[]
     getCategories: () => MenuEntryAndUrl[]
+    getRoots: () => MenuEntryAndUrl[]
+    walkTree: (callback: (e: MenuEntry) => void, loop_cb?: (e: MenuEntry) => void) => void
 }
 
 export type SiteTreeConstructor = (menus : { urlInstanceRestUrl: string, entries: MenuEntry[] | undefined }[]) => SiteTreeInstance
 
 export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
-    const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : number]: MenuEntry } } = {};
-    const parents: { [urlInstanceRestUrl : string]: { [idChild : number]: MenuEntry } } = {};
-    const children: { [urlInstanceRestUrl : string]: { [idParent : number]: MenuEntry[] } } = {};
+    const itemsByID : { [urlInstanceRestUrl : string]: { [idItem : string]: MenuEntry } } = {};
+    const parents: { [urlInstanceRestUrl : string]: { [idChild : string]: MenuEntry } } = {};
+    const children: { [urlInstanceRestUrl : string]: { [idParent : string]: MenuEntry[] } } = {};
     const externalMenus: { [urlInstanceRestUrl : string]: MenuEntry[] } = {};
     const notCustomItemsByUrl : { [fullUrl : string]: MenuEntryAndUrl } = {};
     const customItemsByUrl : { [fullUrl : string]: MenuEntryAndUrl } = {};
@@ -100,7 +102,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
     info(`END ANALYSE`, { method: 'SiteTreeReadOnly' });
 
     return {
-        getParent(urlInstanceRestUrl: string, idChild:number): MenuEntryAndUrl | undefined {
+        getParent(urlInstanceRestUrl: string, idChild: string): MenuEntryAndUrl | undefined {
             const parent = parents[urlInstanceRestUrl][idChild];
             if (parent) {
                 return { urlInstanceRestUrl, entry: parent };
@@ -116,7 +118,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 }
             }
         },
-        getChildren(urlInstanceRestUrl: string, idParent:number): MenuEntryAndUrl[] {
+        getChildren(urlInstanceRestUrl: string, idParent:string): MenuEntryAndUrl[] {
             const childrenAndURLsInTheSameSite = (children[urlInstanceRestUrl][idParent] || []).map(c => ({urlInstanceRestUrl, entry: c}));
             const childrenAndUrlList = childrenAndURLsInTheSameSite.map(childAndUrl => {
                 if (childAndUrl.entry.object === 'epfl-external-menu'){
@@ -141,7 +143,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             });
             return childrenAndUrlList.filter(c => c.entry.object !== 'epfl-external-menu');
         },
-        getSiblings(urlInstanceRestUrl: string, idItem:number)  {
+        getSiblings(urlInstanceRestUrl: string, idItem:string)  {
             const parent = this.getParent(urlInstanceRestUrl,idItem);
             if (parent) {
                 return this.getChildren(parent.urlInstanceRestUrl, parent.entry.ID).map(childAndURL => childAndURL.entry);
@@ -161,7 +163,7 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
             }
             return undefined;
         },
-        findItemByRestUrlAndId(urlInstanceRestUrl: string, idItem: number) {
+        findItemByRestUrlAndId(urlInstanceRestUrl: string, idItem: string) {
             return itemsByID[urlInstanceRestUrl][idItem];
         },
         findItemByUrl(pageURL: string): MenuEntryAndUrl | undefined {
@@ -203,6 +205,38 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
         getCategories () {
             return menuEntriesByObjectType['category'] ?? [];
         },
+        getRoots() {
+            const ret: MenuEntryAndUrl[] = [];
+            const urls = Object.keys(itemsByID);
+            urls.forEach(url => {
+               const idsInUrl = Object.keys(itemsByID[url]);
+               idsInUrl.forEach(id => {
+                   if (!this.getParent(url, id)) {
+                       ret.push({urlInstanceRestUrl: url, entry: itemsByID[url][id]});
+                   }
+               })
+            });
+            return ret;
+        },
+        walkTree (callback, loop_cb = undefined) {
+            const self = this;
+            const visited = new WeakSet();
+            function walkTreeFrom (node: MenuEntryAndUrl) {
+                if (visited.has(node)) {
+                    if (loop_cb) loop_cb(node.entry);
+                    return;
+                } else {
+                    visited.add(node)
+                }
+                callback(node.entry);
+                const children =  self.getChildren(node.urlInstanceRestUrl, node.entry.ID);
+                children.forEach(child => walkTreeFrom(child))
+            }
+            const roots = this.getRoots();
+            roots.forEach(root => {
+                walkTreeFrom(root);
+            })
+        }
     }
 }
 

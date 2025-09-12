@@ -4,9 +4,9 @@ export abstract class MenuEntry {
 
     ownerSite: Site;
     title: string;
-    ID: number;
+    ID: string;
     menu_order: number;
-    menu_item_parent: number;
+    menu_item_parent: string;
     object: string;
     type_label: string;
 

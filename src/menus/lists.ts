@@ -212,44 +212,6 @@ export async function getSiteTree(siteURL: string, config: Config | undefined) {
     }
 }
 
-export function getSitesHierarchy(url: string, lang: string, config: Config | undefined) {
-    if (!config) {
-        throw new Error("No configuration found");
-    }
-    const m = getSiteTreeReadOnlyByLanguage();
-    let siteArray: SiteTreeInstance | undefined = m.menus[lang];
-    let sitemap: any[] = [];
-    if (siteArray) {
-        if (url === config.ROOT_LINK_URL) {
-            const listMenuBarLinks: string[] = getMenuBarLinks(lang);
-            sitemap = listMenuBarLinks.map(menuBarLink => {
-                const levelZero = siteArray!.findLevelZeroByUrl(menuBarLink);
-                if (levelZero) {
-                    const menuBarFullUrl = levelZero.entry.getFullUrl()
-                    return findChildrenFromUrl(menuBarFullUrl, lang, siteArray!);
-                }
-            })
-        } else {
-            sitemap = [findChildrenFromUrl(url, lang, siteArray)];
-        }
-    }
-    return sitemap.filter(s => s != undefined);
-}
-
-function findChildrenFromUrl(url: string, lang: string, siteArray: SiteTreeInstance, visited = new Set()) {
-    visited.add(url);
-    const firstSite = siteArray.findItemAndObjectTypeByUrl(url);
-
-    if (firstSite.result) {
-        const restUrl = Object.keys(firstSite.result)[0];
-        const children = getMenuEntryFromFirstSite(firstSite.result.entry, restUrl, siteArray, lang)["children"]()
-          .filter(c => !visited.has(c.getFullUrl()));
-        const allChildren: any[] = children
-          .map(child => findChildrenFromUrl(child.getFullUrl(), lang, siteArray, visited))
-        return {url : url, children: allChildren.filter(child => child != undefined)};
-    }
-}
-
 export function getSiteMap(config: Config | undefined) {
     if (!config) {
         throw new Error("No configuration found")
@@ -258,9 +220,14 @@ export function getSiteMap(config: Config | undefined) {
     const languages = Object.keys(m.menus)
     const sitemap: string[] = []
     for (const lang of languages) {
-        const sitesHierarchy = getSitesHierarchy(config.ROOT_LINK_URL, lang, config);
-        const sitemapFlat: any[] = flatSitemap(sitesHierarchy);
-        sitemap.push(...sitemapFlat);
+        m.menus[lang].walkTree(
+          (item) => {
+              sitemap.push(`<url>
+  <loc>${item.getFullUrl()}</loc>
+</url>`)
+          },
+          (item) => {console.log(`Loop found for ${item.getFullUrl()}`)}
+        )
     }
     if (!sitemap) {
         throw new Error("No sitemap generated")
