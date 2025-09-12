@@ -28,7 +28,7 @@ describe("End To End SiteHierarchy", function() {
         }
     });
     it('is not empty', async function() {
-        const siteHierarchy = getSitesHierarchy("https://wpn-test.epfl.ch/campus/services/en/homepage/", "en", config);
+        const siteHierarchy = getSitesHierarchy("https://www.epfl.ch/campus/services/en/homepage/", "en", config);
         assert.isAbove(siteHierarchy.length, 0);
     });
 });
