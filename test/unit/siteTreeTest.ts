@@ -47,7 +47,7 @@ describe("Site Tree", function() {
             const parent : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1", rest_url: "/wp-json/bla?bla",...bogusWpMenu}),
                 child : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 2, menu_item_parent: 1, title: "Some_Page child 1",rest_url: "/wp-json/bla?bla", ...bogusWpMenu});
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
-            assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1), [child])
+            assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1).map(childAndURL => childAndURL.entry), [child])
         })
         it("doesn't crash when parentID points nowhere", function() {
             const parent : MenuEntry = MenuEntry.parse(new Site('http://toto.com/'), {ID: 1, menu_item_parent: 0, title: "Some_Page parent 1", rest_url: "/wp-json/bla?bla",...bogusWpMenu}),
@@ -55,7 +55,7 @@ describe("Site Tree", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: [parent, child] }]);
             const tree1 = siteTree.getParent("https://toto.com/wp-json/bla?bla",2);
             assert.isUndefined(tree1);
-            assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1), []);
+            assert.deepEqual(siteTree.getChildren("https://toto.com/wp-json/bla?bla",1).map(childAndURL => childAndURL.entry), []);
         })
         it("doesn't crash when entries menu list is undefined", function() {
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://toto.com/wp-json/bla?bla", entries: undefined }]);
@@ -103,7 +103,7 @@ describe("Site Tree", function() {
             const websiteMenu = JSON.parse(jsonWebSite);
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) },
                 { urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) }]);
-            const children = siteTree.getChildren("https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119);
+            const children = siteTree.getChildren("https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119).map(childAndURL => childAndURL.entry);
             assert.equal(children.filter(item => item.ID ===15624 ).length,
                 1);
         })
@@ -114,7 +114,7 @@ describe("Site Tree", function() {
             const websiteMenu = JSON.parse(jsonWebSite);
             const siteTree = SiteTreeReadOnly([{ urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", entries: servicesMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) },
                 { urlInstanceRestUrl: "https://wp-httpd.epfl.ch/campus/services/website/wp-json/epfl/v1/menus/top?lang=en", entries: websiteMenu.items.map((i: any) => MenuEntry.parse(new Site(i.ownerSite.url), i)) }]);
-            const children = siteTree.getChildren("https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119);
+            const children = siteTree.getChildren("https://wp-httpd.epfl.ch/campus/services/wp-json/epfl/v1/menus/top?lang=en", 7119).map(childAndURL => childAndURL.entry);
             assert.deepEqual(children.filter(item => item.object === 'epfl-external-menu' ), []);
         })
         it("finds the correct item", function() {

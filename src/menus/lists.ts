@@ -177,7 +177,7 @@ function getMenuEntryFromFirstSite(firstSite: MenuEntry, restUrl: string, siteAr
                 return [...searchAllParentsEntriesByID(firstSite, restUrl, siteArray, labLink, assocBreadcrumbs), firstSite];
             },
             children() {
-                return siteArray.getChildren(restUrl,firstSite.ID);
+                return siteArray.getChildren(restUrl,firstSite.ID).map(childAndURL => childAndURL.entry);
             },
             currentPage() {
                 return [firstSite];

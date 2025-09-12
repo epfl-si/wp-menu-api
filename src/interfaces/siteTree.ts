@@ -7,7 +7,7 @@ export type MenuEntryAndUrl = {urlInstanceRestUrl : string, entry: MenuEntry};
 
 export interface SiteTreeInstance  {
     getParent : (urlInstanceRestUrl: string,  idChild: number) => MenuEntryAndUrl | undefined
-    getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntry[]
+    getChildren : (urlInstanceRestUrl: string, idParent: number) => MenuEntryAndUrl[]
     findExternalMenuByRestUrl : (urlInstanceRestUrl: string) => MenuEntry | undefined
     findItemByRestUrlAndId: (urlInstanceRestUrl: string, idItem: number) => MenuEntry | undefined
     getSiblings : (urlInstanceRestUrl: string, idItem: number) => MenuEntry[]
@@ -116,34 +116,35 @@ export const SiteTreeReadOnly : SiteTreeConstructor = function(menus) {
                 }
             }
         },
-        getChildren(urlInstanceRestUrl: string, idParent:number) {
-            const childrenInTheSameSite = children[urlInstanceRestUrl][idParent] || [];
-            const childrenList = childrenInTheSameSite.map(child => {
-                if (child.object === 'epfl-external-menu'){
+        getChildren(urlInstanceRestUrl: string, idParent:number): MenuEntryAndUrl[] {
+            const childrenAndURLsInTheSameSite = (children[urlInstanceRestUrl][idParent] || []).map(c => ({urlInstanceRestUrl, entry: c}));
+            const childrenAndUrlList = childrenAndURLsInTheSameSite.map(childAndUrl => {
+                if (childAndUrl.entry.object === 'epfl-external-menu'){
                     const m = getSiteTreeReadOnlyByLanguage();
-                    let foundExternalMenu: MenuEntry | undefined = child;
+                    let retVal: MenuEntryAndUrl | undefined = childAndUrl;
                     Object.keys(m.menus).forEach(lang => {
-                        let siteArray: SiteTreeInstance = m.menus[lang];
-                        const foundExternalMenuByUrl = siteArray.findExternalMenuByRestUrl(child.getFullUrl());
+                        const siteArray: SiteTreeInstance = m.menus[lang];
+                        const restURL = childAndUrl.entry.getFullUrl();
+                        const foundExternalMenuByUrl = siteArray.findExternalMenuByRestUrl(restURL);
                         if (foundExternalMenuByUrl) {
-                            foundExternalMenu = foundExternalMenuByUrl;
+                            retVal = {urlInstanceRestUrl: restURL, entry: foundExternalMenuByUrl};
                         }
                     });
-                    return foundExternalMenu;
+                    return retVal;
                 }
-                return child;//for normal menus or external not found menus
+                return {urlInstanceRestUrl: childAndUrl.urlInstanceRestUrl, entry: childAndUrl.entry};//for normal menus or external not found menus
             });
-            const detachedMenus = childrenList.filter(c => c.object == 'epfl-external-menu');
+            const detachedMenus = childrenAndUrlList.filter(c => c.entry.object == 'epfl-external-menu');
             detachedMenus.map(em => {
-                warn("External detached menu found", {url: em.title});
-                external_detached_menus_counter.labels({url: em.title}).set(1);
+                warn("External detached menu found", {url: em.entry.title});
+                external_detached_menus_counter.labels({url: em.entry.title}).set(1);
             });
-            return childrenList.filter(c => c.object !== 'epfl-external-menu');
+            return childrenAndUrlList.filter(c => c.entry.object !== 'epfl-external-menu');
         },
         getSiblings(urlInstanceRestUrl: string, idItem:number)  {
             const parent = this.getParent(urlInstanceRestUrl,idItem);
             if (parent) {
-                return this.getChildren(parent.urlInstanceRestUrl, parent.entry.ID);
+                return this.getChildren(parent.urlInstanceRestUrl, parent.entry.ID).map(childAndURL => childAndURL.entry);
             } else {
                 return []
             }
