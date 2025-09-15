@@ -12,14 +12,14 @@ Environment variables are declared in the `menu-api-config.yaml`
 ### Run menu-api on localhost
 - On your terminal :
   - `npm i` (just the first time you run the project)
-  - Connect to Openshift test environment
+  - Connect to Openshift prod environment
   - `oc port-forward service/wp-nginx 8000:80`
   - `npm start`
 
 ## Run tests locally
 
 To run tests locally:
-`npm test` (some test could fail if the site doesn't exist in test environment)
+`npm test` (some test could fail if the site doesn't exist in prod environment)
 
 ### Deployment on Openshift 4 - test/prod
 Follow the doc at https://docs.google.com/document/d/11Kxg4IWH7tMZk_lxds5NsvrYTSU0Pr0PIfKgXcIv-6w/edit?pli=1&tab=t.0
